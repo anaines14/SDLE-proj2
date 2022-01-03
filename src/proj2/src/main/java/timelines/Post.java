@@ -1,9 +1,11 @@
-package main;
+package timelines;
 
 import java.io.Serializable;
 import java.time.LocalTime;
 
 public class Post implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final LocalTime timestamp;
     private String content;
 
@@ -23,5 +25,13 @@ public class Post implements Serializable {
         }
         this.content = newContent;
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Post{" +
+                "timestamp=" + timestamp +
+                ", content='" + content + '\'' +
+                '}';
     }
 }
