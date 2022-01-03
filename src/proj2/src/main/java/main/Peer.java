@@ -7,14 +7,15 @@ import timelines.Timeline;
 import java.io.*;
 import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Peer implements Serializable{
     public static String FOLDER = "timelines" + File.separator;
 
     private final String username;
-    private final GnuNode gnunode;
+    private GnuNode gnunode;
     private final File timelines_folder;
-    private final HashMap<String, Timeline> timelines;
+    private final Map<String, Timeline> timelines;
 
     public Peer(String username, InetAddress address, String port) {
         this.username = username;
@@ -28,10 +29,28 @@ public class Peer implements Serializable{
         this.gnunode = new GnuNode(address, port);
     }
 
+    public Peer(String username) {
+        this.username = username;
+        // create folder
+        this.timelines_folder = new File(FOLDER + username);
+        this.timelines_folder.mkdirs();
+        this.timelines = new HashMap<>();
+        // create own timeline file
+        this.timelines.put(username, new Timeline(username));
+    }
+
+    public String getUsername() { return this.username; }
+
     public void addPost(String post_str) {
         Timeline timeline = this.timelines.get(this.username);
-        Post post = new Post(post_str);
-        timeline.addPost(post);
+        timeline.addPost(post_str);
+    }
+
+    public boolean deletePost(int postId) {
+        Timeline timeline = this.timelines.get(username);
+        if (timeline == null)
+            return false;
+        return timeline.deletePost(postId);
     }
 
     public void saveTimelines() throws IOException {
@@ -56,7 +75,7 @@ public class Peer implements Serializable{
         }
     }
 
-    public HashMap<String, Timeline> getTimelines() {
+    public Map<String, Timeline> getTimelines() {
         return timelines;
     }
 
