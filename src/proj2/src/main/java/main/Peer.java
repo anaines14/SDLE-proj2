@@ -1,20 +1,22 @@
 package main;
 
+import main.network.GnuNode;
 import timelines.Post;
 import timelines.Timeline;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.util.HashMap;
-import java.util.Scanner;
 
-public class Peer implements Serializable {
+public class Peer implements Serializable{
     public static String FOLDER = "timelines" + File.separator;
 
     private final String username;
+    private final GnuNode gnunode;
     private final File timelines_folder;
     private final HashMap<String, Timeline> timelines;
 
-    public Peer(String username) {
+    public Peer(String username, InetAddress address, String port) {
         this.username = username;
         // create folder
         this.timelines_folder = new File(FOLDER + username);
@@ -22,43 +24,8 @@ public class Peer implements Serializable {
         this.timelines = new HashMap<>();
         // create own timeline file
         this.timelines.put(username, new Timeline(username));
-    }
-
-    public static void main(String[] args) {
-        if(args.length < 1) {
-            usage();
-            System.exit(1);
-        }
-        // create peer
-        Peer peer = new Peer(args[0]);
-
-        // command loop
-        Scanner scanner = new Scanner(System.in);
-        String cmd;
-        System.out.println("Started Peer \n\tusername: " + peer.username + "\n\nPlease enter a command.");
-        do {
-            cmd = scanner.nextLine();
-            String[] opts = cmd.split(" ");
-
-            switch (opts[0].toUpperCase()) {
-                case "POST":
-                    // add post to timeline
-                    String post_str = cmd.replaceFirst(opts[0] + " ", "");
-                    peer.addPost(post_str);
-                    System.out.println("Added post: \"" + post_str + "\"");
-                    break;
-                case "STOP":
-                    System.out.println("Stopping peer.");
-                    break;
-                default:
-                    System.out.println("Unknown command.");
-            }
-        } while (!cmd.equalsIgnoreCase("STOP"));
-        System.exit(0);
-    }
-
-    private static void usage() {
-        System.out.println("usage: Peer.java <username>");
+        // join network
+        this.gnunode = new GnuNode(address, port);
     }
 
     public void addPost(String post_str) {
@@ -91,5 +58,9 @@ public class Peer implements Serializable {
 
     public HashMap<String, Timeline> getTimelines() {
         return timelines;
+    }
+
+    public void stop() {
+        this.gnunode.stop();
     }
 }

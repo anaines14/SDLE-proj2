@@ -48,4 +48,8 @@ public class GnuNode {
         byte[] bytes = MessageBuilder.messageToByteArray(message);
         socket.send(bytes);
     }
+
+    public void stop() {
+        this.messageHandlerThread.interrupt();
+    }
 }
