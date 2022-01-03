@@ -1,47 +1,25 @@
 package main;
 
+import visualization.MyGraphFrame;
+
+import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Scanner;
 
-public class Main {
+public class Main{
     public static void main(String[] args) {
-        String filename = args[0];
-        File file = new File("src/main/resources/" + filename);
-        HashMap<String, Peer> peers = new HashMap<>();
+        //Graph thingys
+        MyGraphFrame myGraphFrame = new MyGraphFrame();
+        myGraphFrame.init();
 
-        try {
-            Scanner scanner = new Scanner(file);
-            do {
-                String cmd = scanner.nextLine();
-                String[] opts = cmd.split(" ");
-
-                if (opts.length < 2) {
-                    usage(cmd);
-                    System.exit(1);
-                }
-
-                String username = opts[1];
-
-                switch (cmd.toUpperCase()) {
-                    case "START":
-                        peers.put(username, new Peer(username));
-
-                        //TODO: Start thread with peer
-                        break;
-                    case "POST":
-                        Peer peer = peers.get(username);
-                        break;
-                }
-            } while(scanner.hasNext());
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        JFrame frame = new JFrame();
+        frame.getContentPane().add(myGraphFrame);
+        frame.setTitle("Graph YAY");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
     }
 
-    private static void usage(String cmd) {
-        System.out.println("Invalid command: " + cmd);
-    }
 }
