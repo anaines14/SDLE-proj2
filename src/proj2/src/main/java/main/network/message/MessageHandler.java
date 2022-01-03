@@ -37,4 +37,8 @@ public class MessageHandler implements Runnable {
             handle(request);
         }
     }
+
+    public void close() {
+        this.socket.close();
+    }
 }
