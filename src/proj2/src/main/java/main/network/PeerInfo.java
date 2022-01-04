@@ -88,6 +88,11 @@ public class PeerInfo {
         return neighbours.stream().max(Comparator.comparingInt(Neighbour::getCapacity)).get();
     }
 
+    @Override
+    public String toString() {
+        return  username + " => " + address + ":" + port + " cap=" + capacity + " degree=" + neighbours.size();
+    }
+
     public static void main(String[] args) {
         try {
             PeerInfo peer1 = new PeerInfo(InetAddress.getByName("localhost"), "8000", "user1", 30);

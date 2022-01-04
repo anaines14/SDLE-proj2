@@ -1,6 +1,9 @@
 package main.network.neighbour;
 
 
+import main.network.Peer;
+import main.network.PeerInfo;
+
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -17,6 +20,11 @@ public class Neighbour extends Host implements Serializable{
 
     public Neighbour(String username, InetAddress address, String port, int capacity, int degree) {
         this(username, address, port, capacity, degree, new ArrayList<>());
+    }
+
+    public Neighbour(PeerInfo peerInfo) {
+        super(peerInfo.username, peerInfo.address, peerInfo.port, peerInfo.capacity, peerInfo.getDegree());
+        this.timelines = new ArrayList<>();
     }
 
     public Neighbour(Host host) {

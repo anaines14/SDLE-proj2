@@ -2,6 +2,7 @@ package main;
 
 import main.network.Peer;
 import main.network.executor.MultipleNodeExecutor;
+import main.network.neighbour.Neighbour;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,11 +11,10 @@ import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class TestApp {
+    private static final int MAX_CAPACITY = 31;
     private final MultipleNodeExecutor executor;
     private final Map<String, Peer> peers;
     private int curr_peer_id;
@@ -73,6 +73,18 @@ public class TestApp {
 
         } catch (FileNotFoundException | UnknownHostException | InterruptedException | URISyntaxException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void connectToNetwork(Peer peer) {
+        // select random peer to connect to
+        if (this.peers.size() > 0) {
+            Random rand = new Random();
+            List<String> users = new ArrayList<>(peers.keySet());
+            String key = users.get(rand.nextInt(users.size()));
+            // add peer to neighbour list
+            Peer neigh = peers.get(key);
+            peer.addNeighbour(new Neighbour(neigh.getPeerInfo()));
         }
     }
 
@@ -152,11 +164,13 @@ public class TestApp {
         int capacity = Integer.parseInt(opts[4]);
 
         Peer peer = new Peer(username, address, port, capacity);
+
+        this.connectToNetwork(peer);
         peers.put(username, peer);
         executor.addNode(peer);
     }
 
-    private void execPost(String cmd, String[] opts) throws UnknownHostException {
+    private void execPost(String cmd, String[] opts) {
         if (opts.length < 3) {
             usage();
             System.exit(1);
@@ -196,11 +210,13 @@ public class TestApp {
         int num_peers = Integer.parseInt(opts[1]);
         InetAddress user_addr = InetAddress.getByName("localhost");
 
-        // TODO: Gen random caps
+        Random random = new Random();
         // start and store peers
         for (int i = 1; i <= num_peers; i++) {
             String username = "user" + curr_peer_id;
-            Peer peer = new Peer(username, user_addr, String.valueOf(8000 + curr_peer_id), 0);
+            int random_cap = 1 + random.nextInt(MAX_CAPACITY);
+            Peer peer = new Peer(username, user_addr, String.valueOf(8000 + curr_peer_id), random_cap);
+            this.connectToNetwork(peer);
             peers.put(username, peer);
             executor.addNode(peer);
             curr_peer_id++;

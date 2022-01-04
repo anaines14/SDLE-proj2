@@ -19,39 +19,24 @@ public class Peer implements Serializable {
 
     private final PeerInfo peerInfo;
     private final TimelineInfo timelineInfo;
-    private final InetAddress address;
-    private final String port;
     private final ZContext context;
     private final MessageSender sender;
     private final MessageHandler handler;
-    private int capacity; // Quantity of messages that we can handle, arbitrary for us
-    private Set<Neighbour> neighbours;
-    private Set<Host> hostCache;
 
     public Peer(PeerInfo peerInfo) {
         this.context = new ZContext();
         this.peerInfo = peerInfo;
         this.timelineInfo = new TimelineInfo(peerInfo.username);
-        this.address = peerInfo.address;
-        this.port = peerInfo.port;
-        this.sender = new MessageSender(address, port, peerInfo.username, context);
+        this.sender = new MessageSender(peerInfo.address, peerInfo.port, peerInfo.username, context);
         this.handler = new MessageHandler(peerInfo, context, sender);
-        this.capacity = peerInfo.capacity;
-        this.neighbours = peerInfo.getNeighbours(); // TODO Remove this
-        this.hostCache = peerInfo.hostCache;
     }
 
     public Peer(String username, InetAddress address, String port, int capacity) {
         this.context = new ZContext();
         this.peerInfo = new PeerInfo(address, port, username, capacity);
         this.timelineInfo = new TimelineInfo(username);
-        this.address = peerInfo.address;
-        this.port = peerInfo.port;
         this.sender = new MessageSender(address, port, peerInfo.username, context);
         this.handler = new MessageHandler(peerInfo, context, sender);
-        this.capacity = peerInfo.capacity;
-        this.neighbours = peerInfo.getNeighbours(); // TODO Remove this
-        this.hostCache = peerInfo.hostCache;
     }
 
     public void send(Message message, String port) throws IOException { sender.send(message, port); }
@@ -62,6 +47,10 @@ public class Peer implements Serializable {
 
     public void join(InetAddress address, String port) {
 
+    }
+
+    public PeerInfo getPeerInfo() {
+        return this.peerInfo;
     }
 
     public MessageHandler getMessageHandler() {
@@ -86,7 +75,7 @@ public class Peer implements Serializable {
 
     @Override
     public String toString() {
-        return  address + ":" + port;
+        return peerInfo.toString();
     }
 
     @Override
@@ -94,12 +83,12 @@ public class Peer implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Peer node = (Peer) o;
-        return Objects.equals(address, node.address) && Objects.equals(port, node.port);
+        return Objects.equals(peerInfo.address, node.peerInfo.address) && Objects.equals(peerInfo.port, node.peerInfo.port);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(address, port);
+        return Objects.hash(peerInfo.address, peerInfo.port);
     }
 
     public static void main(String[] args) {
@@ -163,5 +152,10 @@ public class Peer implements Serializable {
         if (hostHigherCap || hostLowerDegree)
             peerInfo.replaceNeighbour(worstNgbr, new Neighbour(host));
         // REJECT host
+    }
+
+    // To connect to the network on start
+    public void addNeighbour(Neighbour neighbour) {
+        peerInfo.addNeighbour(neighbour);
     }
 }
