@@ -20,7 +20,7 @@ public class MessageHandler implements Runnable {
     }
 
     public void handle(Message message) {
-        System.out.println(message.toString());
+        System.out.println(port + ": " + message.toString());
     }
 
     @Override

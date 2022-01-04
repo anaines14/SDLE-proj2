@@ -1,4 +1,4 @@
-package timelines;
+package main.timelines;
 
 import java.io.*;
 import java.time.LocalTime;

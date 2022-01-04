@@ -1,7 +1,7 @@
 package main;
 
 import main.network.GnuNode;
-import timelines.Timeline;
+import main.timelines.Timeline;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -24,14 +24,14 @@ public class Peer implements Serializable{
         this.timelines = new HashMap<>();
         // create own timeline file
         this.timelines.put(username, new Timeline(username));
-        // load timelines
+        // load main.timelines
         try {
             loadTimelines();
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("ERROR: Failed to load timelines");
+            System.err.println("ERROR: Failed to load main.timelines");
         }
         // join network
-        this.gnunode = new GnuNode(address, port);
+        this.gnunode = new GnuNode(address, port, 0); // TODO add capacity
 
         System.out.println("STARTED peer.\n\tusername: " + username +
                 "\n\tIPaddress: " + address.toString() + "\n\tPort: " + port);
