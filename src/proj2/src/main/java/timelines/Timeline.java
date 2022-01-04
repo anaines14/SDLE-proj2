@@ -2,9 +2,7 @@ package timelines;
 
 import java.io.*;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Timeline implements Serializable {
@@ -22,18 +20,34 @@ public class Timeline implements Serializable {
         this.lastPostId = 0;
     }
 
-    public void addPost(Post post) {
-        this.posts.put(post.getId(), post);
-    }
-
     public void addPost(String post_content) {
         this.lastPostId++;
         this.posts.put(this.lastPostId, new Post(lastPostId, post_content));
+        System.out.println("ADDED post: \n" + "\tuser: " + username +
+                "\n\tID: " + lastPostId + "\n\tContent: " + post_content);
+
     }
 
     public boolean deletePost(int postId) {
         Post deleted = this.posts.remove(postId);
-        return deleted != null;
+        if (deleted != null) {
+            System.out.println("DELETED post: \n"  + "\tuser: " + username +
+                    "\n\tID: " + postId);
+            return true;
+        }
+        System.err.println("ERROR: Failed to delete post " + postId + " from " + username);
+        return false;
+    }
+
+    public boolean updatePost(int postId, String post_content) {
+        Post post = this.posts.get(postId);
+        if (post != null && post.update(post_content)) {
+            System.out.println("UPDATED post: \n"  + "\tuser: " + username +
+                    "\n\tID: " + postId + "\n\tContent: " + post_content);
+            return true;
+        }
+        System.err.println("ERROR: Failed to delete post " + postId + " from " + username);
+        return false;
     }
 
     public void save(File timelines_folder) throws IOException {
@@ -48,10 +62,8 @@ public class Timeline implements Serializable {
 
     @Override
     public String toString() {
-        return "Timeline{" +
-                "posts=" + posts +
-                ", username='" + username + '\'' +
-                ", lastUpdate=" + lastUpdate +
-                '}';
+        return username + "'s Timeline:" +
+                "\n\tLast Update:" + lastUpdate +
+                "\n\tPosts: \n\t\t" + posts;
     }
 }

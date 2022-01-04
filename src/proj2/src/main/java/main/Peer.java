@@ -1,7 +1,6 @@
 package main;
 
 import main.network.GnuNode;
-import timelines.Post;
 import timelines.Timeline;
 
 import java.io.*;
@@ -25,8 +24,17 @@ public class Peer implements Serializable{
         this.timelines = new HashMap<>();
         // create own timeline file
         this.timelines.put(username, new Timeline(username));
+        // load timelines
+        try {
+            loadTimelines();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("ERROR: Failed to load timelines");
+        }
         // join network
         this.gnunode = new GnuNode(address, port);
+
+        System.out.println("STARTED peer.\n\tusername: " + username +
+                "\n\tIPaddress: " + address.toString() + "\n\tPort: " + port);
     }
 
     public Peer(String username) {
@@ -39,18 +47,47 @@ public class Peer implements Serializable{
         this.timelines.put(username, new Timeline(username));
     }
 
-    public String getUsername() { return this.username; }
-
     public void addPost(String post_str) {
+        // add post
         Timeline timeline = this.timelines.get(this.username);
         timeline.addPost(post_str);
+        // update timeline file
+        try {
+            saveTimelines();
+        } catch (IOException e) {
+            System.err.println("ERROR: Failed to save timeline.");
+        }
     }
 
-    public boolean deletePost(int postId) {
+    public void updatePost(int postId, String newContent) {
+        Timeline timeline = this.timelines.get(username);
+
+        if (timeline == null)
+            return;
+        if (timeline.updatePost(postId, newContent)) {
+            // update timeline
+            try {
+                saveTimelines();
+            } catch (IOException e) {
+                System.err.println("ERROR: Failed to save timeline.");
+            }
+        }
+    }
+
+    public void deletePost(int postId) {
+        // get timeline
         Timeline timeline = this.timelines.get(username);
         if (timeline == null)
-            return false;
-        return timeline.deletePost(postId);
+            return;
+        // delete post
+        if (timeline.deletePost(postId)) {
+            // update timeline
+            try {
+                saveTimelines();
+            } catch (IOException e) {
+                System.err.println("ERROR: Failed to save timeline.");
+            }
+        }
     }
 
     public void saveTimelines() throws IOException {
@@ -75,11 +112,18 @@ public class Peer implements Serializable{
         }
     }
 
-    public Map<String, Timeline> getTimelines() {
-        return timelines;
+    public void printTimeline() {
+        for (Timeline timeline : this.timelines.values())
+            System.out.println(timeline);
     }
 
     public void stop() {
         this.gnunode.stop();
+        System.out.println("STOPPED: " + username + ".");
+    }
+
+    @Override
+    public String toString() {
+        return username + " " + gnunode;
     }
 }

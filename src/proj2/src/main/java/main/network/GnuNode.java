@@ -52,4 +52,9 @@ public class GnuNode {
     public void stop() {
         this.messageHandlerThread.interrupt();
     }
+
+    @Override
+    public String toString() {
+        return  address + ":" + port;
+    }
 }

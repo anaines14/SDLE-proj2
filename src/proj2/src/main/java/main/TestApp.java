@@ -1,5 +1,7 @@
 package main;
 
+import timelines.Timeline;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.InetAddress;
@@ -59,20 +61,60 @@ public class TestApp {
                         break;
                     case "DELETE":
                         this.execDelete(opts);
+                        break;
+                    case "UPDATE":
+                        this.execUpdate(opts);
+                        break;
+                    case "PRINT":
+                        this.execPrint(opts);
+                        break;
+                    case "PRINT_PEERS":
+                        this.execPrintPeers();
+                        break;
+                    case "SLEEP":
+                        this.execSleep(opts);
+                        break;
                     default:
-                        System.out.println("Unknown command.");
+                        System.out.println("Unknown command.\n");
+                        usage();
                         System.exit(1);
                 }
-            } while(scanner.hasNext());
+            } while(scanner.hasNextLine());
 
-        } catch (FileNotFoundException | UnknownHostException e) {
+        } catch (FileNotFoundException | UnknownHostException | InterruptedException e) {
             e.printStackTrace();
         }
     }
 
+    private void execPrint(String[] opts) {
+        if (opts.length < 2) {
+            usage();
+            System.exit(1);
+        }
+        // get peer
+        String username = opts[1];
+        Peer peer = peers.get(username);
+        // print timeline
+        peer.printTimeline();
+    }
+
+    private void execUpdate(String[] opts) {
+        if (opts.length < 4) {
+            usage();
+            System.exit(1);
+        }
+        // get peer
+        String username = opts[1];
+        int postId = Integer.parseInt(opts[2]);
+        String newContent = opts[3];
+        Peer peer = peers.get(username);
+        // update post
+        peer.updatePost(postId, newContent);
+    }
+
     private void execStart(String[] opts) throws UnknownHostException {
         if (opts.length < 4) {
-            System.out.println("usage: START <username> <address> <port>");
+            usage();
             System.exit(1);
         }
 
@@ -85,7 +127,7 @@ public class TestApp {
 
     private void execPost(String cmd, String[] opts) throws UnknownHostException {
         if (opts.length < 3) {
-            System.out.println("usage: POST <username> \"<content>\"");
+            usage();
             System.exit(1);
         }
 
@@ -103,7 +145,7 @@ public class TestApp {
 
     private void execStop(String[] opts) throws UnknownHostException {
         if (opts.length < 2) {
-            System.out.println("usage: STOP <username>");
+            usage();
             System.exit(1);
         }
 
@@ -116,7 +158,7 @@ public class TestApp {
 
     private void execStartMult(String[] opts) throws UnknownHostException {
         if (opts.length < 2) {
-            System.out.println("usage: START_MULT <n>");
+            usage();
             System.exit(1);
         }
 
@@ -139,8 +181,8 @@ public class TestApp {
     }
 
     private void execDelete(String[] opts) throws UnknownHostException {
-        if (opts.length < 2) {
-            System.out.println("usage: DELETE <username> <post_id>");
+        if (opts.length < 3) {
+            usage();
             System.exit(1);
         }
 
@@ -152,7 +194,34 @@ public class TestApp {
         peer.deletePost(postId);
     }
 
+    private void execSleep(String[] opts) throws InterruptedException {
+        if (opts.length < 2) {
+            usage();
+            System.exit(1);
+        }
+        int time = Integer.parseInt(opts[1]) * 1000;
+        Thread.sleep(time);
+    }
+
+    private void execPrintPeers() {
+        System.out.println("Online Peers: ");
+        for (Peer peer : peers.values()) {
+            System.out.println("\t" + peer);
+        }
+    }
+
     private static void usage() {
-        System.out.println("usage: TestApp.java <test_file>");
+        System.out.println("usage: TestApp.java <test_file>" +
+                "\n\nAvalable commands:\n\n" +
+                "\n\t START <username> <IPaddress> <port>" +
+                "\n\t START_MULT <n>" +
+                "\n\t POST <username> \"<content>\"" +
+                "\n\t UPDATE <username> <post_id> \"<content>\"" +
+                "\n\t DELETE <username> <post_id>" +
+                "\n\t PRINT <username>" +
+                "\n\t PRINT_PEERS" +
+                "\n\t STOP <username>" +
+                "\n\t STOP_ALL" +
+                "\n\t SLEEP <seconds>");
     }
 }
