@@ -1,6 +1,7 @@
 package main.network.message;
 
 import org.zeromq.ZMQ;
+import org.zeromq.ZMQException;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -43,7 +44,7 @@ public class MessageBuilder {
         return message;
     }
 
-    public static Message messageFromSocket(ZMQ.Socket socket) throws IOException, ClassNotFoundException {
+    public static Message messageFromSocket(ZMQ.Socket socket) throws ZMQException, IOException, ClassNotFoundException {
         byte[] bytes = socket.recv();
         Message message = messageFromByteArray(bytes);
         return message;

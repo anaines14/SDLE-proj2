@@ -118,7 +118,7 @@ public class Peer implements Serializable{
     }
 
     public void stop() {
-        this.gnunode.stop();
+        this.gnunode.close();
         System.out.println("STOPPED: " + username + ".");
     }
 

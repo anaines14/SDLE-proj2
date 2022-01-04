@@ -63,7 +63,7 @@ public class TestApp {
                         this.execDelete(opts);
                         break;
                     case "UPDATE":
-                        this.execUpdate(opts);
+                        this.execUpdate(cmd, opts);
                         break;
                     case "PRINT":
                         this.execPrint(opts);
@@ -98,18 +98,27 @@ public class TestApp {
         peer.printTimeline();
     }
 
-    private void execUpdate(String[] opts) {
+    private void execUpdate(String cmd, String[] opts) {
         if (opts.length < 4) {
             usage();
             System.exit(1);
         }
         // get peer
         String username = opts[1];
-        int postId = Integer.parseInt(opts[2]);
-        String newContent = opts[3];
-        Peer peer = peers.get(username);
-        // update post
-        peer.updatePost(postId, newContent);
+        try {
+            int postId = Integer.parseInt(opts[2]);
+
+            // split on first ""
+            String newContent = cmd.split("\"", 2)[1];
+            newContent = newContent.substring(0, newContent.length()-1); // remove last "
+
+            Peer peer = peers.get(username);
+            // update post
+            peer.updatePost(postId, newContent);
+        } catch (NumberFormatException e) {
+            usage();
+            System.exit(1);
+        }
     }
 
     private void execStart(String[] opts) throws UnknownHostException {
@@ -149,9 +158,9 @@ public class TestApp {
             System.exit(1);
         }
 
-        // get peer
+        // remove peer
         String username = opts[1];
-        Peer peer = peers.get(username);
+        Peer peer = peers.remove(username);
         // stop peer
         peer.stop();
     }
@@ -178,6 +187,8 @@ public class TestApp {
         for (Peer p : peers.values()) {
             p.stop();
         }
+        // clean map
+        peers.clear();
     }
 
     private void execDelete(String[] opts) throws UnknownHostException {

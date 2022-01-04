@@ -47,10 +47,15 @@ public class GnuNode {
 
         byte[] bytes = MessageBuilder.messageToByteArray(message);
         socket.send(bytes);
+        socket.close();
     }
 
-    public void stop() {
+    public void close() {
         this.messageHandlerThread.interrupt();
+        try {
+            this.messageHandlerThread.join();
+        } catch (InterruptedException ignored) {}
+        this.context.close();
     }
 
     @Override
