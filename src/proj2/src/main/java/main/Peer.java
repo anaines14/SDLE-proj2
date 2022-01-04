@@ -1,6 +1,7 @@
 package main;
 
 import main.network.GnuNode;
+import main.network.PeerInfo;
 import main.timelines.Timeline;
 
 import java.io.*;
@@ -11,6 +12,7 @@ import java.util.Map;
 public class Peer implements Serializable{
     public static String FOLDER = "timelines" + File.separator;
 
+    private PeerInfo peerInfo;
     private final String username;
     private GnuNode gnunode;
     private final File timelines_folder;
@@ -30,8 +32,9 @@ public class Peer implements Serializable{
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("ERROR: Failed to load main.timelines");
         }
+        this.peerInfo = new PeerInfo(address, port, username, 0, timelines); // TODO add capacity
         // join network
-        this.gnunode = new GnuNode(address, port, 0); // TODO add capacity
+        this.gnunode = new GnuNode(peerInfo);
 
         System.out.println("STARTED peer.\n\tusername: " + username +
                 "\n\tIPaddress: " + address.toString() + "\n\tPort: " + port);

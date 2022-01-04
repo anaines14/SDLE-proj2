@@ -1,29 +1,19 @@
 package main.network.message;
 
+import main.network.GnuNode;
+
 import java.io.Serializable;
+import java.net.InetAddress;
 
-public class Message implements Serializable {
-    private String username;
-    private String content;
+public abstract class Message implements Serializable {
+    public InetAddress senderAddress;
+    public String senderPort;
+    public String username;
 
-    public Message(String username, String content) {
-        this.username = username;
-        this.content = content;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getContent() {
-        return content;
-    }
+    public abstract String getType();
 
     @Override
     public String toString() {
-        return "Message{" +
-                "username='" + username + '\'' +
-                ", content='" + content + '\'' +
-                '}';
+        return "[" + getType() + "]" + " " + senderAddress.getHostName() + ":" + senderPort;
     }
 }
