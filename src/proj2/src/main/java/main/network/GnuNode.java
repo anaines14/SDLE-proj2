@@ -12,14 +12,13 @@ import org.zeromq.ZMQ;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class GnuNode {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
+    public static final int MAX_NGBRS = 3;
 
     private final InetAddress address;
     private final String port;
@@ -116,7 +115,31 @@ public class GnuNode {
         System.out.println(this.toString() + " pinged its neighbours");
     }
 
-    public void addNeighbour() {
-        System.out.println(this.toString() + " adds a neighbour");
+    public void addNeighbour()  {
+        // get higher capacity host not neighbour
+        Host host = this.getBestHostNotNeighbor();
+        if(host == null) {
+            System.out.println("There are no neighbours to add.");
+            return;
+        }
+        // ACCEPT neighbor if limit not reached
+        if(neighbours.size() < MAX_NGBRS) {
+            neighbours.add(new Neighbour(host));
+            return;
+        }
+
+    }
+
+    public Host getBestHostNotNeighbor() {
+        Set<Host> neighboursSet = new HashSet<>(neighbours);
+        // filter already neighbors
+        Set<Host> notNeighbors = hostCache.stream()
+                .filter(f -> !neighbours.contains(f))
+                .collect(Collectors.toSet());
+
+        Optional<Host> best_host = notNeighbors.stream().max(Comparator.comparingInt(Host::getCapacity));
+        if(best_host.isEmpty()) return null;
+
+        return best_host.get();
     }
 }
