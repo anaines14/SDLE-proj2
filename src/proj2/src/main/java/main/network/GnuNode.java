@@ -23,8 +23,8 @@ public class GnuNode {
     private final MessageSender sender;
     private final MessageHandler handler;
     private int capacity; // Quantity of messages that we can handle, arbitrary for us
-    private List<Neighbour> neighbours;
-    private List<Host> hostCache;
+    private Set<Neighbour> neighbours;
+    private Set<Host> hostCache;
 
     public GnuNode(PeerInfo peerInfo) {
         this.context = new ZContext();
@@ -34,7 +34,7 @@ public class GnuNode {
         this.sender = new MessageSender(address, port, peerInfo.username, context);
         this.handler = new MessageHandler(peerInfo, context, sender);
         this.capacity = peerInfo.capacity;
-        this.neighbours = peerInfo.neighbours;
+        this.neighbours = peerInfo.getNeighbours(); // TODO Remove this
         this.hostCache = peerInfo.hostCache;
     }
 
@@ -115,11 +115,9 @@ public class GnuNode {
             neighbours.add(new Neighbour(host));
             return;
         }
-
     }
 
     public Host getBestHostNotNeighbor() {
-        Set<Host> neighboursSet = new HashSet<>(neighbours);
         // filter already neighbors
         Set<Host> notNeighbors = hostCache.stream()
                 .filter(f -> !neighbours.contains(f))

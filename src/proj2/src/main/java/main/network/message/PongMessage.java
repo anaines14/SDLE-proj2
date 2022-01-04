@@ -1,18 +1,12 @@
 package main.network.message;
 
-import main.network.neighbour.Host;
-
-import java.util.List;
+import main.network.neighbour.Neighbour;
 
 public class PongMessage extends Message {
-    public int degree;
-    public List<Host> storedHostCache;
-    public List<String> storedTimelines;
+    Neighbour sender;
 
-    public PongMessage(int degree, List<Host> storedHostCache, List<String> storedTimelines) {
-        this.degree = degree;
-        this.storedHostCache = storedHostCache;
-        this.storedTimelines = storedTimelines;
+    public PongMessage(Neighbour sender) {
+        this.sender = sender;
     }
 
     @Override

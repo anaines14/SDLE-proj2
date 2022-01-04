@@ -1,10 +1,11 @@
 package main.network.neighbour;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;
 
 // Data class
-public class Host {
+public class Host implements Serializable {
     private final InetAddress address;
     private final String port;
     private final int capacity;

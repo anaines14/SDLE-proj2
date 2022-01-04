@@ -1,6 +1,7 @@
 package main.network.message;
 
 import main.network.PeerInfo;
+import main.network.neighbour.Neighbour;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -41,13 +42,19 @@ public class MessageHandler implements Runnable {
 
     public void handle(PingMessage message) {
         // Reply with a Pong message with our info
-        PongMessage replyMsg = new PongMessage(peerInfo.getDegree(), peerInfo.hostCache, peerInfo.getStoredTimelines());
+        Neighbour ourInfo = new Neighbour(peerInfo.username, peerInfo.address, peerInfo.port,
+                peerInfo.capacity, peerInfo.getStoredTimelines());
+        PongMessage replyMsg = new PongMessage(ourInfo);
         sender.send(replyMsg, this.port);
     }
 
     public void handle(PongMessage message) {
         // Update/Add info that we have about a peer
-        String senderUsername = message.username;
+        Neighbour responder = message.sender;
+        if (peerInfo.hasNeighbour(responder))
+            peerInfo.updateNeighbour(responder);
+        else
+            peerInfo.addNeighbour(responder);
     }
 
     @Override
