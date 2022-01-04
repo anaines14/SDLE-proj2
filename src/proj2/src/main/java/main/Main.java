@@ -1,21 +1,22 @@
 package main;
 
-import visualization.MyGraphFrame;
-
-import javax.swing.*;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.implementations.SingleGraph;
 
 public class Main{
     public static void main(String[] args) {
         //Graph thingys
-        MyGraphFrame myGraphFrame = new MyGraphFrame();
-        myGraphFrame.init();
+        System.setProperty("org.graphstream.ui","swing");
+        Graph graph = new SingleGraph("Example");
 
-        JFrame frame = new JFrame();
-        frame.getContentPane().add(myGraphFrame);
-        frame.setTitle("Graph YAY");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
+        graph.addNode("Lucas1");
+        graph.addNode("2");
+        graph.addNode("3");
+        graph.addNode("Crocodilo");
+
+        graph.addEdge("Lucas liga com crocodilo get it? AHAHAHAHAH comedia", "Lucas1","Crocodilo");
+
+        graph.display();
     }
 
 }
