@@ -1,6 +1,6 @@
 package main.network.executor;
 
-import main.network.GnuNode;
+import main.network.Peer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,16 +9,16 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class MultipleNodeExecutor implements NodeExecutor {
     private static final int POOL_SIZE = 5;
-    private HashMap<GnuNode, NodeThreadExecutor> executors;
+    private HashMap<Peer, NodeThreadExecutor> executors;
     private boolean started;
     private ScheduledThreadPoolExecutor scheduler;
 
-    public MultipleNodeExecutor(List<GnuNode> nodes) {
+    public MultipleNodeExecutor(List<Peer> nodes) {
         this.executors = new HashMap<>();
         this.started = false;
         this.scheduler = new ScheduledThreadPoolExecutor(POOL_SIZE);
 
-        for (GnuNode node: nodes)
+        for (Peer node: nodes)
             this.executors.put(node, new NodeThreadExecutor(node, scheduler));
     }
 
@@ -26,7 +26,7 @@ public class MultipleNodeExecutor implements NodeExecutor {
         this(new ArrayList<>());
     }
 
-    public boolean addNode(GnuNode node) {
+    public boolean addNode(Peer node) {
         if (this.executors.containsKey(node))
             return false;
 
@@ -38,7 +38,7 @@ public class MultipleNodeExecutor implements NodeExecutor {
         return true;
     }
 
-    public boolean remNode(GnuNode node) {
+    public boolean remNode(Peer node) {
         if (!this.executors.containsKey(node))
             return false;
 
@@ -56,7 +56,7 @@ public class MultipleNodeExecutor implements NodeExecutor {
             return;
 
         this.started = true;
-        for (GnuNode node: executors.keySet()) {
+        for (Peer node: executors.keySet()) {
             this.executors.get(node).execute();
         }
     }
@@ -67,7 +67,7 @@ public class MultipleNodeExecutor implements NodeExecutor {
             return;
 
         this.started = false;
-        for (GnuNode node: executors.keySet()) {
+        for (Peer node: executors.keySet()) {
             this.executors.get(node).stop();
         }
 

@@ -1,25 +1,24 @@
 package main.network;
 
-import main.Peer;
 import main.network.executor.MultipleNodeExecutor;
 import main.network.message.*;
 import main.network.neighbour.Host;
 import main.network.neighbour.Neighbour;
+import main.timelines.TimelineInfo;
 import org.zeromq.ZContext;
-
-import java.awt.*;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.List;
 
-public class GnuNode {
+public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
     public static final int MAX_NGBRS = 3;
 
     private final PeerInfo peerInfo;
+    private final TimelineInfo timelineInfo;
     private final InetAddress address;
     private final String port;
     private final ZContext context;
@@ -29,9 +28,23 @@ public class GnuNode {
     private Set<Neighbour> neighbours;
     private Set<Host> hostCache;
 
-    public GnuNode(PeerInfo peerInfo) {
+    public Peer(PeerInfo peerInfo) {
         this.context = new ZContext();
         this.peerInfo = peerInfo;
+        this.timelineInfo = new TimelineInfo(peerInfo.username);
+        this.address = peerInfo.address;
+        this.port = peerInfo.port;
+        this.sender = new MessageSender(address, port, peerInfo.username, context);
+        this.handler = new MessageHandler(peerInfo, context, sender);
+        this.capacity = peerInfo.capacity;
+        this.neighbours = peerInfo.getNeighbours(); // TODO Remove this
+        this.hostCache = peerInfo.hostCache;
+    }
+
+    public Peer(String username, InetAddress address, String port, int capacity) {
+        this.context = new ZContext();
+        this.peerInfo = new PeerInfo(address, port, username, capacity);
+        this.timelineInfo = new TimelineInfo(username);
         this.address = peerInfo.address;
         this.port = peerInfo.port;
         this.sender = new MessageSender(address, port, peerInfo.username, context);
@@ -55,6 +68,22 @@ public class GnuNode {
         return handler;
     }
 
+    public void printTimelines() {
+        this.timelineInfo.printTimelines();
+    }
+
+    public void updatePost(int postId, String newContent) {
+        this.timelineInfo.updatePost(peerInfo.username, postId, newContent);
+    }
+
+    public void addPost(String newContent) {
+        this.timelineInfo.addPost(peerInfo.username, newContent);
+    }
+
+    public void deletePost(int postId) {
+        this.timelineInfo.deletePost(peerInfo.username, postId);
+    }
+
     @Override
     public String toString() {
         return  address + ":" + port;
@@ -64,7 +93,7 @@ public class GnuNode {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        GnuNode node = (GnuNode) o;
+        Peer node = (Peer) o;
         return Objects.equals(address, node.address) && Objects.equals(port, node.port);
     }
 
@@ -78,10 +107,10 @@ public class GnuNode {
             PeerInfo peer1 = new PeerInfo(InetAddress.getByName("localhost"), "8884", "user1", 10);
             PeerInfo peer2 = new PeerInfo(InetAddress.getByName("localhost"), "8881", "user2", 20);
             PeerInfo peer3 = new PeerInfo(InetAddress.getByName("localhost"), "8882", "user3", 30);
-            GnuNode node1 = new GnuNode(peer1);
-            GnuNode node2 = new GnuNode(peer2);
-            GnuNode node3 = new GnuNode(peer3);
-            List<GnuNode> nodes = new ArrayList<>(Arrays.asList(node1, node2, node3));
+            Peer node1 = new Peer(peer1);
+            Peer node2 = new Peer(peer2);
+            Peer node3 = new Peer(peer3);
+            List<Peer> nodes = new ArrayList<>(Arrays.asList(node1, node2, node3));
 
             MultipleNodeExecutor executor = new MultipleNodeExecutor(nodes);
             executor.execute();

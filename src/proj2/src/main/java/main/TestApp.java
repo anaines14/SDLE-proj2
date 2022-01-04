@@ -1,23 +1,27 @@
 package main;
 
+import main.network.Peer;
+import main.network.executor.MultipleNodeExecutor;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
 public class TestApp {
-    private static final String TESTS_DIR = "src" + File.separator +
-            "main" + File.separator + "resources" + File.separator;
-
+    private final MultipleNodeExecutor executor;
     private final Map<String, Peer> peers;
     private int curr_peer_id;
 
     public TestApp() {
         this.peers = new HashMap<>();
+        this.executor = new MultipleNodeExecutor();
         this.curr_peer_id = 1;
     }
 
@@ -53,9 +57,13 @@ public class TestApp {
     }
 
     private void run_test(String filename) {
-        File testFile = new File(TESTS_DIR + filename);
+        // fetch file from resources
+        ClassLoader classLoader = getClass().getClassLoader();
+        URL resource = classLoader.getResource(filename);
 
         try {
+            assert resource != null;
+            File testFile = new File(resource.toURI());
             Scanner scanner = new Scanner(testFile);
             do {
                 // get command
@@ -63,7 +71,7 @@ public class TestApp {
                 execCmd(cmd); // exec command
             } while(scanner.hasNextLine());
 
-        } catch (FileNotFoundException | UnknownHostException | InterruptedException e) {
+        } catch (FileNotFoundException | UnknownHostException | InterruptedException | URISyntaxException e) {
             e.printStackTrace();
         }
     }
@@ -76,7 +84,7 @@ public class TestApp {
             case "POST" -> this.execPost(cmd, opts);
             case "STOP" -> this.execStop(opts);
             case "START_MULT" -> this.execStartMult(opts);
-            case "STOP_ALL" -> this.execStopAll(opts);
+            case "STOP_ALL" -> this.execStopAll();
             case "DELETE" -> this.execDelete(opts);
             case "UPDATE" -> this.execUpdate(cmd, opts);
             case "PRINT" -> this.execPrint(opts);
@@ -100,7 +108,7 @@ public class TestApp {
         String username = opts[1];
         Peer peer = peers.get(username);
         // print timeline
-        peer.printTimeline();
+        peer.printTimelines();
     }
 
     private void execUpdate(String cmd, String[] opts) throws NumberFormatException {
@@ -132,7 +140,7 @@ public class TestApp {
     }
 
     private void execStart(String[] opts) throws UnknownHostException {
-        if (opts.length < 4) {
+        if (opts.length < 5) {
             usage();
             System.exit(1);
         }
@@ -141,7 +149,11 @@ public class TestApp {
         String username = opts[1];
         InetAddress address = InetAddress.getByName(opts[2]);
         String port = opts[3];
-        peers.put(opts[1], new Peer(username, address, port));
+        int capacity = Integer.parseInt(opts[4]);
+
+        Peer peer = new Peer(username, address, port, capacity);
+        peers.put(username, peer);
+        executor.addNode(peer);
     }
 
     private void execPost(String cmd, String[] opts) throws UnknownHostException {
@@ -172,7 +184,7 @@ public class TestApp {
         String username = opts[1];
         Peer peer = peers.remove(username);
         // stop peer
-        peer.stop();
+        executor.remNode(peer);
     }
 
     private void execStartMult(String[] opts) throws UnknownHostException {
@@ -184,20 +196,20 @@ public class TestApp {
         int num_peers = Integer.parseInt(opts[1]);
         InetAddress user_addr = InetAddress.getByName("localhost");
 
+        // TODO: Gen random caps
         // start and store peers
         for (int i = 1; i <= num_peers; i++) {
             String username = "user" + curr_peer_id;
-            peers.put(username, new Peer(username, user_addr, String.valueOf(8000 + curr_peer_id)));
+            Peer peer = new Peer(username, user_addr, String.valueOf(8000 + curr_peer_id), 0);
+            peers.put(username, peer);
+            executor.addNode(peer);
             curr_peer_id++;
         }
     }
 
-    private void execStopAll(String[] opts) throws UnknownHostException {
-        // stop all peers
-        for (Peer p : peers.values()) {
-            p.stop();
-        }
+    private void execStopAll() {
         // clean map
+        executor.stop();
         peers.clear();
     }
 
@@ -243,7 +255,7 @@ public class TestApp {
     private static void usage() {
         System.out.println("usage: TestApp.java <test_file>" +
                 "\n\nAvalable commands:\n\n" +
-                "\n\t START <username> <IPaddress> <port>" +
+                "\n\t START <username> <IPaddress> <port> <capacity>" +
                 "\n\t START_MULT <n>" +
                 "\n\t POST <username> \"<content>\"" +
                 "\n\t UPDATE <username> <post_id> \"<content>\"" +

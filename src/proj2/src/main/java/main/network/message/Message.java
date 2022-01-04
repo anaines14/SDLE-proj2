@@ -1,7 +1,5 @@
 package main.network.message;
 
-import main.network.GnuNode;
-
 import java.io.Serializable;
 import java.net.InetAddress;
 

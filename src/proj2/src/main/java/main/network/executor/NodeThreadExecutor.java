@@ -1,24 +1,24 @@
 package main.network.executor;
 
-import main.network.GnuNode;
+import main.network.Peer;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static main.network.GnuNode.ADDNEIGH_DELAY;
-import static main.network.GnuNode.PINGNEIGH_DELAY;
+import static main.network.Peer.ADDNEIGH_DELAY;
+import static main.network.Peer.PINGNEIGH_DELAY;
 
 // Used to create a thread to receive messages of a node
 public class NodeThreadExecutor implements NodeExecutor {
     private Thread receiveThread;
-    private GnuNode node;
+    private Peer node;
     private boolean started;
     private final ScheduledThreadPoolExecutor scheduler;
     private ScheduledFuture<?> pingNeigFuture;
     private ScheduledFuture<?> addNeighFuture;
 
-    public NodeThreadExecutor(GnuNode node, ScheduledThreadPoolExecutor scheduler) {
+    public NodeThreadExecutor(Peer node, ScheduledThreadPoolExecutor scheduler) {
         this.node = node;
         this.receiveThread = new Thread(node.getMessageHandler());
         this.started = false;
