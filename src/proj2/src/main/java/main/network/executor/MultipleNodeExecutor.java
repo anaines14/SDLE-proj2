@@ -5,17 +5,21 @@ import main.network.GnuNode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class MultipleNodeExecutor implements NodeExecutor {
+    private static final int POOL_SIZE = 5;
     private HashMap<GnuNode, NodeThreadExecutor> executors;
     private boolean started;
+    private ScheduledThreadPoolExecutor scheduler;
 
     public MultipleNodeExecutor(List<GnuNode> nodes) {
         this.executors = new HashMap<>();
         this.started = false;
+        this.scheduler = new ScheduledThreadPoolExecutor(POOL_SIZE);
 
         for (GnuNode node: nodes)
-            this.executors.put(node, new NodeThreadExecutor(node));
+            this.executors.put(node, new NodeThreadExecutor(node, scheduler));
     }
 
     public MultipleNodeExecutor() {
@@ -26,7 +30,7 @@ public class MultipleNodeExecutor implements NodeExecutor {
         if (this.executors.containsKey(node))
             return false;
 
-        NodeThreadExecutor executor = new NodeThreadExecutor(node);
+        NodeThreadExecutor executor = new NodeThreadExecutor(node, scheduler);
         if (this.started)
             executor.execute();
 
@@ -48,6 +52,9 @@ public class MultipleNodeExecutor implements NodeExecutor {
 
     @Override
     public void execute() {
+        if (this.started)
+            return;
+
         this.started = true;
         for (GnuNode node: executors.keySet()) {
             this.executors.get(node).execute();
@@ -56,9 +63,14 @@ public class MultipleNodeExecutor implements NodeExecutor {
 
     @Override
     public void stop() {
+        if (!this.started)
+            return;
+
         this.started = false;
         for (GnuNode node: executors.keySet()) {
             this.executors.get(node).stop();
         }
+
+        this.scheduler.shutdown();
     }
 }

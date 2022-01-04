@@ -1,8 +1,6 @@
 package main.network;
 
 import main.network.executor.MultipleNodeExecutor;
-import main.network.executor.NodeExecutor;
-import main.network.executor.NodeThreadExecutor;
 import main.network.message.Message;
 import main.network.message.MessageBuilder;
 import main.network.message.MessageHandler;
@@ -20,6 +18,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class GnuNode {
+    public static final int PINGNEIGH_DELAY = 1000;
+    public static final int ADDNEIGH_DELAY = 1000;
+
     private final InetAddress address;
     private final String port;
     private final ZContext context;
@@ -100,13 +101,22 @@ public class GnuNode {
             node3.send(new Message("e", "g"), node1.getPort());
 
             try {
-                Thread.sleep(100); // Wait for all messages to be sent
+                Thread.sleep(1000); // Wait for all messages to be sent
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            System.out.println("STOPPING");
             executor.stop();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void pingNeighbours() {
+        System.out.println(this.toString() + " pinged its neighbours");
+    }
+
+    public void addNeighbour() {
+        System.out.println(this.toString() + " adds a neighbour");
     }
 }
