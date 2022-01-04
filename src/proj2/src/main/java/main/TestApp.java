@@ -22,15 +22,34 @@ public class TestApp {
     }
 
     public static void main(String[] args) {
+        TestApp app = new TestApp();
+
         // check number of arguments
-        if (args.length != 1) {
-            usage();
-            System.exit(1);
+        if (args.length == 1) { // run test from file
+            String filename = args[0];
+            app.run_test(filename);
+        }
+        else { // run loop using user input
+            app.run_loop();
         }
 
-        TestApp app = new TestApp();
-        String filename = args[0];
-        app.run_test(filename);
+        System.exit(0);
+    }
+
+    private void run_loop() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Please enter a command (Type EXIT to end)...");
+        String cmd = scanner.nextLine();
+        while (!cmd.equalsIgnoreCase("EXIT")) {
+            try {
+                execCmd(cmd); // exec command
+                // get command
+                cmd = scanner.nextLine();
+
+            } catch (UnknownHostException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void run_test(String filename) {
@@ -39,48 +58,9 @@ public class TestApp {
         try {
             Scanner scanner = new Scanner(testFile);
             do {
+                // get command
                 String cmd = scanner.nextLine();
-                String[] opts = cmd.split(" ");
-
-                switch (opts[0].toUpperCase()) {
-                    case "START":
-                        this.execStart(opts);
-                        break;
-                    case "POST":
-                        this.execPost(cmd, opts);
-                        break;
-                    case "STOP":
-                        this.execStop(opts);
-                        break;
-                    case "START_MULT":
-                        this.execStartMult(opts);
-                        break;
-                    case "STOP_ALL":
-                        this.execStopAll(opts);
-                        break;
-                    case "DELETE":
-                        this.execDelete(opts);
-                        break;
-                    case "UPDATE":
-                        this.execUpdate(cmd, opts);
-                        break;
-                    case "PRINT":
-                        this.execPrint(opts);
-                        break;
-                    case "PRINT_PEERS":
-                        this.execPrintPeers();
-                        break;
-                    case "SLEEP":
-                        this.execSleep(opts);
-                        break;
-                    case "BREAK":
-                        this.execBreakpoint();
-                        break;
-                    default:
-                        System.out.println("Unknown command.\n");
-                        usage();
-                        System.exit(1);
-                }
+                execCmd(cmd); // exec command
             } while(scanner.hasNextLine());
 
         } catch (FileNotFoundException | UnknownHostException | InterruptedException e) {
@@ -88,6 +68,28 @@ public class TestApp {
         }
     }
 
+    private void execCmd(String cmd) throws UnknownHostException, InterruptedException {
+        String[] opts = cmd.split(" ");
+
+        switch (opts[0].toUpperCase()) {
+            case "START" -> this.execStart(opts);
+            case "POST" -> this.execPost(cmd, opts);
+            case "STOP" -> this.execStop(opts);
+            case "START_MULT" -> this.execStartMult(opts);
+            case "STOP_ALL" -> this.execStopAll(opts);
+            case "DELETE" -> this.execDelete(opts);
+            case "UPDATE" -> this.execUpdate(cmd, opts);
+            case "PRINT" -> this.execPrint(opts);
+            case "PRINT_PEERS" -> this.execPrintPeers();
+            case "SLEEP" -> this.execSleep(opts);
+            case "BREAK" -> this.execBreakpoint();
+            default -> {
+                System.out.println("Unknown command.\n");
+                usage();
+                System.exit(1);
+            }
+        }
+    }
 
     private void execPrint(String[] opts) {
         if (opts.length < 2) {
@@ -101,7 +103,7 @@ public class TestApp {
         peer.printTimeline();
     }
 
-    private void execUpdate(String cmd, String[] opts) {
+    private void execUpdate(String cmd, String[] opts) throws NumberFormatException {
         if (opts.length < 4) {
             usage();
             System.exit(1);
@@ -112,7 +114,12 @@ public class TestApp {
             int postId = Integer.parseInt(opts[2]);
 
             // split on first ""
-            String newContent = cmd.split("\"", 2)[1];
+            String[] cmd_split = cmd.split("\"", 2);
+            if(cmd_split.length < 2) {
+                usage();
+                System.exit(1);
+            }
+            String newContent = cmd_split[1];
             newContent = newContent.substring(0, newContent.length()-1); // remove last "
 
             Peer peer = peers.get(username);
