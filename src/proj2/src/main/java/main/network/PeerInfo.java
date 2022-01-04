@@ -4,10 +4,10 @@ import main.network.neighbour.Host;
 import main.network.neighbour.Neighbour;
 import main.timelines.Timeline;
 
-import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 // Data class that serves like a Model in an MVC
 public class PeerInfo {
@@ -48,6 +48,11 @@ public class PeerInfo {
         return neighbours.contains(neighbour);
     }
 
+    public void replaceNeighbour(Neighbour oldNeigh, Neighbour newNeigh) {
+        neighbours.remove(oldNeigh);
+        neighbours.add(newNeigh);
+    }
+
     public void updateNeighbour(Neighbour updated) {
         neighbours.remove(updated);
         neighbours.add(updated);
@@ -55,6 +60,32 @@ public class PeerInfo {
 
     public void addNeighbour(Neighbour neighbour) {
         neighbours.add(neighbour);
+    }
+
+    public Neighbour getWorstNeighbour(int hostCapacity) {
+        // get neighbors with less capacity than host
+        List<Neighbour> badNgbrs = neighbours.stream()
+                .filter(n -> n.getCapacity() < hostCapacity).toList();
+        if (badNgbrs.isEmpty()) return null; // REJECT host if there are no worse neighbours
+
+        // from neighbours with less capacity than host, get the one with max degree
+        return badNgbrs.stream().max(Host::compareTo).get();
+    }
+
+    public Host getBestHostNotNeighbour() {
+        // filter already neighbors
+        Set<Host> notNeighbors = hostCache.stream()
+                .filter(f -> !neighbours.contains(f))
+                .collect(Collectors.toSet());
+
+        Optional<Host> best_host = notNeighbors.stream().max(Comparator.comparingInt(Host::getCapacity));
+        if(best_host.isEmpty()) return null;
+
+        return best_host.get();
+    }
+
+    public Neighbour getBestNeighbour() { // With highest capacity
+        return neighbours.stream().max(Comparator.comparingInt(Neighbour::getCapacity)).get();
     }
 
     public static void main(String[] args) {

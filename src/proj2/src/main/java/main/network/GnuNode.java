@@ -6,11 +6,12 @@ import main.network.neighbour.Host;
 import main.network.neighbour.Neighbour;
 import org.zeromq.ZContext;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
 
 public class GnuNode {
     public static final int PINGNEIGH_DELAY = 1000;
@@ -101,62 +102,37 @@ public class GnuNode {
     }
 
     public void pingNeighbours() {
-        System.out.println(this.toString() + " pinged its neighbours");
+        System.out.println(this + " pinged its neighbours");
     }
 
     public void addNeighbour()  {
         // get higher capacity host not neighbour
-        Host host = this.getBestHostNotNeighbor();
-        if(host == null) {
+        Host host = peerInfo.getBestHostNotNeighbour();
+        if (host == null) {
             System.out.println("There are no neighbours to add.");
             return;
         }
         // ACCEPT host if limit not reached
-        if(neighbours.size() < MAX_NGBRS) {
-            neighbours.add(new Neighbour(host));
+        if (peerInfo.getNeighbours().size() < MAX_NGBRS) {
+            peerInfo.addNeighbour(new Neighbour(host));
             return;
         }
 
         // from neighbours with less capacity than host, get the one with max degree
-        Neighbour worstNgbr = this.getWorstNeighbor(host.getCapacity());
-        if(worstNgbr == null) return; // REJECT host if there are no worse neighbours
+        Neighbour worstNgbr = peerInfo.getWorstNeighbour(host.getCapacity());
+        if (worstNgbr == null) return; // REJECT host if there are no worse neighbours
 
         // get highest capacity node
-        Neighbour bestNgbr = neighbours.stream().
-                max(Comparator.comparingInt(Neighbour::getCapacity)).get();
+        Neighbour bestNgbr = peerInfo.getBestNeighbour();
 
         // host has higher capacity than every neighbour
         boolean hostHigherCap = host.getCapacity() > bestNgbr.getCapacity(),
                 // host has lower degree than worst neighbour (less busy)
                 hostLowerDegree = host.getDegree() < worstNgbr.getDegree();
 
-        if (hostHigherCap || hostLowerDegree) {
-            neighbours.remove(worstNgbr); // remove worst neighbour
-            neighbours.add(new Neighbour(host)); // ACCEPT host as new neighbour
-        }
+        if (hostHigherCap || hostLowerDegree)
+            peerInfo.replaceNeighbour(worstNgbr, new Neighbour(host));
         // REJECT host
-    }
-
-    private Neighbour getWorstNeighbor(int hostCapacity) {
-        // get neighbors with less capacity than host
-        List<Neighbour> badNgbrs = neighbours.stream()
-                .filter(n -> n.getCapacity() < hostCapacity).toList();
-        if (badNgbrs.isEmpty()) return null; // REJECT host if there are no worse neighbours
-
-        // from neighbours with less capacity than host, get the one with max degree
-        return badNgbrs.stream().max(Host::compareTo).get();
-    }
-
-    private Host getBestHostNotNeighbor() {
-        // filter already neighbors
-        Set<Host> notNeighbors = hostCache.stream()
-                .filter(f -> !neighbours.contains(f))
-                .collect(Collectors.toSet());
-
-        Optional<Host> best_host = notNeighbors.stream().max(Comparator.comparingInt(Host::getCapacity));
-        if(best_host.isEmpty()) return null;
-
-        return best_host.get();
     }
 
     // TODO: DELETE
