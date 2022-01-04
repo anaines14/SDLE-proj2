@@ -1,5 +1,6 @@
 package main.network.message;
 
+import main.network.PeerInfo;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -19,6 +20,10 @@ public class MessageSender {
         this.senderPort = senderPort;
         this.username = username;
         this.context = context;
+    }
+
+    public MessageSender(PeerInfo peerInfo, ZContext context){
+        this(peerInfo.address, peerInfo.port, peerInfo.username, context);
     }
 
     public void send(Message message, String port) {
