@@ -1,5 +1,6 @@
 package main.network;
 
+import main.Peer;
 import main.network.executor.MultipleNodeExecutor;
 import main.network.message.*;
 import main.network.neighbour.Host;
@@ -118,7 +119,7 @@ public class GnuNode {
             return;
         }
 
-        // from neighbours with less capacity than host, get the one with max degree
+        // from neighbours with less or equal capacity than host, get the one with max degree
         Neighbour worstNgbr = peerInfo.getWorstNeighbour(host.getCapacity());
         if (worstNgbr == null) return; // REJECT host if there are no worse neighbours
 
@@ -133,18 +134,5 @@ public class GnuNode {
         if (hostHigherCap || hostLowerDegree)
             peerInfo.replaceNeighbour(worstNgbr, new Neighbour(host));
         // REJECT host
-    }
-
-    // TODO: DELETE
-    private void test() throws UnknownHostException {
-        InetAddress addr = InetAddress.getByName("localhost");
-        neighbours.add(new Neighbour("1",addr,"8000",10,10));
-        neighbours.add(new Neighbour("2",addr,"8001",5,10));
-
-        hostCache.add(new Host("1",addr,"8000",10,10));
-        hostCache.add(new Host("2",addr,"8001",5,10));
-        hostCache.add(new Host("3",addr,"8002",3,7));
-        hostCache.add(new Host("4",addr,"8003",3,10));
-
     }
 }

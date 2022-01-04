@@ -65,7 +65,7 @@ public class PeerInfo {
     public Neighbour getWorstNeighbour(int hostCapacity) {
         // get neighbors with less capacity than host
         List<Neighbour> badNgbrs = neighbours.stream()
-                .filter(n -> n.getCapacity() < hostCapacity).toList();
+                .filter(n -> n.getCapacity() <= hostCapacity).toList();
         if (badNgbrs.isEmpty()) return null; // REJECT host if there are no worse neighbours
 
         // from neighbours with less capacity than host, get the one with max degree
