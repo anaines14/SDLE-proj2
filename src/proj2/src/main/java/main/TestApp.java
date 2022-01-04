@@ -1,9 +1,8 @@
 package main;
 
-import timelines.Timeline;
-
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -74,6 +73,9 @@ public class TestApp {
                     case "SLEEP":
                         this.execSleep(opts);
                         break;
+                    case "BREAK":
+                        this.execBreakpoint();
+                        break;
                     default:
                         System.out.println("Unknown command.\n");
                         usage();
@@ -85,6 +87,7 @@ public class TestApp {
             e.printStackTrace();
         }
     }
+
 
     private void execPrint(String[] opts) {
         if (opts.length < 2) {
@@ -221,6 +224,15 @@ public class TestApp {
         }
     }
 
+    private void execBreakpoint() {
+        System.out.println("Press enter...");
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void usage() {
         System.out.println("usage: TestApp.java <test_file>" +
                 "\n\nAvalable commands:\n\n" +
@@ -233,6 +245,7 @@ public class TestApp {
                 "\n\t PRINT_PEERS" +
                 "\n\t STOP <username>" +
                 "\n\t STOP_ALL" +
+                "\n\t BREAK" +
                 "\n\t SLEEP <seconds>");
     }
 }
