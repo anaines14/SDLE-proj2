@@ -3,5 +3,4 @@ POST username "HELLO WORLD \"ASD\""
 STOP username
 START_MULT 2
 STOP_ALL
-DELETE user1
 SLEEP

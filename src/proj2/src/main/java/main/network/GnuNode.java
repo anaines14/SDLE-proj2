@@ -50,9 +50,11 @@ public class GnuNode {
         socket.close();
     }
 
-    public void stop() {
+    public void close() {
         this.messageHandlerThread.interrupt();
-        this.messageHandler.close();
+        try {
+            this.messageHandlerThread.join();
+        } catch (InterruptedException ignored) {}
         this.context.close();
     }
 }
