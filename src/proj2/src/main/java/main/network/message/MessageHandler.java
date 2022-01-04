@@ -48,7 +48,6 @@ public class MessageHandler implements Runnable {
     public void handle(PongMessage message) {
         // Update/Add info that we have about a peer
         String senderUsername = message.username;
-        peerInfo.hostCache.
     }
 
     @Override
