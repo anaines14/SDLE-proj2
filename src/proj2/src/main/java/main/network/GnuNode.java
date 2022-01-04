@@ -8,6 +8,7 @@ import org.zeromq.ZContext;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -110,14 +111,43 @@ public class GnuNode {
             System.out.println("There are no neighbours to add.");
             return;
         }
-        // ACCEPT neighbor if limit not reached
+        // ACCEPT host if limit not reached
         if(neighbours.size() < MAX_NGBRS) {
             neighbours.add(new Neighbour(host));
             return;
         }
+
+        // from neighbours with less capacity than host, get the one with max degree
+        Neighbour worstNgbr = this.getWorstNeighbor(host.getCapacity());
+        if(worstNgbr == null) return; // REJECT host if there are no worse neighbours
+
+        // get highest capacity node
+        Neighbour bestNgbr = neighbours.stream().
+                max(Comparator.comparingInt(Neighbour::getCapacity)).get();
+
+        // host has higher capacity than every neighbour
+        boolean hostHigherCap = host.getCapacity() > bestNgbr.getCapacity(),
+                // host has lower degree than worst neighbour (less busy)
+                hostLowerDegree = host.getDegree() < worstNgbr.getDegree();
+
+        if (hostHigherCap || hostLowerDegree) {
+            neighbours.remove(worstNgbr); // remove worst neighbour
+            neighbours.add(new Neighbour(host)); // ACCEPT host as new neighbour
+        }
+        // REJECT host
     }
 
-    public Host getBestHostNotNeighbor() {
+    private Neighbour getWorstNeighbor(int hostCapacity) {
+        // get neighbors with less capacity than host
+        List<Neighbour> badNgbrs = neighbours.stream()
+                .filter(n -> n.getCapacity() < hostCapacity).toList();
+        if (badNgbrs.isEmpty()) return null; // REJECT host if there are no worse neighbours
+
+        // from neighbours with less capacity than host, get the one with max degree
+        return badNgbrs.stream().max(Host::compareTo).get();
+    }
+
+    private Host getBestHostNotNeighbor() {
         // filter already neighbors
         Set<Host> notNeighbors = hostCache.stream()
                 .filter(f -> !neighbours.contains(f))
@@ -127,5 +157,18 @@ public class GnuNode {
         if(best_host.isEmpty()) return null;
 
         return best_host.get();
+    }
+
+    // TODO: DELETE
+    private void test() throws UnknownHostException {
+        InetAddress addr = InetAddress.getByName("localhost");
+        neighbours.add(new Neighbour("1",addr,"8000",10,10));
+        neighbours.add(new Neighbour("2",addr,"8001",5,10));
+
+        hostCache.add(new Host("1",addr,"8000",10,10));
+        hostCache.add(new Host("2",addr,"8001",5,10));
+        hostCache.add(new Host("3",addr,"8002",3,7));
+        hostCache.add(new Host("4",addr,"8003",3,10));
+
     }
 }

@@ -6,21 +6,22 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Neighbour extends Host implements Serializable {
+
+public class Neighbour extends Host implements Serializable{
     private final List<String> timelines;
 
-    public Neighbour(String username, InetAddress address, String port, int capacity, List<String> timelines) {
-        super(username, address, port, capacity);
+    public Neighbour(String username, InetAddress address, String port, int capacity, int degree, List<String> timelines) {
+        super(username, address, port, capacity, degree);
         this.timelines = timelines;
     }
 
-    public Neighbour (Host host) {
-        super(host);
-        this.timelines = new ArrayList<>();
+    public Neighbour(String username, InetAddress address, String port, int capacity, int degree) {
+        this(username, address, port, capacity, degree, new ArrayList<>());
     }
 
-    private Integer getDegree() {
-        return timelines.size();
+    public Neighbour(Host host) {
+        super(host);
+        this.timelines = new ArrayList<>();
     }
 
     public String toString() {

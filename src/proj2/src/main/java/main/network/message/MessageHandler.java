@@ -43,7 +43,7 @@ public class MessageHandler implements Runnable {
     public void handle(PingMessage message) {
         // Reply with a Pong message with our info
         Neighbour ourInfo = new Neighbour(peerInfo.username, peerInfo.address, peerInfo.port,
-                peerInfo.capacity, peerInfo.getStoredTimelines());
+                peerInfo.capacity, peerInfo.getDegree(), peerInfo.getStoredTimelines());
         PongMessage replyMsg = new PongMessage(ourInfo);
         sender.send(replyMsg, this.port);
     }

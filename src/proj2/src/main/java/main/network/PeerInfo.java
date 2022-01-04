@@ -63,9 +63,9 @@ public class PeerInfo {
             List<String> timelines1 = new ArrayList<>(Arrays.asList("u1", "u2", "u3"));
             List<String> timelines2 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4"));
             List<String> timelines3 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4", "u5"));
-            Neighbour n1 = new Neighbour("u1", InetAddress.getByName("localhost"), "8000", 50, timelines1);
-            Neighbour n2 = new Neighbour("u2", InetAddress.getByName("localhost"), "8001", 50, timelines2);
-            Neighbour n3 = new Neighbour("u1", InetAddress.getByName("localhost"), "8000", 60, timelines3);
+            Neighbour n1 = new Neighbour("u1", InetAddress.getByName("localhost"), "8000", 50, 1, timelines1);
+            Neighbour n2 = new Neighbour("u2", InetAddress.getByName("localhost"), "8001", 50, 3, timelines2);
+            Neighbour n3 = new Neighbour("u1", InetAddress.getByName("localhost"), "8000", 60, 4, timelines3);
 
             for (Neighbour n: peer1.getNeighbours())
                 System.out.println(n.toString());
