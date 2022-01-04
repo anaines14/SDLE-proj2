@@ -29,7 +29,7 @@ public class Broker implements Runnable{
         workers = new ArrayList<>();
 
         for(int id = 0; id < N_WORKERS; id++){
-            Worker worker = new Worker(peerInfo, zContext, id); 
+            Worker worker = new Worker(peerInfo, zContext, id);
             workers.add(worker);
             worker.run();
         }

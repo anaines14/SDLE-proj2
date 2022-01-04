@@ -33,7 +33,7 @@ public class Worker implements Runnable{
         while(true){
             try {
                 Message message = MessageBuilder.messageFromSocket(worker);
-                handle(message);
+                handler.handle(message);
 
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -41,9 +41,4 @@ public class Worker implements Runnable{
         }
     }
 
-    private void handle(Message message) {
-        switch(message.getType()){
-
-        }
-    }
 }
