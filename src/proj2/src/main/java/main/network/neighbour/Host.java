@@ -11,7 +11,7 @@ public class Host implements Serializable, Comparable<Host> {
     private final int capacity;
     // needed to add as neighbor
     private final String username;
-    private int degree;
+    private final int degree;
 
     public Host(String username, InetAddress address, String port, int capacity, int degree) {
         this.address = address;
@@ -50,6 +50,8 @@ public class Host implements Serializable, Comparable<Host> {
     public int getDegree() {
         return degree;
     }
+
+    public String getUsername() { return username; }
 
     @Override
     public int compareTo(Host host) {

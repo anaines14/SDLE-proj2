@@ -1,0 +1,19 @@
+graph {
+    fill-color:grey;
+}
+
+node {
+    text-size:12;
+    text-color:black;
+    text-style:bold;
+    text-alignment:under;
+    size:25;
+    fill-color:#848482;
+}
+
+edge {
+    text-color:black;
+    size:2;
+    fill-color:black;
+    text-alignment:center;
+}

@@ -3,6 +3,9 @@ package main;
 import main.network.Peer;
 import main.network.executor.MultipleNodeExecutor;
 import main.network.neighbour.Neighbour;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.SingleGraph;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,8 +39,6 @@ public class TestApp {
         else { // run loop using user input
             app.run_loop();
         }
-
-        System.exit(0);
     }
 
     private void run_loop() {
@@ -102,6 +103,7 @@ public class TestApp {
             case "PRINT" -> this.execPrint(opts);
             case "PRINT_PEERS" -> this.execPrintPeers();
             case "SLEEP" -> this.execSleep(opts);
+            case "GRAPH" -> this.execGraph();
             case "BREAK" -> this.execBreakpoint();
             default -> {
                 System.out.println("Unknown command.\n");
@@ -109,6 +111,35 @@ public class TestApp {
                 System.exit(1);
             }
         }
+    }
+
+    private void execGraph() {
+        System.setProperty("org.graphstream.ui","swing");
+        Graph graph = new SingleGraph("Network");
+
+        // fetch file from resources
+        ClassLoader classLoader = getClass().getClassLoader();
+        URL resource = classLoader.getResource("stylesheet");
+        // set style
+        graph.setAttribute("ui.stylesheet", "url('" + resource + "')");
+
+        // create nodes
+        for (String username : this.peers.keySet()) {
+            Node node = graph.addNode(username);
+            node.setAttribute("ui.label", node.getId());
+        }
+        // create edges
+        for (Map.Entry<String, Peer> entry : this.peers.entrySet()) {
+            String username = entry.getKey();
+            Peer peer = entry.getValue();
+            for (Neighbour neigh : peer.getPeerInfo().getNeighbours()) {
+                String neigh_name = neigh.getUsername();
+                String id = username + neigh_name;
+                graph.addEdge(id, username, neigh_name);
+            }
+        }
+
+        graph.display();
     }
 
     private void execPrint(String[] opts) {
@@ -188,7 +219,7 @@ public class TestApp {
         peer.addPost(post_content);
     }
 
-    private void execStop(String[] opts) throws UnknownHostException {
+    private void execStop(String[] opts) {
         if (opts.length < 2) {
             usage();
             System.exit(1);
@@ -229,7 +260,7 @@ public class TestApp {
         peers.clear();
     }
 
-    private void execDelete(String[] opts) throws UnknownHostException {
+    private void execDelete(String[] opts) {
         if (opts.length < 3) {
             usage();
             System.exit(1);
@@ -269,18 +300,23 @@ public class TestApp {
     }
 
     private static void usage() {
-        System.out.println("usage: TestApp.java <test_file>" +
-                "\n\nAvalable commands:\n\n" +
-                "\n\t START <username> <IPaddress> <port> <capacity>" +
-                "\n\t START_MULT <n>" +
-                "\n\t POST <username> \"<content>\"" +
-                "\n\t UPDATE <username> <post_id> \"<content>\"" +
-                "\n\t DELETE <username> <post_id>" +
-                "\n\t PRINT <username>" +
-                "\n\t PRINT_PEERS" +
-                "\n\t STOP <username>" +
-                "\n\t STOP_ALL" +
-                "\n\t BREAK" +
-                "\n\t SLEEP <seconds>");
+        System.out.println("""
+                usage: TestApp.java <test_file>
+
+                Avalable commands:
+
+
+                \t START <username> <IPaddress> <port> <capacity>
+                \t START_MULT <n>
+                \t POST <username> "<content>"
+                \t UPDATE <username> <post_id> "<content>"
+                \t DELETE <username> <post_id>
+                \t PRINT <username>
+                \t PRINT_PEERS
+                \t STOP <username>
+                \t STOP_ALL
+                \t GRAPH
+                \t BREAK
+                \t SLEEP <seconds>""");
     }
 }
