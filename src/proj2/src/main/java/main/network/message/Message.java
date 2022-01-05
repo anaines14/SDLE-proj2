@@ -27,6 +27,6 @@ public abstract class Message implements Serializable {
     @Override
     public String toString() {
         Sender lastSender = getLastSender();
-        return "[" + getType() + "]" + ": " + lastSender.getPort();
+        return lastSender.getPort() + ": " + "[" + getType() + "]";
     }
 }

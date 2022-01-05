@@ -15,7 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class Peer implements Serializable {
+public class Peer implements Serializable, Runnable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
     public static final int MAX_NGBRS = 3;
@@ -166,11 +166,6 @@ public class Peer implements Serializable {
         // REJECT host
     }
 
-    // To connect to the network on start
-    public void addNeighbour(Neighbour neighbour) {
-        peerInfo.addNeighbour(neighbour);
-    }
-
     public PeerInfo getPeerInfo() {
         return this.peerInfo;
     }
@@ -195,5 +190,9 @@ public class Peer implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(peerInfo);
+    }
+
+    public void run() {
+        pingNeighbours();
     }
 }

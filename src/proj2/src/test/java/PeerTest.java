@@ -62,7 +62,7 @@ public class PeerTest {
         peer3.join(new Neighbour(peer2.getPeerInfo().getHost()));
 
         try {
-            Thread.sleep(3000);
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -80,5 +80,24 @@ public class PeerTest {
         assertEquals(new HashSet<>(Arrays.asList("u2", "u1")), peer3Neigh);
 
         this.close();
+    }
+
+    @Test
+    public void peerCommunication() {
+        peer1.join(new Neighbour(peer3.getPeerInfo().getHost()));
+        peer3.join(new Neighbour(peer1.getPeerInfo().getHost()));
+
+        Thread t1 = new Thread(peer1);
+        Thread t2 = new Thread(peer2);
+
+        ScheduledThreadPoolExecutor pool = new ScheduledThreadPoolExecutor(2);
+        pool.execute(t1);
+        pool.execute(t2);
+
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

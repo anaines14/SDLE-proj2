@@ -41,7 +41,6 @@ public class MessageHandler {
         Neighbour ourInfo = new Neighbour(peerInfo.getHost());
 
         peerInfo.addHost(message.getSender());
-
         PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache());
         return replyMsg;
     }

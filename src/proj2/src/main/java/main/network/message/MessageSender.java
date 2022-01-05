@@ -43,8 +43,8 @@ public class MessageSender {
         socket.setIdentity(username.getBytes(StandardCharsets.UTF_8));
         socket.connect("tcp://localhost:" + port); // TODO convert to address
 
-        System.out.println(username + " SENT[" + message.getType() + "]: " + port);
         this.send(message, socket);
+        System.out.println(username + " SENT[" + message.getType() + "]: " + port);
 
         try {
             return (MessageResponse) MessageBuilder.messageFromSocket(socket);

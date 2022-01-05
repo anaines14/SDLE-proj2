@@ -47,7 +47,7 @@ public class PeerInfo {
     }
 
     public void addNeighbour(Neighbour neighbour) {
-        if (neighbour == this.me) // We can't add ourselves as a neighbour
+        if (neighbour.equals(this.me)) // We can't add ourselves as a neighbour
             return;
 
         System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());

@@ -56,8 +56,7 @@ public class Host implements Serializable, Comparable<Host> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Host)) return false;
-        Host host = (Host) o;
+        if (!(o instanceof Host host)) return false;
         return Objects.equals(address, host.address) && Objects.equals(port, host.port);
     }
 
