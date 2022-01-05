@@ -43,7 +43,11 @@ public class PeerInfo {
     }
 
     public void updateHostCache(Set<Host> hostCache) {
-        this.hostCache.addAll(hostCache);
+        Set<Host> filterOurselvesOut = hostCache.stream().filter(
+                host -> !host.equals(this.getHost())
+        ).collect(Collectors.toSet());
+
+        this.hostCache.addAll(filterOurselvesOut);
     }
 
     public void addNeighbour(Neighbour neighbour) {
@@ -86,7 +90,7 @@ public class PeerInfo {
 
     public void addHost(Host host) {
 
-        if (hostCache.contains(host) || this.me == host)
+        if (hostCache.contains(host) || this.me.equals(host))
             return;
 
         hostCache.add(host);
