@@ -4,6 +4,7 @@ import main.network.executor.MultipleNodeExecutor;
 import main.network.message.*;
 import main.network.neighbour.Host;
 import main.network.neighbour.Neighbour;
+import main.timelines.Timeline;
 import main.timelines.TimelineInfo;
 import org.zeromq.ZContext;
 
@@ -72,9 +73,13 @@ public class Peer implements Serializable {
         return responder;
     }
 
-
     public void printTimelines() {
         this.timelineInfo.printTimelines();
+    }
+
+    public Timeline getTimelineFrom(String username) {
+        // TODO
+        return null;
     }
 
     public void updatePost(int postId, String newContent) {
