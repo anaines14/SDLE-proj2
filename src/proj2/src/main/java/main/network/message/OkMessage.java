@@ -2,13 +2,13 @@ package main.network.message;
 
 import main.network.PeerInfo;
 
-public class PingMessage extends Message {
-    public PingMessage(PeerInfo info) {
+public class OkMessage extends Message {
+    public OkMessage(PeerInfo info) {
         super(info);
     }
 
     @Override
     public String getType() {
-        return "PING";
+        return "OK";
     }
 }

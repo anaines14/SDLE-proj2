@@ -7,9 +7,10 @@ import org.zeromq.ZMQ;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 
 public class MessageSender {
-    // TODO thread pool para isto
+    // Each Peer has a MessageSender, and it sends all messages through it
     private final InetAddress senderAddress;
     private final String senderPort;
     private String username;
@@ -26,10 +27,8 @@ public class MessageSender {
         this(peerInfo.address, peerInfo.port, peerInfo.username, context);
     }
 
-    public void send(Message message, String port) {
-        ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-        socket.connect("tcp://localhost:" + port); // TODO convert to address
-
+    public void send(Message message, ZMQ.Socket socket) {
+        System.out.println("Sending " + message);
         message.senderAddress = senderAddress;
         message.senderPort = senderPort;
         message.username = username;
@@ -40,7 +39,15 @@ public class MessageSender {
             e.printStackTrace();
         }
         socket.send(bytes);
-        System.out.println("Sending " + message.toString() + " to " + port);
+    }
+
+    public void send(Message message, String port) {
+        ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+        socket.setIdentity(username.getBytes(StandardCharsets.UTF_8));
+        socket.connect("tcp://localhost:" + port); // TODO convert to address
+
+        this.send(message, socket);
+
         socket.close();
     }
 }

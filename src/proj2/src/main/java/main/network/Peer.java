@@ -37,8 +37,8 @@ public class Peer implements Serializable {
         this.context = new ZContext();
         this.peerInfo = new PeerInfo(address, port, username, capacity);
         this.timelineInfo = new TimelineInfo(username);
-        this.broker = new Broker(context, peerInfo);
         this.sender = new MessageSender(peerInfo, context);
+        this.broker = new Broker(context, sender, peerInfo);
     }
 
     public Peer(String username, InetAddress address, String port, int capacity) {
@@ -157,16 +157,17 @@ public class Peer implements Serializable {
             peer1.execute(scheduler);
             peer2.execute(scheduler);
 
-            // peer1.sender.send(new PingMessage(), "8101");
+            peer1.sender.send(new PingMessage(peer1.peerInfo), "8101");
 
             try {
-                Thread.sleep(1000);
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("STOPPING");
+
             peer1.stop();
             peer2.stop();
+            scheduler.shutdown();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }

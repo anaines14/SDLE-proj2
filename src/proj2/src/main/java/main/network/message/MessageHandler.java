@@ -2,90 +2,52 @@ package main.network.message;
 
 import main.network.PeerInfo;
 import main.network.neighbour.Neighbour;
-import org.zeromq.SocketType;
 import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
-import org.zeromq.ZMQException;
 
-import java.io.IOException;
 import java.net.InetAddress;
 
-// Recebe tds as msgs e dá-lhes handle
-public class MessageHandler implements Runnable {
+public class MessageHandler {
     private InetAddress address;
     private String port;
     private PeerInfo peerInfo;
-    private ZMQ.Socket socket;
     private MessageSender sender;
 
-    public MessageHandler(PeerInfo peerInfo, ZContext context, MessageSender sender) {
+    public MessageHandler(PeerInfo peerInfo, MessageSender sender) {
         this.address = peerInfo.address;
         this.port = peerInfo.port;
         this.peerInfo = peerInfo;
-        this.socket = context.createSocket(SocketType.REP);
         this.sender = sender;
     }
 
-    public void handle(Message message) {
+    public Message handle(Message message) {
         switch (message.getType()) {
             case "PING":
-                handle((PingMessage) message);
-                break;
+                return handle((PingMessage) message);
             case "PONG":
-                handle((PongMessage) message);
-                break;
+                return handle((PongMessage) message);
 
             default:
-                break;
+                return null;
         }
     }
 
-    public void handle(PingMessage message) {
+    public Message handle(PingMessage message) {
         // Reply with a Pong message with our info
         Neighbour ourInfo = new Neighbour(peerInfo.username, peerInfo.address, peerInfo.port,
                 peerInfo.capacity, peerInfo.getDegree(), peerInfo.getStoredTimelines());
-        PongMessage replyMsg = new PongMessage(ourInfo);
-        sender.send(replyMsg, this.port);
+
+        PongMessage replyMsg = new PongMessage(this.peerInfo, ourInfo);
+        return replyMsg;
     }
 
-    public void handle(PongMessage message) {
+    public Message handle(PongMessage message) {
         // Update/Add info that we have about a peer
         Neighbour responder = message.sender;
         if (peerInfo.hasNeighbour(responder))
             peerInfo.updateNeighbour(responder);
         else
             peerInfo.addNeighbour(responder);
-    }
 
-    @Override
-    public void run() {
-        this.socket.bind("tcp://*:" + port);
-
-        while (!Thread.currentThread().isInterrupted()) {
-            Message request = null;
-            try {
-                request = MessageBuilder.messageFromSocket(socket);
-            } catch (ZMQException e) {
-                if (e.getErrorCode() == ZMQ.Error.ETERM.getCode() || // Context terminated
-                    e.getErrorCode() == ZMQ.Error.EINTR.getCode()) // Interrupted
-                    break;
-                e.printStackTrace();
-                this.close();
-                return;
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-                this.close();
-                return;
-            }
-
-            assert request != null;
-            handle(request);
-        }
-
-        this.close();
-    }
-
-    public void close() {
-
+        return new OkMessage(this.peerInfo);
     }
 }

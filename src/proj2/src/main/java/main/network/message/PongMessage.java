@@ -1,11 +1,13 @@
 package main.network.message;
 
+import main.network.PeerInfo;
 import main.network.neighbour.Neighbour;
 
 public class PongMessage extends Message {
     Neighbour sender;
 
-    public PongMessage(Neighbour sender) {
+    public PongMessage(PeerInfo info, Neighbour sender) {
+        super(info);
         this.sender = sender;
     }
 

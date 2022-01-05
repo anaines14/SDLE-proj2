@@ -8,22 +8,20 @@ import org.zeromq.*;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 
 public class Worker {
     private MessageHandler handler;
+    private MessageSender sender;
     private ZMQ.Socket worker;
     private Thread thread;
 
-
-    Worker(PeerInfo peerInfo, ZContext context, int id){
-        MessageSender sender = new MessageSender(peerInfo, context);
-        handler = new MessageHandler(peerInfo, context, sender);
+    Worker(PeerInfo peerInfo, MessageSender sender, ZContext context, int id){
+        handler = new MessageHandler(peerInfo, sender);
+        this.sender = sender;
         worker = context.createSocket(SocketType.REQ);
 
-        BigInteger bigint = BigInteger.valueOf(id);
-        worker.setIdentity(bigint.toByteArray());
-        worker.connect("inproc://workers");
-        worker.send("READY");
+        worker.setIdentity(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
         this.thread = new Thread(this::run);
     }
 
@@ -46,10 +44,21 @@ public class Worker {
     }
 
     private void run() {
+        worker.connect("inproc://workers");
+        worker.send("READY");
+
         while (!Thread.currentThread().isInterrupted()) {
+            String clientAddress = worker.recvStr();
+            String empty = worker.recvStr();
+            assert(empty.length() == 0);
+            System.out.println("HERE");
+
             try {
                 Message message = MessageBuilder.messageFromSocket(worker);
-                this.handler.handle(message);
+                worker.sendMore(clientAddress);
+                worker.sendMore("");
+                Message replyMsg = this.handler.handle(message);
+                this.sender.send(replyMsg, worker);
             } catch (ZMQException e) {
                 if (e.getErrorCode() == ZMQ.Error.ETERM.getCode() || // Context terminated
                         e.getErrorCode() == ZMQ.Error.EINTR.getCode()) // Interrupted
@@ -62,7 +71,6 @@ public class Worker {
                 this.stop();
                 return;
             }
-
     }
 }
 }
