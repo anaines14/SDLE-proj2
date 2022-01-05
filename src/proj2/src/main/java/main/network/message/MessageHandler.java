@@ -86,7 +86,6 @@ public class MessageHandler implements Runnable {
     }
 
     public void close() {
-        this.socket.setLinger(0);
-        this.socket.close();
+
     }
 }

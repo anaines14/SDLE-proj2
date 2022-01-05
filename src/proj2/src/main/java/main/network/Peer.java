@@ -6,56 +6,50 @@ import main.network.neighbour.Host;
 import main.network.neighbour.Neighbour;
 import main.timelines.TimelineInfo;
 import org.zeromq.ZContext;
-import java.io.IOException;
+
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
-import java.util.List;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
     public static final int MAX_NGBRS = 3;
 
+    // Model/Data members
     private final PeerInfo peerInfo;
     private final TimelineInfo timelineInfo;
     private final ZContext context;
+
+    // Network members
+    private final Broker broker;
     private final MessageSender sender;
-    private final MessageHandler handler;
 
-    public Peer(PeerInfo peerInfo) {
-        this.context = new ZContext();
-        this.peerInfo = peerInfo;
-        this.timelineInfo = new TimelineInfo(peerInfo.username);
-        this.sender = new MessageSender(peerInfo.address, peerInfo.port, peerInfo.username, context);
-        this.handler = new MessageHandler(peerInfo, context, sender);
-    }
+    // Hooks
+    private ScheduledFuture<?> pingNeigFuture;
+    private ScheduledFuture<?> addNeighFuture;
 
-    public Peer(String username, InetAddress address, String port, int capacity) {
+    public Peer(String username, InetAddress address, String port, int capacity, ScheduledThreadPoolExecutor scheduler) {
         this.context = new ZContext();
         this.peerInfo = new PeerInfo(address, port, username, capacity);
         this.timelineInfo = new TimelineInfo(username);
-        this.sender = new MessageSender(address, port, peerInfo.username, context);
-        this.handler = new MessageHandler(peerInfo, context, sender);
+        this.broker = new Broker(context, peerInfo);
+        this.sender = new MessageSender(peerInfo, context);
     }
 
-    public void send(Message message, String port) throws IOException { sender.send(message, port); }
-
-    public void close() {
-        this.context.close();
+    public Peer(String username, InetAddress address, String port, int capacity) {
+        this(username, address, port, capacity, new ScheduledThreadPoolExecutor(MultipleNodeExecutor.POOL_SIZE));
     }
 
-    public void join(InetAddress address, String port) {
-
+    public Peer(PeerInfo peerInfo) {
+        this(peerInfo.username, peerInfo.address, peerInfo.port, peerInfo.capacity);
     }
 
-    public PeerInfo getPeerInfo() {
-        return this.peerInfo;
-    }
-
-    public MessageHandler getMessageHandler() {
-        return handler;
-    }
+    public void join(InetAddress address, String port) {}
 
     public void printTimelines() {
         this.timelineInfo.printTimelines();
@@ -73,51 +67,20 @@ public class Peer implements Serializable {
         this.timelineInfo.deletePost(peerInfo.username, postId);
     }
 
-    @Override
-    public String toString() {
-        return peerInfo.toString();
+    public void execute(ScheduledThreadPoolExecutor scheduler) {
+        this.broker.execute();
+        pingNeigFuture = scheduler.scheduleWithFixedDelay(this::pingNeighbours,
+                0, PINGNEIGH_DELAY, TimeUnit.MILLISECONDS);
+        addNeighFuture = scheduler.scheduleWithFixedDelay(this::addNeighbour,
+                0, ADDNEIGH_DELAY, TimeUnit.MILLISECONDS);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Peer node = (Peer) o;
-        return Objects.equals(peerInfo.address, node.peerInfo.address) && Objects.equals(peerInfo.port, node.peerInfo.port);
-    }
+    public void stop() {
+        this.broker.stop();
+        if (pingNeigFuture != null) pingNeigFuture.cancel(false);
+        if (addNeighFuture != null) addNeighFuture.cancel(false);
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(peerInfo.address, peerInfo.port);
-    }
-
-    public static void main(String[] args) {
-        try {
-            PeerInfo peer1 = new PeerInfo(InetAddress.getByName("localhost"), "8884", "user1", 10);
-            PeerInfo peer2 = new PeerInfo(InetAddress.getByName("localhost"), "8881", "user2", 20);
-            PeerInfo peer3 = new PeerInfo(InetAddress.getByName("localhost"), "8882", "user3", 30);
-            Peer node1 = new Peer(peer1);
-            Peer node2 = new Peer(peer2);
-            Peer node3 = new Peer(peer3);
-            List<Peer> nodes = new ArrayList<>(Arrays.asList(node1, node2, node3));
-
-            MultipleNodeExecutor executor = new MultipleNodeExecutor(nodes);
-            executor.execute();
-
-            node1.send(new PingMessage(), peer1.port);
-            node2.send(new PingMessage(), peer2.port);
-            node3.send(new PingMessage(), peer3.port);
-
-            try {
-                Thread.sleep(1000); // Wait for all messages to be sent
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            System.out.println("STOPPING");
-            executor.stop();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.context.close();
     }
 
     public void pingNeighbours() {
@@ -157,5 +120,55 @@ public class Peer implements Serializable {
     // To connect to the network on start
     public void addNeighbour(Neighbour neighbour) {
         peerInfo.addNeighbour(neighbour);
+    }
+
+    public PeerInfo getPeerInfo() {
+        return this.peerInfo;
+    }
+
+    public Broker getBroker() {
+        return broker;
+    }
+
+    @Override
+    public String toString() {
+        return peerInfo.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Peer node = (Peer) o;
+        return Objects.equals(peerInfo.address, node.peerInfo.address) && Objects.equals(peerInfo.port, node.peerInfo.port);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(peerInfo.address, peerInfo.port);
+    }
+
+    public static void main(String[] args) {
+        try {
+            Peer peer1 = new Peer("u1", InetAddress.getByName("localhost"), "8100", 10);
+            Peer peer2 = new Peer("u2", InetAddress.getByName("localhost"), "8101", 20);
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(3);
+
+            peer1.execute(scheduler);
+            peer2.execute(scheduler);
+
+            // peer1.sender.send(new PingMessage(), "8101");
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("STOPPING");
+            peer1.stop();
+            peer2.stop();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 }
