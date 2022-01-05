@@ -65,7 +65,6 @@ public class Peer implements Serializable {
                 done = true;
             }
 
-
             ++i;
         }
 
@@ -181,32 +180,5 @@ public class Peer implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(peerInfo.address, peerInfo.port);
-    }
-
-    public static void main(String[] args) {
-        try {
-            Peer peer1 = new Peer("u1", InetAddress.getByName("localhost"), "8100", 10);
-            Peer peer2 = new Peer("u2", InetAddress.getByName("localhost"), "8101", 20);
-            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(3);
-
-            peer1.execute(scheduler);
-            peer2.execute(scheduler);
-
-            peer1.sender.sendRequest(new PingMessage(peer1.peerInfo), "8101");
-
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            System.out.println("Test");
-            peer1.stop();
-            peer2.stop();
-            scheduler.shutdown();
-            System.out.println("Test2");
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
     }
 }

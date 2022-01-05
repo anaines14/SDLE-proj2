@@ -5,7 +5,6 @@ import main.network.neighbour.Neighbour;
 import main.timelines.Timeline;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
