@@ -24,6 +24,7 @@ public class MessageBuilder {
     }
 
     public static Message messageFromByteArray(byte[] bytes) throws IOException, ClassNotFoundException {
+        if (bytes == null) return null;
         ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
         ObjectInput in = null;
         Message message;

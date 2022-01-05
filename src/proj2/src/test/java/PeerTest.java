@@ -87,13 +87,6 @@ public class PeerTest {
         peer1.join(new Neighbour(peer3.getPeerInfo().getHost()));
         peer3.join(new Neighbour(peer1.getPeerInfo().getHost()));
 
-        Thread t1 = new Thread(peer1);
-        Thread t2 = new Thread(peer2);
-
-        ScheduledThreadPoolExecutor pool = new ScheduledThreadPoolExecutor(2);
-        pool.execute(t1);
-        pool.execute(t2);
-
         try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {

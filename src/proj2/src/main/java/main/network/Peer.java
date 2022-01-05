@@ -15,7 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class Peer implements Serializable, Runnable {
+public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
     public static final int MAX_NGBRS = 3;
@@ -97,11 +97,14 @@ public class Peer implements Serializable, Runnable {
                 0, ADDNEIGH_DELAY, TimeUnit.MILLISECONDS);
     }
 
-    public void stop() {
-        this.broker.stop();
+    public void cancelHooks() {
         if (pingNeigFuture != null) pingNeigFuture.cancel(false);
         if (addNeighFuture != null) addNeighFuture.cancel(false);
+    }
 
+    public void stop() {
+        this.broker.stop();
+        this.cancelHooks();
         this.context.close();
     }
 
@@ -190,9 +193,5 @@ public class Peer implements Serializable, Runnable {
     @Override
     public int hashCode() {
         return Objects.hash(peerInfo);
-    }
-
-    public void run() {
-        pingNeighbours();
     }
 }
