@@ -31,6 +31,10 @@ public class Neighbour extends Host implements Serializable{
         this.timelines = new ArrayList<>();
     }
 
+    public boolean hasTimeline(String username) {
+        return timelines.contains(username);
+    }
+
     public List<String> getTimelines() {
         return timelines;
     }
