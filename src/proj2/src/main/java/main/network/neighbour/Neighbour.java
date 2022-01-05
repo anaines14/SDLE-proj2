@@ -1,7 +1,6 @@
 package main.network.neighbour;
 
 
-import main.network.Peer;
 import main.network.PeerInfo;
 
 import java.io.Serializable;
@@ -30,6 +29,10 @@ public class Neighbour extends Host implements Serializable{
     public Neighbour(Host host) {
         super(host);
         this.timelines = new ArrayList<>();
+    }
+
+    public List<String> getTimelines() {
+        return timelines;
     }
 
     public String toString() {

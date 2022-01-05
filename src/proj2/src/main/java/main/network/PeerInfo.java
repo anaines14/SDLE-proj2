@@ -17,7 +17,7 @@ public class PeerInfo {
     public Map<String, Timeline> timelines;
     public final int capacity; // Quantity of messages that we can handle, arbitrary for us
     private Set<Neighbour> neighbours;
-    public Set<Host> hostCache;
+    private Set<Host> hostCache;
 
     public PeerInfo(InetAddress address, String port, String username, int capacity, Map<String, Timeline> timelines) {
         this.address = address;
@@ -44,6 +44,8 @@ public class PeerInfo {
         return timelines.keySet().stream().toList();
     }
 
+    // Neighbours
+
     public boolean hasNeighbour(Neighbour neighbour) {
         return neighbours.contains(neighbour);
     }
@@ -60,6 +62,11 @@ public class PeerInfo {
 
     public void addNeighbour(Neighbour neighbour) {
         neighbours.add(neighbour);
+        hostCache.add(neighbour); // Everytime we add a neighbour, we also add to the hostcache
+    }
+
+    public void removeNeighbour(Neighbour neighbour) {
+        neighbours.remove(neighbour);
     }
 
     public Neighbour getWorstNeighbour(int hostCapacity) {
@@ -70,6 +77,24 @@ public class PeerInfo {
 
         // from neighbours with less capacity than host, get the one with max degree
         return badNgbrs.stream().max(Host::compareTo).get();
+    }
+
+    public Neighbour getBestNeighbour() { // With highest capacity
+        return neighbours.stream().max(Comparator.comparingInt(Neighbour::getCapacity)).get();
+    }
+
+    // HostCache
+
+    public void addHost(Host host) {
+        if (hostCache.contains(host))
+            return;
+        hostCache.add(host);
+    }
+
+    public void removeHost(Host host) {
+        if (!hostCache.contains(host))
+            return;
+        hostCache.remove(host);
     }
 
     public Host getBestHostNotNeighbour() {
@@ -84,47 +109,9 @@ public class PeerInfo {
         return best_host.get();
     }
 
-    public Neighbour getBestNeighbour() { // With highest capacity
-        return neighbours.stream().max(Comparator.comparingInt(Neighbour::getCapacity)).get();
-    }
 
     @Override
     public String toString() {
         return  username + " => " + address + ":" + port + " cap=" + capacity + " degree=" + neighbours.size();
-    }
-
-    public static void main(String[] args) {
-        try {
-            PeerInfo peer1 = new PeerInfo(InetAddress.getByName("localhost"), "8000", "user1", 30);
-            List<String> timelines1 = new ArrayList<>(Arrays.asList("u1", "u2", "u3"));
-            List<String> timelines2 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4"));
-            List<String> timelines3 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4", "u5"));
-            Neighbour n1 = new Neighbour("u1", InetAddress.getByName("localhost"), "8000", 50, 1, timelines1);
-            Neighbour n2 = new Neighbour("u2", InetAddress.getByName("localhost"), "8001", 50, 3, timelines2);
-            Neighbour n3 = new Neighbour("u1", InetAddress.getByName("localhost"), "8000", 60, 4, timelines3);
-
-            for (Neighbour n: peer1.getNeighbours())
-                System.out.println(n.toString());
-            System.out.println("---------------------");
-
-            peer1.addNeighbour(n1);
-            for (Neighbour n: peer1.getNeighbours())
-                System.out.println(n.toString());
-            System.out.println("---------------------");
-
-            peer1.addNeighbour(n2);
-            for (Neighbour n: peer1.getNeighbours())
-                System.out.println(n.toString());
-            System.out.println("---------------------");
-
-            peer1.updateNeighbour(n3);
-            for (Neighbour n: peer1.getNeighbours())
-                System.out.println(n.toString());
-            System.out.println("---------------------");
-
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-
     }
 }

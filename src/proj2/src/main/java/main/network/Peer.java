@@ -19,6 +19,7 @@ public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
     public static final int MAX_NGBRS = 3;
+    public static final int RCV_TIMEOUT = 1000;
 
     // Model/Data members
     private final PeerInfo peerInfo;
@@ -50,6 +51,27 @@ public class Peer implements Serializable {
     }
 
     public void join(InetAddress address, String port) {}
+
+    public Neighbour ping(Neighbour neighbour) {
+        Neighbour responder = null;
+        int i = 0;
+        boolean done = false;
+        while (i < 3 && !done) {
+            MessageResponse response = this.sender.
+                    sendRequest(new PingMessage(peerInfo), neighbour.getPort(), RCV_TIMEOUT);
+
+            if (response != null && Objects.equals(response.getType(), "PONG")) {
+                responder = ((PongMessage) response).sender;
+                done = true;
+            }
+
+
+            ++i;
+        }
+
+        return responder;
+    }
+
 
     public void printTimelines() {
         this.timelineInfo.printTimelines();
@@ -84,6 +106,19 @@ public class Peer implements Serializable {
     }
 
     public void pingNeighbours() {
+        for (Neighbour neighbour: peerInfo.getNeighbours()) { // TODO multithread this, probably with scheduler
+            Neighbour updatedNeighbour = ping(neighbour);
+
+            if (updatedNeighbour == null) { // Went offline after n tries
+                peerInfo.removeNeighbour(neighbour);
+                peerInfo.removeHost(neighbour);
+            }
+
+            if (peerInfo.hasNeighbour(updatedNeighbour))
+                peerInfo.updateNeighbour(updatedNeighbour);
+            else
+                peerInfo.addNeighbour(updatedNeighbour);
+        }
         System.out.println(this + " pinged its neighbours");
     }
 
@@ -157,17 +192,19 @@ public class Peer implements Serializable {
             peer1.execute(scheduler);
             peer2.execute(scheduler);
 
-            peer1.sender.send(new PingMessage(peer1.peerInfo), "8101");
+            peer1.sender.sendRequest(new PingMessage(peer1.peerInfo), "8101");
 
             try {
-                Thread.sleep(10000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
+            System.out.println("Test");
             peer1.stop();
             peer2.stop();
             scheduler.shutdown();
+            System.out.println("Test2");
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }

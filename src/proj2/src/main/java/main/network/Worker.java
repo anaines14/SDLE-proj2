@@ -1,9 +1,6 @@
 package main.network;
 
-import main.network.message.Message;
-import main.network.message.MessageBuilder;
-import main.network.message.MessageHandler;
-import main.network.message.MessageSender;
+import main.network.message.*;
 import org.zeromq.*;
 
 import java.io.IOException;
@@ -48,15 +45,16 @@ public class Worker {
         worker.send("READY");
 
         while (!Thread.currentThread().isInterrupted()) {
-            String clientAddress = worker.recvStr();
-            String empty = worker.recvStr();
-            assert(empty.length() == 0);
-            System.out.println("HERE");
-
             try {
-                Message message = MessageBuilder.messageFromSocket(worker);
+                String clientAddress = worker.recvStr();
+                String empty = worker.recvStr();
+                assert(empty.length() == 0);
+                System.out.println("HERE");
+
+                Message message =  MessageBuilder.messageFromSocket(worker);
                 worker.sendMore(clientAddress);
                 worker.sendMore("");
+
                 Message replyMsg = this.handler.handle(message);
                 this.sender.send(replyMsg, worker);
             } catch (ZMQException e) {

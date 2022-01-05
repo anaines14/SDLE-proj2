@@ -2,7 +2,7 @@ package main.network.message;
 
 import main.network.PeerInfo;
 
-public class PingMessage extends Message {
+public class PingMessage extends MessageRequest {
     public PingMessage(PeerInfo info) {
         super(info);
     }

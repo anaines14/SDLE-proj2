@@ -41,13 +41,24 @@ public class MessageSender {
         socket.send(bytes);
     }
 
-    public void send(Message message, String port) {
+    public MessageResponse sendRequest(Message message, String port, int timeout) {
         ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+        socket.setReceiveTimeOut(timeout);
         socket.setIdentity(username.getBytes(StandardCharsets.UTF_8));
         socket.connect("tcp://localhost:" + port); // TODO convert to address
 
         this.send(message, socket);
 
-        socket.close();
+        try {
+            return (MessageResponse) MessageBuilder.messageFromSocket(socket);
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public Message sendRequest(Message message, String port) {
+        return sendRequest(message, port, -1);
     }
 }

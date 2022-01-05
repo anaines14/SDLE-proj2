@@ -2,10 +2,10 @@ package main.network.message;
 
 import main.network.PeerInfo;
 import main.network.neighbour.Neighbour;
-import org.zeromq.ZContext;
 
 import java.net.InetAddress;
 
+// Dá handle só a mensagens que iniciam requests (PING)
 public class MessageHandler {
     private InetAddress address;
     private String port;
@@ -20,34 +20,28 @@ public class MessageHandler {
     }
 
     public Message handle(Message message) {
+        if (!(message instanceof MessageRequest)) // We only can handle message requests
+            return new KoMessage(peerInfo);
+
+        return handle((MessageRequest) message);
+    }
+
+    private MessageResponse handle(MessageRequest message) {
         switch (message.getType()) {
             case "PING":
                 return handle((PingMessage) message);
-            case "PONG":
-                return handle((PongMessage) message);
 
             default:
                 return null;
         }
     }
 
-    public Message handle(PingMessage message) {
+    private MessageResponse handle(PingMessage message) {
         // Reply with a Pong message with our info
         Neighbour ourInfo = new Neighbour(peerInfo.username, peerInfo.address, peerInfo.port,
                 peerInfo.capacity, peerInfo.getDegree(), peerInfo.getStoredTimelines());
 
         PongMessage replyMsg = new PongMessage(this.peerInfo, ourInfo);
         return replyMsg;
-    }
-
-    public Message handle(PongMessage message) {
-        // Update/Add info that we have about a peer
-        Neighbour responder = message.sender;
-        if (peerInfo.hasNeighbour(responder))
-            peerInfo.updateNeighbour(responder);
-        else
-            peerInfo.addNeighbour(responder);
-
-        return new OkMessage(this.peerInfo);
     }
 }

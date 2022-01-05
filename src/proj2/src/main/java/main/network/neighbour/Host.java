@@ -43,6 +43,14 @@ public class Host implements Serializable, Comparable<Host> {
         return "Username: " + username + " IP: " + address.getHostName() + ":" + port + " Cap: " + capacity;
     }
 
+    public InetAddress getAddress() {
+        return address;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
     public int getCapacity() {
         return capacity;
     }
