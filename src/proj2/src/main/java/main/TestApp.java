@@ -100,6 +100,7 @@ public class TestApp {
             case "STOP_ALL" -> this.execStopAll();
             case "DELETE" -> this.execDelete(opts);
             case "UPDATE" -> this.execUpdate(cmd, opts);
+            case "TIMELINE" -> this.execTimeline(opts);
             case "PRINT" -> this.execPrint(opts);
             case "PRINT_PEERS" -> this.execPrintPeers();
             case "SLEEP" -> this.execSleep(opts);
@@ -111,6 +112,16 @@ public class TestApp {
                 System.exit(1);
             }
         }
+    }
+
+    private void execTimeline(String[] opts) {
+        // get peer
+        String username = opts[1];
+        String timeline = opts[2];
+        Peer peer = peers.get(username);
+
+        if (peer != null)
+            peer.getTimelineFrom(timeline);
     }
 
     private void execGraph() {
@@ -151,7 +162,8 @@ public class TestApp {
         String username = opts[1];
         Peer peer = peers.get(username);
         // print timeline
-        peer.printTimelines();
+        if (peer != null)
+            peer.printTimelines();
     }
 
     private void execUpdate(String cmd, String[] opts) throws NumberFormatException {
@@ -175,7 +187,8 @@ public class TestApp {
 
             Peer peer = peers.get(username);
             // update post
-            peer.updatePost(postId, newContent);
+            if (peer != null)
+                peer.updatePost(postId, newContent);
         } catch (NumberFormatException e) {
             usage();
             System.exit(1);
@@ -216,7 +229,8 @@ public class TestApp {
         post_content = post_content.substring(0, post_content.length()-1); // remove last "
 
         // add post to timeline
-        peer.addPost(post_content);
+        if (peer != null)
+            peer.addPost(post_content);
     }
 
     private void execStop(String[] opts) {
@@ -229,7 +243,8 @@ public class TestApp {
         String username = opts[1];
         Peer peer = peers.remove(username);
         // stop peer
-        executor.remNode(peer);
+        if (peer != null)
+            executor.remNode(peer);
     }
 
     private void execStartMult(String[] opts) throws UnknownHostException {
@@ -269,9 +284,11 @@ public class TestApp {
         // get peer
         String username = opts[1];
         Peer peer = this.peers.get(username);
-        int postId = Integer.parseInt(opts[2]);
-        // delete post
-        peer.deletePost(postId);
+        if (peer != null) {
+            int postId = Integer.parseInt(opts[2]);
+            // delete post
+            peer.deletePost(postId);
+        }
     }
 
     private void execSleep(String[] opts) throws InterruptedException {
@@ -311,6 +328,7 @@ public class TestApp {
                 \t POST <username> "<content>"
                 \t UPDATE <username> <post_id> "<content>"
                 \t DELETE <username> <post_id>
+                \t TIMELINE <username>
                 \t PRINT <username>
                 \t PRINT_PEERS
                 \t STOP <username>

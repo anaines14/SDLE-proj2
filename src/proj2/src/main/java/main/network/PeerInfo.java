@@ -78,14 +78,14 @@ public class PeerInfo {
                 .filter(f -> !neighbours.contains(f))
                 .collect(Collectors.toSet());
 
-        Optional<Host> best_host = notNeighbors.stream().max(Comparator.comparingInt(Host::getCapacity));
+        Optional<Host> best_host = notNeighbors.stream().max(Host::compareTo);
         if(best_host.isEmpty()) return null;
 
         return best_host.get();
     }
 
     public Neighbour getBestNeighbour() { // With highest capacity
-        return neighbours.stream().max(Comparator.comparingInt(Neighbour::getCapacity)).get();
+        return neighbours.stream().max(Host::compareTo).get();
     }
 
     @Override
