@@ -5,7 +5,10 @@ import main.network.message.*;
 import main.network.neighbour.Host;
 import main.network.neighbour.Neighbour;
 import main.timelines.TimelineInfo;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -31,8 +34,15 @@ public class Peer implements Serializable {
         this.handler = new MessageHandler(peerInfo, context, sender);
     }
 
-    public Peer(String username, InetAddress address, String port, int capacity) {
+    public Peer(String username, InetAddress address, int capacity) {
         this.context = new ZContext();
+
+        // assign random port
+        ZMQ.Socket socket = context.createSocket(SocketType.REP);
+        int p = socket.bindToRandomPort("tcp://" + address.getHostName());
+        String port = Integer.toString(p);
+        socket.close();
+
         this.peerInfo = new PeerInfo(address, port, username, capacity);
         this.timelineInfo = new TimelineInfo(username);
         this.sender = new MessageSender(address, port, peerInfo.username, context);

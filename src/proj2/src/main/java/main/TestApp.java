@@ -6,6 +6,10 @@ import main.network.neighbour.Neighbour;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZSocket;
+import zmq.ZMQ;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,11 +25,13 @@ public class TestApp {
     private final MultipleNodeExecutor executor;
     private final Map<String, Peer> peers;
     private int curr_peer_id;
+    private ZContext context;
 
     public TestApp() {
         this.peers = new HashMap<>();
         this.executor = new MultipleNodeExecutor();
         this.curr_peer_id = 1;
+        this.context = new ZContext();
     }
 
     public static void main(String[] args) {
@@ -191,10 +197,9 @@ public class TestApp {
         // create and store peer
         String username = opts[1];
         InetAddress address = InetAddress.getByName(opts[2]);
-        String port = opts[3];
-        int capacity = Integer.parseInt(opts[4]);
+        int capacity = Integer.parseInt(opts[3]);
 
-        Peer peer = new Peer(username, address, port, capacity);
+        Peer peer = new Peer(username, address, capacity);
 
         this.connectToNetwork(peer);
         peers.put(username, peer);
@@ -246,7 +251,7 @@ public class TestApp {
         for (int i = 1; i <= num_peers; i++) {
             String username = "user" + curr_peer_id;
             int random_cap = 1 + random.nextInt(MAX_CAPACITY);
-            Peer peer = new Peer(username, user_addr, String.valueOf(8000 + curr_peer_id), random_cap);
+            Peer peer = new Peer(username, user_addr, random_cap);
             this.connectToNetwork(peer);
             peers.put(username, peer);
             executor.addNode(peer);
@@ -255,6 +260,7 @@ public class TestApp {
     }
 
     private void execStopAll() {
+        System.out.println("Stopping all peers.");
         // clean map
         executor.stop();
         peers.clear();
@@ -306,7 +312,7 @@ public class TestApp {
                 Avalable commands:
 
 
-                \t START <username> <IPaddress> <port> <capacity>
+                \t START <username> <IPaddress> <capacity>
                 \t START_MULT <n>
                 \t POST <username> "<content>"
                 \t UPDATE <username> <post_id> "<content>"
