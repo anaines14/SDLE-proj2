@@ -5,9 +5,9 @@ import main.network.PeerInfo;
 public class QueryMessage extends Message {
     private final String wantedTimeline;
 
-    public QueryMessage(String username, PeerInfo peerInfo) {
+    public QueryMessage(String wantedTimeline, PeerInfo peerInfo) {
         super(peerInfo);
-        this.wantedTimeline = username;
+        this.wantedTimeline = wantedTimeline;
     }
 
     public String getWantedTimeline() {

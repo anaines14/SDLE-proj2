@@ -20,6 +20,7 @@ public class MessageHandler {
     }
 
     public Message handle(Message message) {
+        System.out.println("Received Message");
         if (!(message instanceof MessageRequest)) // We only can handle message requests
             return new KoMessage(peerInfo);
 
@@ -30,7 +31,6 @@ public class MessageHandler {
         switch (message.getType()) {
             case "PING":
                 return handle((PingMessage) message);
-
             default:
                 return null;
         }
@@ -43,5 +43,10 @@ public class MessageHandler {
 
         PongMessage replyMsg = new PongMessage(this.peerInfo, ourInfo);
         return replyMsg;
+    }
+
+    private void handle(QueryMessage message) {
+        // TODO
+        System.out.println("Received QueryMessage");
     }
 }

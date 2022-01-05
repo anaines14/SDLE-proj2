@@ -73,13 +73,13 @@ public class Peer implements Serializable {
         return responder;
     }
 
-    public void printTimelines() {
-        this.timelineInfo.printTimelines();
+    public void queryNeighbour(String wantedTimeline, Neighbour neighbour) {
+        this.sender.sendRequest(new QueryMessage(wantedTimeline, peerInfo), neighbour.getPort());
+
     }
 
-    public Timeline getTimelineFrom(String username) {
-        // TODO
-        return null;
+    public void printTimelines() {
+        this.timelineInfo.printTimelines();
     }
 
     public void updatePost(int postId, String newContent) {
@@ -108,6 +108,20 @@ public class Peer implements Serializable {
         if (addNeighFuture != null) addNeighFuture.cancel(false);
 
         this.context.close();
+    }
+
+    public void queryNeighbours(String timeline) {
+        // check if neighbours have the timeline
+        // TODO: BLOOM FILTERS
+        Set<Neighbour> neighbours = this.peerInfo.getNeighboursWithTimeline(timeline);
+        System.out.println("got neighbours with timelibnes: " + neighbours.size());
+
+        // query neighbours with timelines
+        for(Neighbour n: neighbours) {
+            queryNeighbour(timeline, n);
+            System.out.println("query neighbour");
+        }
+
     }
 
     public void pingNeighbours() {

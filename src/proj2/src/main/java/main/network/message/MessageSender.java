@@ -28,9 +28,7 @@ public class MessageSender {
     }
 
     public void send(Message message, ZMQ.Socket socket) {
-        System.out.println("Sending " + message);
-        message.senderAddress = senderAddress;
-        message.senderPort = senderPort;
+        message.addSender(senderAddress, senderPort);
         message.username = username;
         byte[] bytes = new byte[0];
         try {
@@ -39,6 +37,8 @@ public class MessageSender {
             e.printStackTrace();
         }
         socket.send(bytes);
+        System.out.println("Sent " + message);
+
     }
 
     public MessageResponse sendRequest(Message message, String port, int timeout) {

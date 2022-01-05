@@ -83,6 +83,10 @@ public class PeerInfo {
         return neighbours.stream().max(Host::compareTo).get();
     }
 
+    public Set<Neighbour> getNeighboursWithTimeline(String timeline) {
+         return neighbours.stream().filter(n -> n.hasTimeline(timeline)).collect(Collectors.toSet());
+    }
+
     // HostCache
 
     public void addHost(Host host) {

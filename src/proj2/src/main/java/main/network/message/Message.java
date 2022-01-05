@@ -22,9 +22,17 @@ public abstract class Message implements Serializable {
 
     public abstract String getType();
 
+    public Sender getLastSender() {
+        return path.getLastSender();
+    }
+
+    public void addSender(InetAddress address, String port) {
+        path.addSender(address, port);
+    }
+
     @Override
     public String toString() {
-        Sender lastSender = path.getLastSender();
+        Sender lastSender = getLastSender();
         return "[" + getType() + "]" + " " + lastSender.getHostName() + ":" + lastSender;
     }
 }

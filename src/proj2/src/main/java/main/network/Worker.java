@@ -49,7 +49,6 @@ public class Worker {
                 String clientAddress = worker.recvStr();
                 String empty = worker.recvStr();
                 assert(empty.length() == 0);
-                System.out.println("HERE");
 
                 Message message =  MessageBuilder.messageFromSocket(worker);
                 worker.sendMore(clientAddress);

@@ -1,9 +1,10 @@
 package main.network.message.sender;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;
 
-public class Sender {
+public class Sender implements Serializable {
     private InetAddress address;
     private String port;
 
