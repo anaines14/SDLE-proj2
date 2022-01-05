@@ -8,10 +8,10 @@ import java.util.Objects;
 public class Host implements Serializable, Comparable<Host> {
     private final InetAddress address;
     private final String port;
-    private final int capacity;
+    private final int capacity; // Quantity of messages that we can handle, arbitrary for us
     // needed to add as neighbor
     private final String username;
-    private final int degree;
+    private int degree;
 
     public Host(String username, InetAddress address, String port, int capacity, int degree) {
         this.address = address;
@@ -23,24 +23,6 @@ public class Host implements Serializable, Comparable<Host> {
 
     public Host(Host host) {
         this(host.username, host.address, host.port, host.capacity, host.degree);
-    }
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Host)) return false;
-        Host host = (Host) o;
-        return Objects.equals(address, host.address) && Objects.equals(port, host.port);
-    }
-
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(address, port);
-    }
-
-    @Override
-    public String toString() {
-        return "Username: " + username + " IP: " + address.getHostName() + ":" + port + " Cap: " + capacity;
     }
 
     public InetAddress getAddress() {
@@ -60,6 +42,29 @@ public class Host implements Serializable, Comparable<Host> {
     }
 
     public String getUsername() { return username; }
+
+    public void setDegree(int size) {
+        this.degree = size;
+    }
+
+    @Override
+    public String toString() {
+        return "Username: " + username + " IP: " + address.getHostName() +
+                ":" + port + " Cap: " + capacity + " Deg: " + degree;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Host)) return false;
+        Host host = (Host) o;
+        return Objects.equals(address, host.address) && Objects.equals(port, host.port);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(address, port);
+    }
 
     @Override
     public int compareTo(Host host) {

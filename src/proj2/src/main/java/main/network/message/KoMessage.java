@@ -1,10 +1,11 @@
 package main.network.message;
 
-import main.network.PeerInfo;
+import main.network.neighbour.Host;
 
 public class KoMessage extends MessageResponse {
-    public KoMessage(PeerInfo info) {
-        super(info);
+
+    public KoMessage(Host host) {
+        super(host);
     }
 
     @Override

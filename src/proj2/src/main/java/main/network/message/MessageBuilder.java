@@ -4,7 +4,6 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 
 public class MessageBuilder {
     // https://stackoverflow.com/questions/2836646/java-serializable-object-to-byte-array
@@ -46,7 +45,6 @@ public class MessageBuilder {
 
     public static Message messageFromSocket(ZMQ.Socket socket) throws ZMQException, IOException, ClassNotFoundException {
         byte[] bytes = socket.recv();
-        System.out.println(bytes.length);
         Message message = messageFromByteArray(bytes);
         return message;
     }

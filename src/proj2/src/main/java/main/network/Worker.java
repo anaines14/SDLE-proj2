@@ -1,10 +1,15 @@
 package main.network;
 
-import main.network.message.*;
-import org.zeromq.*;
+import main.network.message.Message;
+import main.network.message.MessageBuilder;
+import main.network.message.MessageHandler;
+import main.network.message.MessageSender;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQException;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 
 public class Worker {

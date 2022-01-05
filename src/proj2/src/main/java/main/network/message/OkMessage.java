@@ -1,10 +1,11 @@
 package main.network.message;
 
-import main.network.PeerInfo;
+import main.network.neighbour.Host;
 
 public class OkMessage extends MessageResponse {
-    public OkMessage(PeerInfo info) {
-        super(info);
+
+    public OkMessage(Host host) {
+        super(host);
     }
 
     @Override

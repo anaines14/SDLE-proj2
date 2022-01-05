@@ -1,21 +1,11 @@
 package main;
 
-import main.network.Peer;
-import main.network.executor.CommandExecutor;
-import main.network.executor.MultipleNodeExecutor;
-import main.network.neighbour.Neighbour;
-import org.graphstream.graph.Graph;
-import org.graphstream.graph.Node;
-import org.graphstream.graph.implementations.SingleGraph;
-
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.Scanner;
 
 public class TestApp {
     private final CommandExecutor cmdExecutor;

@@ -24,12 +24,10 @@ public class MessageSender {
     }
 
     public MessageSender(PeerInfo peerInfo, ZContext context){
-        this(peerInfo.address, peerInfo.port, peerInfo.username, context);
+        this(peerInfo.getAddress(), peerInfo.getPort(), peerInfo.getUsername(), context);
     }
 
     public void send(Message message, ZMQ.Socket socket) {
-        message.addSender(senderAddress, senderPort);
-        message.username = username;
         byte[] bytes = new byte[0];
         try {
             bytes = MessageBuilder.messageToByteArray(message);
@@ -37,8 +35,6 @@ public class MessageSender {
             e.printStackTrace();
         }
         socket.send(bytes);
-        System.out.println("Sent " + message);
-
     }
 
     public MessageResponse sendRequest(Message message, String port, int timeout) {
@@ -47,6 +43,7 @@ public class MessageSender {
         socket.setIdentity(username.getBytes(StandardCharsets.UTF_8));
         socket.connect("tcp://localhost:" + port); // TODO convert to address
 
+        System.out.println(username + " SENT[" + message.getType() + "]: " + port);
         this.send(message, socket);
 
         try {

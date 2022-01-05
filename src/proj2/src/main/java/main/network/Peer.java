@@ -4,14 +4,13 @@ import main.network.executor.MultipleNodeExecutor;
 import main.network.message.*;
 import main.network.neighbour.Host;
 import main.network.neighbour.Neighbour;
-import main.timelines.Timeline;
 import main.timelines.TimelineInfo;
 import org.zeromq.ZContext;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -47,33 +46,30 @@ public class Peer implements Serializable {
         this(username, address, port, capacity, new ScheduledThreadPoolExecutor(MultipleNodeExecutor.POOL_SIZE));
     }
 
-    public Peer(PeerInfo peerInfo) {
-        this(peerInfo.username, peerInfo.address, peerInfo.port, peerInfo.capacity);
+    public void join(Neighbour neighbour) {
+        peerInfo.addNeighbour(neighbour);
     }
 
-    public void join(InetAddress address, String port) {}
-
-    public Neighbour ping(Neighbour neighbour) {
-        Neighbour responder = null;
+    public PongMessage ping(Neighbour neighbour) {
+        MessageResponse response = null;
         int i = 0;
         boolean done = false;
         while (i < 3 && !done) {
-            MessageResponse response = this.sender.
-                    sendRequest(new PingMessage(peerInfo), neighbour.getPort(), RCV_TIMEOUT);
+            response = this.sender.
+                    sendRequest(new PingMessage(peerInfo.getHost()), neighbour.getPort(), RCV_TIMEOUT);
 
             if (response != null && Objects.equals(response.getType(), "PONG")) {
-                responder = ((PongMessage) response).sender;
                 done = true;
             }
 
             ++i;
         }
 
-        return responder;
+        return (PongMessage) response;
     }
 
     public void queryNeighbour(String wantedTimeline, Neighbour neighbour) {
-        this.sender.sendRequest(new QueryMessage(wantedTimeline, peerInfo), neighbour.getPort());
+        this.sender.sendRequest(new QueryMessage(wantedTimeline, peerInfo.getHost()), neighbour.getPort());
 
     }
 
@@ -82,15 +78,15 @@ public class Peer implements Serializable {
     }
 
     public void updatePost(int postId, String newContent) {
-        this.timelineInfo.updatePost(peerInfo.username, postId, newContent);
+        this.timelineInfo.updatePost(peerInfo.getUsername(), postId, newContent);
     }
 
     public void addPost(String newContent) {
-        this.timelineInfo.addPost(peerInfo.username, newContent);
+        this.timelineInfo.addPost(peerInfo.getUsername(), newContent);
     }
 
     public void deletePost(int postId) {
-        this.timelineInfo.deletePost(peerInfo.username, postId);
+        this.timelineInfo.deletePost(peerInfo.getUsername(), postId);
     }
 
     public void execute(ScheduledThreadPoolExecutor scheduler) {
@@ -125,28 +121,28 @@ public class Peer implements Serializable {
 
     public void pingNeighbours() {
         for (Neighbour neighbour: peerInfo.getNeighbours()) { // TODO multithread this, probably with scheduler
-            Neighbour updatedNeighbour = ping(neighbour);
-
-            if (updatedNeighbour == null) { // Went offline after n tries
+            PongMessage response = ping(neighbour);
+            if (response == null) { // Went offline after n tries
+                System.out.println(peerInfo.getUsername() + " REMOVED " + neighbour.getUsername());
                 peerInfo.removeNeighbour(neighbour);
                 peerInfo.removeHost(neighbour);
+                continue;
             }
 
-            if (peerInfo.hasNeighbour(updatedNeighbour))
+            Neighbour updatedNeighbour = response.sender;
+            if (peerInfo.hasNeighbour(updatedNeighbour)) {
+                Set<Host> hostCache = response.hostCache;
+                System.out.println(peerInfo.getUsername() + " UPDATED " + neighbour.getUsername());
                 peerInfo.updateNeighbour(updatedNeighbour);
-            else
-                peerInfo.addNeighbour(updatedNeighbour);
+                peerInfo.updateHostCache(hostCache);
+            }
         }
-        System.out.println(this + " pinged its neighbours");
     }
 
     public void addNeighbour()  {
         // get higher capacity host not neighbour
         Host host = peerInfo.getBestHostNotNeighbour();
-        if (host == null) {
-            System.out.println("There are no neighbours to add.");
-            return;
-        }
+        if (host == null) return;
         // ACCEPT host if limit not reached
         if (peerInfo.getNeighbours().size() < MAX_NGBRS) {
             peerInfo.addNeighbour(new Neighbour(host));
@@ -192,12 +188,12 @@ public class Peer implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Peer node = (Peer) o;
-        return Objects.equals(peerInfo.address, node.peerInfo.address) && Objects.equals(peerInfo.port, node.peerInfo.port);
+        Peer peer = (Peer) o;
+        return Objects.equals(peerInfo, peer.peerInfo);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(peerInfo.address, peerInfo.port);
+        return Objects.hash(peerInfo);
     }
 }

@@ -13,21 +13,21 @@ public class MessageHandler {
     private MessageSender sender;
 
     public MessageHandler(PeerInfo peerInfo, MessageSender sender) {
-        this.address = peerInfo.address;
-        this.port = peerInfo.port;
+        this.address = peerInfo.getAddress();
+        this.port = peerInfo.getPort();
         this.peerInfo = peerInfo;
         this.sender = sender;
     }
 
     public Message handle(Message message) {
-        System.out.println("Received Message");
         if (!(message instanceof MessageRequest)) // We only can handle message requests
-            return new KoMessage(peerInfo);
+            return new KoMessage(peerInfo.getHost());
 
         return handle((MessageRequest) message);
     }
 
     private MessageResponse handle(MessageRequest message) {
+        // System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: " + message.getLastSender().getPort());
         switch (message.getType()) {
             case "PING":
                 return handle((PingMessage) message);
@@ -38,10 +38,11 @@ public class MessageHandler {
 
     private MessageResponse handle(PingMessage message) {
         // Reply with a Pong message with our info
-        Neighbour ourInfo = new Neighbour(peerInfo.username, peerInfo.address, peerInfo.port,
-                peerInfo.capacity, peerInfo.getDegree(), peerInfo.getStoredTimelines());
+        Neighbour ourInfo = new Neighbour(peerInfo.getHost());
 
-        PongMessage replyMsg = new PongMessage(this.peerInfo, ourInfo);
+        peerInfo.addHost(message.getSender());
+
+        PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache());
         return replyMsg;
     }
 

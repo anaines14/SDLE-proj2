@@ -3,14 +3,16 @@ package main.network;
 import main.network.message.Message;
 import main.network.message.MessageBuilder;
 import main.network.message.MessageSender;
-import org.zeromq.*;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 
 public class Broker {
@@ -29,9 +31,8 @@ public class Broker {
         frontend = context.createSocket(SocketType.ROUTER);
         backend = context.createSocket(SocketType.ROUTER);
         control = context.createSocket(SocketType.PULL);
-        frontend.bind("tcp://*:" + peerInfo.port); // TODO Put port
+        frontend.bind("tcp://*:" + peerInfo.getPort()); // TODO Put port
         backend.bind("inproc://workers");
-        System.out.println("BINDING " + peerInfo.port);
         // To signal the broker thread to shutdown, we use a control socket
         // This is better than an interrupt because this thread has a poller, making the process of exiting more safe
         // We could use interrupts here, but it would cause too many try catches (smelly code) and JeroMQ only started
@@ -44,7 +45,6 @@ public class Broker {
             Worker worker = new Worker(peerInfo, sender, context, id);
             workers.add(worker);
         }
-        System.out.println("RUNNING BROKER: " + peerInfo.port);
     }
 
     public void execute() {
@@ -52,7 +52,6 @@ public class Broker {
     }
 
     public void close() {
-        System.out.println("CLOSING");
         frontend.close();
         backend.close();
         control.close();
@@ -137,7 +136,6 @@ public class Broker {
                     String empty = frontend.recvStr();
                     assert(empty.length() == 0);
 
-                    System.out.println("GOT REQUEST");
                     Message request = null;
                     try {
                         request = MessageBuilder.messageFromSocket(frontend);
@@ -150,7 +148,6 @@ public class Broker {
                     backend.sendMore("");
                     backend.sendMore(clientAddr);
                     backend.sendMore("");
-                    System.out.println("Got request from " + clientAddr + ": " + request);
                     try {
                         backend.send(MessageBuilder.messageToByteArray(request));
                     } catch (IOException e) {

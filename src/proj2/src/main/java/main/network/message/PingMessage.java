@@ -1,10 +1,17 @@
 package main.network.message;
 
-import main.network.PeerInfo;
+import main.network.neighbour.Host;
 
 public class PingMessage extends MessageRequest {
-    public PingMessage(PeerInfo info) {
-        super(info);
+    private Host sender;
+
+    public PingMessage(Host host) {
+        super(host);
+        this.sender = host;
+    }
+
+    public Host getSender() {
+        return sender;
     }
 
     @Override

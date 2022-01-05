@@ -1,9 +1,9 @@
 package main.network.message;
 
-import main.network.PeerInfo;
+import main.network.neighbour.Host;
 
 public abstract class MessageRequest extends Message {
-    public MessageRequest(PeerInfo info) {
-        super(info);
+    public MessageRequest(Host host) {
+        super(host);
     }
 }

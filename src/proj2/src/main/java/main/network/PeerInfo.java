@@ -10,37 +10,20 @@ import java.util.stream.Collectors;
 
 // Data class that serves like a Model in an MVC
 public class PeerInfo {
-    public final InetAddress address;
-    public final String port;
-    public final String username;
+    private Host me;
     public Map<String, Timeline> timelines;
-    public final int capacity; // Quantity of messages that we can handle, arbitrary for us
     private Set<Neighbour> neighbours;
     private Set<Host> hostCache;
 
-    public PeerInfo(InetAddress address, String port, String username, int capacity, Map<String, Timeline> timelines) {
-        this.address = address;
-        this.port = port;
-        this.username = username;
-        this.capacity = capacity;
+    public PeerInfo(String username, InetAddress address, String port, int capacity, Map<String, Timeline> timelines) {
+        this.me = new Host(username, address, port, capacity, 0);
         this.timelines = timelines;
         this.neighbours = new HashSet<>();
         this.hostCache = new HashSet<>();
     }
 
     public PeerInfo(InetAddress address, String port, String username, int capacity) {
-        this(address, port, username, capacity, new HashMap<>());
-    }
-
-    public Set<Neighbour> getNeighbours() { return neighbours; }
-
-    public Integer getDegree() {
-        return neighbours.size();
-    }
-
-    /* Returns list of usernames that we have timelines to */
-    public List<String> getStoredTimelines() {
-        return timelines.keySet().stream().toList();
+        this(username, address, port, capacity, new HashMap<>());
     }
 
     // Neighbours
@@ -59,13 +42,26 @@ public class PeerInfo {
         neighbours.add(updated);
     }
 
+    public void updateHostCache(Set<Host> hostCache) {
+        this.hostCache.addAll(hostCache);
+    }
+
     public void addNeighbour(Neighbour neighbour) {
+        if (neighbour == this.me) // We can't add ourselves as a neighbour
+            return;
+
+        System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
         neighbours.add(neighbour);
+        this.me.setDegree(neighbours.size());
         hostCache.add(neighbour); // Everytime we add a neighbour, we also add to the hostcache
     }
 
     public void removeNeighbour(Neighbour neighbour) {
+        if (!neighbours.contains(neighbour))
+            return;
+
         neighbours.remove(neighbour);
+        this.me.setDegree(neighbours.size());
     }
 
     public Neighbour getWorstNeighbour(int hostCapacity) {
@@ -89,14 +85,17 @@ public class PeerInfo {
     // HostCache
 
     public void addHost(Host host) {
-        if (hostCache.contains(host))
+
+        if (hostCache.contains(host) || this.me == host)
             return;
+
         hostCache.add(host);
     }
 
     public void removeHost(Host host) {
         if (!hostCache.contains(host))
             return;
+
         hostCache.remove(host);
     }
 
@@ -112,8 +111,42 @@ public class PeerInfo {
         return best_host.get();
     }
 
+    public String getUsername() {
+        return this.me.getUsername();
+    }
+
+    public InetAddress getAddress() {
+        return this.me.getAddress();
+    }
+
+    public String getPort() {
+        return this.me.getPort();
+    }
+
+    public Host getHost() {
+        return this.me;
+    }
+
+    public Set<Neighbour> getNeighbours() { return neighbours; }
+
+    public Set<Host> getHostCache() {
+        return this.hostCache;
+    }
+
+    public Integer getDegree() {
+        return me.getDegree();
+    }
+
+    /* Returns list of usernames that we have timelines to */
+    public List<String> getStoredTimelines() {
+        return timelines.keySet().stream().toList();
+    }
+
     @Override
-    public String toString() {
-        return  username + " => " + address + ":" + port + " cap=" + capacity + " degree=" + neighbours.size();
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PeerInfo peerInfo = (PeerInfo) o;
+        return Objects.equals(me, peerInfo.me);
     }
 }

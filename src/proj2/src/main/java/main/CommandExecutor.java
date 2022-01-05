@@ -1,6 +1,7 @@
-package main.network.executor;
+package main;
 
 import main.network.Peer;
+import main.network.executor.MultipleNodeExecutor;
 import main.network.neighbour.Neighbour;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
@@ -89,7 +90,7 @@ public class CommandExecutor {
 
             // add peer to neighbour list
             Peer neigh = peers.get(key);
-            peer.addNeighbour(new Neighbour(neigh.getPeerInfo()));
+            peer.join(new Neighbour(neigh.getPeerInfo().getHost()));
         }
     }
 
