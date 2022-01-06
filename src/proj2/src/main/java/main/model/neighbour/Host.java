@@ -7,7 +7,7 @@ import java.util.Objects;
 // Data class
 public class Host implements Serializable, Comparable<Host> {
     private final InetAddress address;
-    private final String port;
+    private String port;
     private final int capacity; // Quantity of messages that we can handle, arbitrary for us
     // needed to add as neighbor
     private final String username;
@@ -45,6 +45,10 @@ public class Host implements Serializable, Comparable<Host> {
 
     public void setDegree(int size) {
         this.degree = size;
+    }
+
+    public void setPort(String port) {
+        this.port = port;
     }
 
     @Override

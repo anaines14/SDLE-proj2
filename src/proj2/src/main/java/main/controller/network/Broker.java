@@ -22,26 +22,33 @@ public class Broker {
     private ZContext context;
     private ZMQ.Socket frontend;
     private ZMQ.Socket backend;
+    // To signal the broker thread to shutdown, we use a control socket
+    // This is better than an interrupt because this thread has a poller, making the process of exiting more safe
+    // We could use interrupts here, but it would cause too many try catches (smelly code) and JeroMQ only started
+    // supporting socket interruption on receive calls recently
     private ZMQ.Socket control;
     private List<Worker> workers;
 
     private Thread thread;
+    private String frontendPort; // For testing
 
     public Broker(ZContext context, MessageSender sender, PeerInfo peerInfo){
         this.context = context;
         frontend = context.createSocket(SocketType.ROUTER);
         backend = context.createSocket(SocketType.ROUTER);
         control = context.createSocket(SocketType.PULL);
-        frontend.bind("tcp://*:" + peerInfo.getPort()); // TODO Put port
+
+        // Bind each socket, bind frontend to random port
+        String hostName = peerInfo.getAddress().getHostName();
+        int intP = frontend.bindToRandomPort("tcp://" + hostName);
+        String port = Integer.toString(intP);
+        peerInfo.setPort(port); // Set port to one that was bound to
+        this.frontendPort = port;
         backend.bind("inproc://workers");
-        // To signal the broker thread to shutdown, we use a control socket
-        // This is better than an interrupt because this thread has a poller, making the process of exiting more safe
-        // We could use interrupts here, but it would cause too many try catches (smelly code) and JeroMQ only started
-        // supporting socket interruption on receive calls recently
         control.bind("inproc://control");
+
         workers = new ArrayList<>();
         this.thread = new Thread(this::run);
-
         for(int id = 0; id < N_WORKERS; id++){
             Worker worker = new Worker(peerInfo, sender, context, id);
             workers.add(worker);
@@ -133,6 +140,7 @@ public class Broker {
 
             if (items.pollin(2)) { // Frontend, client request
                 try {
+                    System.out.println("Received request");
                     String clientAddr = frontend.recvStr();
 
                     //Remove empty msg between messages
@@ -161,5 +169,9 @@ public class Broker {
                 }
             }
         }
+    }
+
+    public String getFrontendPort() {
+        return frontendPort;
     }
 }

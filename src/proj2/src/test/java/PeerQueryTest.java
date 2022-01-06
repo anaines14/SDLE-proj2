@@ -52,5 +52,11 @@ public class PeerQueryTest {
 
         assertEquals(2, peer1.getPeerInfo().getNeighbours().size());
         peer1.queryNeighbours("u5");
+
+        peer1.stop();
+        peer2.stop();
+        peer3.stop();
+        peer4.stop();
+        peer5.stop();
     }
 }
