@@ -76,7 +76,6 @@ public class MessageSender {
         while (i < this.maxRetries && !done) {
             MessageResponse response = this.sendRequest(message, port);
             if (response != null && Objects.equals(response.getType(), "PONG")) {
-                System.out.println("Failed getting response to [" + message.getType() + "]" + port);
                 return response;
             }
             ++i;

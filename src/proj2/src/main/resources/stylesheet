@@ -17,3 +17,22 @@ edge {
     fill-color:black;
     text-alignment:center;
 }
+
+edge.nodeToNode {
+ arrow-shape: arrow;
+ arrow-size: 20px, 4px;
+}
+
+node.noeud {
+ size-mode: fit;
+ shape: rounded-box;
+ fill-color: white;
+ stroke-mode: plain;
+ padding: 4px, 4px;
+ icon-mode: at-left;
+ icon: url('draw/noeud.png');
+}
+
+node:clicked {
+	fill-color: red;
+}

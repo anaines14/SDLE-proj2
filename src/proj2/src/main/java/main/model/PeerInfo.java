@@ -1,5 +1,6 @@
 package main.model;
 
+import main.gui.Observer;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
@@ -14,6 +15,7 @@ public class PeerInfo {
     public Map<String, Timeline> timelines;
     private Set<Neighbour> neighbours;
     private Set<Host> hostCache;
+    private Observer observer;
 
     public PeerInfo(String username, InetAddress address, String port, int capacity, Map<String, Timeline> timelines) {
         this.me = new Host(username, address, port, capacity, 0);
@@ -33,8 +35,8 @@ public class PeerInfo {
     }
 
     public void replaceNeighbour(Neighbour oldNeigh, Neighbour newNeigh) {
-        neighbours.remove(oldNeigh);
-        neighbours.add(newNeigh);
+        this.removeNeighbour(oldNeigh);
+        this.addNeighbour(newNeigh);
     }
 
     public void updateNeighbour(Neighbour updated) {
@@ -58,6 +60,9 @@ public class PeerInfo {
         neighbours.add(neighbour);
         this.me.setDegree(neighbours.size());
         hostCache.add(neighbour); // Everytime we add a neighbour, we also add to the hostcache
+
+        this.observer.newEdgeUpdate(this.getUsername(), neighbour.getUsername());
+
     }
 
     public void removeNeighbour(Neighbour neighbour) {
@@ -65,7 +70,10 @@ public class PeerInfo {
             return;
 
         neighbours.remove(neighbour);
+        System.out.println(this.getUsername() + " REMOVED " + neighbour.getUsername());
         this.me.setDegree(neighbours.size());
+
+        this.observer.removeEdgeUpdate(this.getUsername(), neighbour.getUsername());
     }
 
     public Neighbour getWorstNeighbour(int hostCapacity) {
@@ -116,6 +124,15 @@ public class PeerInfo {
 
         return best_host.get();
     }
+
+    // observers
+
+    public void subscribe(Observer o) {
+        this.observer = o;
+        this.observer.newNodeUpdate(this.getUsername());
+    }
+
+    // getters
 
     public String getUsername() {
         return this.me.getUsername();
