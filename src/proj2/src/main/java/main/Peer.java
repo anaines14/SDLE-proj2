@@ -166,9 +166,9 @@ public class Peer implements Serializable {
         Neighbour bestNgbr = peerInfo.getBestNeighbour();
 
         // host has higher capacity than every neighbour
-        boolean hostHigherCap = host.getCapacity() > bestNgbr.getCapacity(),
+        boolean hostHigherCap = host.getCapacity() > worstNgbr.getCapacity(),
                 // host has lower degree than worst neighbour (less busy)
-                hostLowerDegree = host.getDegree() < worstNgbr.getDegree();
+                hostLowerDegree = host.getDegree() < bestNgbr.getDegree();
 
         if (hostHigherCap || hostLowerDegree)
             peerInfo.replaceNeighbour(worstNgbr, new Neighbour(host));

@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
@@ -14,9 +16,12 @@ public class GraphTest {
     private InetAddress address;
     private ScheduledThreadPoolExecutor scheduler;
 
+    private static int MIN_NODE_SIZE = 2;
+    private static  int MAX_NODE_SIZE = 10;
+
     @BeforeEach
     public void setUp() {
-        scheduler = new ScheduledThreadPoolExecutor(5);
+        scheduler = new ScheduledThreadPoolExecutor(10);
         this.graph = new GraphWrapper("Network");
 
         address = null;
@@ -27,22 +32,34 @@ public class GraphTest {
         this.graph.display();
     }
 
-    public void nodeFactory(int numNodes) {
+    public List<Peer> nodeFactory(int numNodes) {
         String username = "user";
         Random rand = new Random();
+        List<Peer> peers = new ArrayList<>();
+
+        int capacity = MIN_NODE_SIZE + rand.nextInt(MAX_NODE_SIZE);
 
         // initiator peer
-        Peer initPeer = new Peer(username + 1, address, rand.nextInt());
+        Peer initPeer = new Peer(username + 1, address, capacity);
         initPeer.getPeerInfo().subscribe(this.graph);
         initPeer.execute(scheduler);
+        peers.add(initPeer);
 
         for(int i = 2; i <= numNodes; i++) {
-            Peer p = new Peer(username + i, address, rand.nextInt());
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            capacity = MIN_NODE_SIZE + rand.nextInt(MAX_NODE_SIZE);
+            Peer p = new Peer(username + i, address, capacity);
             p.getPeerInfo().subscribe(this.graph);
             p.execute(scheduler);
             p.join(initPeer);
+            peers.add(p);
         }
 
+        return peers;
     }
 
     @Test
@@ -60,12 +77,25 @@ public class GraphTest {
 
     @Test
     public void multipleNodeView() {
-        this.nodeFactory(10);
+        List<Peer> peers = this.nodeFactory(30);
 
         try {
-            Thread.sleep(60000);
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        for(Peer p: peers) {
+            System.out.println("Peer: " + p.getPeerInfo().getUsername() + " " + p.getPeerInfo().getHostCache());
+        }
+
+        this.scheduler.shutdown();
+
+        try {
+            Thread.sleep(120000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 }

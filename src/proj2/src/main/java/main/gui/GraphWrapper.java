@@ -15,7 +15,7 @@ public class GraphWrapper implements Observer{
 
         // fetch file from resources
         ClassLoader classLoader = getClass().getClassLoader();
-        URL resource = classLoader.getResource("stylesheet");
+        URL resource = classLoader.getResource("stylesheet.css");
 
         // set style
         graph.setAttribute("ui.stylesheet", "url('" + resource + "')");
@@ -26,10 +26,11 @@ public class GraphWrapper implements Observer{
         System.out.println("Displayed GRAPH in external window.");
     }
 
-    public void addNode(String name) throws IdAlreadyInUseException {
+    public void addNode(String name, int capacity) throws IdAlreadyInUseException {
         if (graph.getNode(name) == null) {
             Node node = graph.addNode(name);
             node.setAttribute("ui.label", node.getId());
+            node.setAttribute("ui.style", "size: " + capacity*5 + ";");
         }
     }
 
@@ -70,10 +71,10 @@ public class GraphWrapper implements Observer{
     }
 
     // new node
-    public void newNodeUpdate(String username) {
+    public void newNodeUpdate(String username, int capacity) {
         // if node not in graph => add it
         try {
-            this.addNode(username);
+            this.addNode(username, capacity);
         } catch(IdAlreadyInUseException e) {
             System.err.println("ERROR: Failed to add node on graph");
         }

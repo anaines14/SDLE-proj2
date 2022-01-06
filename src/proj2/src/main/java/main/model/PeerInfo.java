@@ -63,7 +63,8 @@ public class PeerInfo {
         this.me.setDegree(neighbours.size());
         hostCache.add(neighbour); // Everytime we add a neighbour, we also add to the hostcache
 
-        this.observer.newEdgeUpdate(this.getUsername(), neighbour.getUsername());
+        if (this.observer != null)
+            this.observer.newEdgeUpdate(this.getUsername(), neighbour.getUsername());
 
     }
 
@@ -75,7 +76,8 @@ public class PeerInfo {
         System.out.println(this.getUsername() + " REMOVED " + neighbour.getUsername());
         this.me.setDegree(neighbours.size());
 
-        this.observer.removeEdgeUpdate(this.getUsername(), neighbour.getUsername());
+        if (this.observer != null)
+            this.observer.removeEdgeUpdate(this.getUsername(), neighbour.getUsername());
     }
 
     public Neighbour getWorstNeighbour(int hostCapacity) {
@@ -121,17 +123,19 @@ public class PeerInfo {
                 .filter(f -> !neighbours.contains(f))
                 .collect(Collectors.toSet());
 
+
         Optional<Host> best_host = notNeighbors.stream().max(Host::compareTo);
         if(best_host.isEmpty()) return null;
-
+        System.out.println("==== " + this.getUsername());
+        System.out.println("NOT NEIGH "  + notNeighbors);
+        System.out.println("I'M THE BEST " + best_host);
         return best_host.get();
     }
 
     // observers
-
     public void subscribe(Observer o) {
         this.observer = o;
-        this.observer.newNodeUpdate(this.getUsername());
+        this.observer.newNodeUpdate(this.getUsername(), this.getCapacity());
     }
 
     // getters
@@ -150,6 +154,10 @@ public class PeerInfo {
 
     public Host getHost() {
         return this.me;
+    }
+
+    public int getCapacity() {
+        return this.me.getCapacity();
     }
 
     public Set<Neighbour> getNeighbours() { return neighbours; }

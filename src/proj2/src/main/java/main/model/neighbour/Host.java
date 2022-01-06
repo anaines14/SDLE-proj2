@@ -68,7 +68,7 @@ public class Host implements Serializable, Comparable<Host> {
     @Override
     public int compareTo(Host host) {
         if (capacity == host.capacity)
-            return Integer.compare(host.degree, degree);
-        return Integer.compare(host.capacity, capacity);
+            return Integer.compare(degree, host.degree);
+        return Integer.compare(capacity, host.capacity);
     }
 }

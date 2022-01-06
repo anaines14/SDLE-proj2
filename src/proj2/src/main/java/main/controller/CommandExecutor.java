@@ -1,7 +1,6 @@
 package main.controller;
 
 import main.Peer;
-import main.controller.MultipleNodeExecutor;
 import main.model.neighbour.Neighbour;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
@@ -277,10 +276,10 @@ public class CommandExecutor {
 
         // fetch file from resources
         ClassLoader classLoader = getClass().getClassLoader();
-        URL resource = classLoader.getResource("stylesheet");
+        URL resource = classLoader.getResource("stylesheet.css");
 
         // set style
-        graph.setAttribute("ui.stylesheet", "url('" + resource + "')");
+        graph.setAttribute("ui.stylesheet.css", "url('" + resource + "')");
 
         // create nodes
         for (String username : this.peers.keySet()) {

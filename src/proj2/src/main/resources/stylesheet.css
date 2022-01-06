@@ -1,0 +1,27 @@
+graph {
+    fill-color: #828bfc, #85e7d4;
+    fill-mode:gradient-horizontal;
+}
+
+node {
+    text-size:12;
+    text-color:black;
+    text-style:bold;
+    text-alignment:under;
+    fill-color: white;
+
+    stroke-mode: plain;
+    stroke-color: black;
+    stroke-width: 2;
+}
+
+edge {
+    text-color:black;
+    size:2;
+    fill-color:black;
+    text-alignment:center;
+}
+
+node:clicked {
+	fill-color: red;
+}
