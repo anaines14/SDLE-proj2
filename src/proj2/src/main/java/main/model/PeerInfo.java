@@ -126,9 +126,6 @@ public class PeerInfo {
 
         Optional<Host> best_host = notNeighbors.stream().max(Host::compareTo);
         if(best_host.isEmpty()) return null;
-        System.out.println("==== " + this.getUsername());
-        System.out.println("NOT NEIGH "  + notNeighbors);
-        System.out.println("I'M THE BEST " + best_host);
         return best_host.get();
     }
 

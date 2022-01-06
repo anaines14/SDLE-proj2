@@ -85,10 +85,6 @@ public class GraphTest {
             e.printStackTrace();
         }
 
-        for(Peer p: peers) {
-            System.out.println("Peer: " + p.getPeerInfo().getUsername() + " " + p.getPeerInfo().getHostCache());
-        }
-
         this.scheduler.shutdown();
 
         try {
