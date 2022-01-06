@@ -93,4 +93,8 @@ public class TimelineInfo {
         for (Timeline timeline : this.timelines.values())
             System.out.println(timeline);
     }
+
+    public boolean hasTimeline(String wantedUser) {
+        return timelines.containsKey(wantedUser);
+    }
 }

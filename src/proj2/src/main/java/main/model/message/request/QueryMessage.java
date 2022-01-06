@@ -58,6 +58,6 @@ public class QueryMessage extends MessageRequest {
 
     @Override
     public String toString() {
-        return super.toString() + ": " + path.toString();
+        return super.toString() + "("+ this.wantedUsername + ":" + path.toString() + ")";
     }
 }

@@ -35,8 +35,10 @@ public class Path implements Serializable {
     @Override
     public String toString() {
         StringBuilder res = new StringBuilder();
-        for (Sender s: path)
-            res.append(s.getPort()).append("-");
+        for (int i = 0; i < path.size() - 1; ++i)
+            res.append(path.get(i).getPort()).append("-");
+        if (!path.isEmpty())
+            res.append(path.get(path.size() - 1).getPort());
         return res.toString();
     }
 }

@@ -3,27 +3,29 @@ package main.model;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
+import main.model.timelines.TimelineInfo;
 
 import java.net.InetAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 // Data class that serves like a Model in an MVC
 public class PeerInfo {
     private Host me;
-    public Map<String, Timeline> timelines;
+    private TimelineInfo timelineInfo;
     private Set<Neighbour> neighbours;
     private Set<Host> hostCache;
 
-    public PeerInfo(String username, InetAddress address, String port, int capacity, Map<String, Timeline> timelines) {
+    public PeerInfo(String username, InetAddress address, String port, int capacity, TimelineInfo timelineInfo) {
         this.me = new Host(username, address, port, capacity, 0);
-        this.timelines = timelines;
-        this.neighbours = new HashSet<>();
+        this.timelineInfo = timelineInfo;
+        this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = new HashSet<>();
     }
 
     public PeerInfo(InetAddress address, String port, String username, int capacity) {
-        this(username, address, port, capacity, new HashMap<>());
+        this(username, address, port, capacity, new TimelineInfo(username));
     }
 
     // Neighbours
@@ -143,10 +145,10 @@ public class PeerInfo {
         return me.getDegree();
     }
 
-    /* Returns list of usernames that we have timelines to */
-    public List<String> getStoredTimelines() {
-        return timelines.keySet().stream().toList();
+    public TimelineInfo getTimelineInfo() {
+        return timelineInfo;
     }
+
 
     @Override
     public boolean equals(Object o) {

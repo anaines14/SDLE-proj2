@@ -19,7 +19,7 @@ public class Worker {
     private ZMQ.Socket worker;
     private Thread thread;
 
-    Worker(PeerInfo peerInfo, MessageSender sender, ZContext context, int id){
+    public Worker(PeerInfo peerInfo, MessageSender sender, ZContext context, int id){
         handler = new MessageHandler(peerInfo, sender);
         this.sender = sender;
         worker = context.createSocket(SocketType.REQ);
