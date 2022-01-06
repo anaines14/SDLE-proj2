@@ -1,5 +1,7 @@
 graph {
     fill-color:grey;
+    fill-mode: image-scaled;
+        fill-image: url('https://files.lafm.com.co/assets/public/2019-05/grumpy_cat_0.jpg');
 }
 
 node {
@@ -8,7 +10,8 @@ node {
     text-style:bold;
     text-alignment:under;
     size:25;
-    fill-color:#848482;
+    fill-mode: image-scaled;
+    fill-image: url('https://files.lafm.com.co/assets/public/2019-05/grumpy_cat_0.jpg');
 }
 
 edge {
