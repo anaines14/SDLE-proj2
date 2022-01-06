@@ -8,6 +8,7 @@ import org.zeromq.ZMQ;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 public class MessageSender {
     // Each Peer has a MessageSender, and it sends all messages through it
@@ -40,9 +41,11 @@ public class MessageSender {
     public MessageResponse sendRequest(Message message, String port, int timeout) {
         ZMQ.Socket socket = context.createSocket(SocketType.REQ);
         socket.setReceiveTimeOut(timeout);
-        socket.setIdentity(username.getBytes(StandardCharsets.UTF_8));
-        socket.connect("tcp://localhost:" + port); // TODO convert to address
+        String uuid = username + "-" + UUID.randomUUID();
+        // We use UUID's so that, when creating multiple sockets per user we don't override them
 
+        socket.setIdentity(uuid.getBytes(StandardCharsets.UTF_8));
+        socket.connect("tcp://localhost:" + port); // TODO convert to address
         this.send(message, socket);
         System.out.println(username + " SENT[" + message.getType() + "]: " + port);
 
@@ -52,6 +55,8 @@ public class MessageSender {
             e.printStackTrace();
         }
 
+        socket.close();
+        context.destroySocket(socket);
         return null;
     }
 

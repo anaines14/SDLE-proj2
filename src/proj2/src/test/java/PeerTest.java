@@ -1,6 +1,5 @@
 import main.network.Peer;
 import main.network.neighbour.Neighbour;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

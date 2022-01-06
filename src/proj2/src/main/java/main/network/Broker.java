@@ -26,7 +26,7 @@ public class Broker {
 
     private Thread thread;
 
-    Broker(ZContext context, MessageSender sender, PeerInfo peerInfo){
+    public Broker(ZContext context, MessageSender sender, PeerInfo peerInfo){
         this.context = context;
         frontend = context.createSocket(SocketType.ROUTER);
         backend = context.createSocket(SocketType.ROUTER);
@@ -89,7 +89,9 @@ public class Broker {
             if(worker_queues.size() > 0)
                 items.register(frontend, ZMQ.Poller.POLLIN);
 
-            items.poll();
+            if (items.poll() < 0)
+                return;
+
             if (items.pollin(0)) { // Backend, Worker pinged
                 try {
                     worker_queues.add(backend.recvStr());
