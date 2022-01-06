@@ -5,8 +5,11 @@ import main.network.message.*;
 import main.network.neighbour.Host;
 import main.network.neighbour.Neighbour;
 import main.timelines.TimelineInfo;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;
@@ -34,16 +37,19 @@ public class Peer implements Serializable {
     private ScheduledFuture<?> pingNeigFuture;
     private ScheduledFuture<?> addNeighFuture;
 
-    public Peer(String username, InetAddress address, String port, int capacity, ScheduledThreadPoolExecutor scheduler) {
+    public Peer(String username, InetAddress address, int capacity) {
         this.context = new ZContext();
+
+        // assign random port
+        ZMQ.Socket socket = context.createSocket(SocketType.REP);
+        int p = socket.bindToRandomPort("tcp://" + address.getHostName());
+        String port = Integer.toString(p);
+        socket.close();
+
         this.peerInfo = new PeerInfo(address, port, username, capacity);
         this.timelineInfo = new TimelineInfo(username);
         this.sender = new MessageSender(peerInfo, context);
         this.broker = new Broker(context, sender, peerInfo);
-    }
-
-    public Peer(String username, InetAddress address, String port, int capacity) {
-        this(username, address, port, capacity, new ScheduledThreadPoolExecutor(MultipleNodeExecutor.POOL_SIZE));
     }
 
     public void join(Neighbour neighbour) {
@@ -70,7 +76,6 @@ public class Peer implements Serializable {
 
     public void queryNeighbour(String wantedTimeline, Neighbour neighbour) {
         this.sender.sendRequest(new QueryMessage(wantedTimeline, peerInfo.getHost()), neighbour.getPort());
-
     }
 
     public void printTimelines() {

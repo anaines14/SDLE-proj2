@@ -25,9 +25,9 @@ public class PeerTest {
         try {
             localhost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ignored) {}
-        peer1 = new Peer("u1", localhost, "8101", 10);
-        peer2 = new Peer("u2", localhost, "8102", 20);
-        peer3 = new Peer("u3", localhost, "8103", 30);
+        peer1 = new Peer("u1", localhost,  10);
+        peer2 = new Peer("u2", localhost, 20);
+        peer3 = new Peer("u3", localhost, 30);
         scheduler = new ScheduledThreadPoolExecutor(3);
 
         peer1.execute(scheduler);
@@ -61,7 +61,7 @@ public class PeerTest {
         peer3.join(new Neighbour(peer2.getPeerInfo().getHost()));
 
         try {
-            Thread.sleep(3000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

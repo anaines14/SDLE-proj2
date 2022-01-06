@@ -73,7 +73,7 @@ public class TestApp {
                 Avalable commands:
 
 
-                \t START <username> <IPaddress> <port> <capacity>
+                \t START <username> <IPaddress> <capacity>
                 \t START_MULT <n>
                 \t POST <username> "<content>"
                 \t UPDATE <username> <post_id> "<content>"

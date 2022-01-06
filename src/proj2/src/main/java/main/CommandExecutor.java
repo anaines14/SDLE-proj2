@@ -62,15 +62,14 @@ public class CommandExecutor {
     }
 
     private int execStart(String[] opts) throws UnknownHostException {
-        if (opts.length < 5) return -1;
+        if (opts.length < 4) return -1;
 
         // create and store peer
         String username = opts[1];
         InetAddress address = InetAddress.getByName(opts[2]);
-        String port = opts[3];
-        int capacity = Integer.parseInt(opts[4]);
+        int capacity = Integer.parseInt(opts[3]);
 
-        Peer peer = new Peer(username, address, port, capacity);
+        Peer peer = new Peer(username, address, capacity);
         startPeer(username, peer);
 
         return 0;
@@ -153,7 +152,7 @@ public class CommandExecutor {
             int capacity = 1 + random.nextInt(MAX_CAPACITY);
 
             // start and store peer
-            Peer peer = new Peer(username, address, String.valueOf(8000 + curr_peer_id), capacity);
+            Peer peer = new Peer(username, address, capacity);
             startPeer(username, peer);
 
             curr_peer_id++;
