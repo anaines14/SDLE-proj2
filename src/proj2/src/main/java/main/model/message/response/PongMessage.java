@@ -1,4 +1,4 @@
-package main.model.message;
+package main.model.message.response;
 
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
@@ -9,9 +9,7 @@ public class PongMessage extends MessageResponse {
     public Neighbour sender;
     public Set<Host> hostCache;
 
-
     public PongMessage(Neighbour sender, Set<Host> hostCache) {
-        super(sender);
         this.sender = sender;
         this.hostCache = hostCache;
     }

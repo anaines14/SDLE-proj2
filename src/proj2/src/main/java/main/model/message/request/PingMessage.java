@@ -1,4 +1,4 @@
-package main.model.message;
+package main.model.message.request;
 
 import main.model.neighbour.Host;
 
@@ -6,7 +6,6 @@ public class PingMessage extends MessageRequest {
     private Host sender;
 
     public PingMessage(Host host) {
-        super(host);
         this.sender = host;
     }
 

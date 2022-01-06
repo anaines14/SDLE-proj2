@@ -3,10 +3,11 @@ package main;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
-import main.model.message.MessageResponse;
-import main.model.message.PingMessage;
-import main.model.message.PongMessage;
-import main.model.message.QueryMessage;
+import main.model.message.request.MessageRequest;
+import main.model.message.request.PingMessage;
+import main.model.message.request.QueryMessage;
+import main.model.message.response.MessageResponse;
+import main.model.message.response.PongMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.TimelineInfo;
@@ -26,6 +27,7 @@ public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
     public static final int MAX_NGBRS = 3;
+    public static final int MAX_RETRY = 3;
     public static final int RCV_TIMEOUT = 1000;
 
     // Model/Data members
@@ -38,7 +40,7 @@ public class Peer implements Serializable {
     private final MessageSender sender;
 
     // Hooks
-    private ScheduledFuture<?> pingNeigFuture;
+    private ScheduledFuture<?> pingNeighFuture;
     private ScheduledFuture<?> addNeighFuture;
 
     public Peer(String username, InetAddress address, int capacity) {
@@ -52,7 +54,7 @@ public class Peer implements Serializable {
 
         this.peerInfo = new PeerInfo(address, port, username, capacity);
         this.timelineInfo = new TimelineInfo(username);
-        this.sender = new MessageSender(peerInfo, context);
+        this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker = new Broker(context, sender, peerInfo);
     }
 
@@ -60,26 +62,8 @@ public class Peer implements Serializable {
         peerInfo.addNeighbour(neighbour);
     }
 
-    public PongMessage ping(Neighbour neighbour) {
-        MessageResponse response = null;
-        int i = 0;
-        boolean done = false;
-        while (i < 3 && !done) {
-            response = this.sender.
-                    sendRequest(new PingMessage(peerInfo.getHost()), neighbour.getPort(), RCV_TIMEOUT);
-
-            if (response != null && Objects.equals(response.getType(), "PONG")) {
-                done = true;
-            }
-
-            ++i;
-        }
-
-        return (PongMessage) response;
-    }
-
-    public void queryNeighbour(String wantedTimeline, Neighbour neighbour) {
-        this.sender.sendRequest(new QueryMessage(wantedTimeline, peerInfo.getHost()), neighbour.getPort());
+    public void join(Peer peer) {
+        peerInfo.addNeighbour(new Neighbour(peer.getPeerInfo().getHost()));
     }
 
     public void printTimelines() {
@@ -100,14 +84,14 @@ public class Peer implements Serializable {
 
     public void execute(ScheduledThreadPoolExecutor scheduler) {
         this.broker.execute();
-        pingNeigFuture = scheduler.scheduleWithFixedDelay(this::pingNeighbours,
+        pingNeighFuture = scheduler.scheduleWithFixedDelay(this::pingNeighbours,
                 0, PINGNEIGH_DELAY, TimeUnit.MILLISECONDS);
         addNeighFuture = scheduler.scheduleWithFixedDelay(this::addNeighbour,
                 0, ADDNEIGH_DELAY, TimeUnit.MILLISECONDS);
     }
 
     public void cancelHooks() {
-        if (pingNeigFuture != null) pingNeigFuture.cancel(false);
+        if (pingNeighFuture != null) pingNeighFuture.cancel(false);
         if (addNeighFuture != null) addNeighFuture.cancel(false);
     }
 
@@ -117,23 +101,25 @@ public class Peer implements Serializable {
         this.context.close();
     }
 
-    public void queryNeighbours(String timeline) {
-        // check if neighbours have the timeline
+    public void queryNeighbours(String username) {
+        // check if neighbours have the username's timeline
         // TODO: BLOOM FILTERS
-        Set<Neighbour> neighbours = this.peerInfo.getNeighboursWithTimeline(timeline);
-        System.out.println("got neighbours with timelibnes: " + neighbours.size());
+        Set<Neighbour> neighbours = this.peerInfo.getNeighboursWithTimeline(username);
+        System.out.println("got neighbours with timelines: " + neighbours.size());
 
         // query neighbours with timelines
-        for(Neighbour n: neighbours) {
-            queryNeighbour(timeline, n);
+        for (Neighbour n: neighbours) {
+            MessageRequest request = new QueryMessage(username, this.peerInfo);
+            this.sender.sendRequestNTimes(request, n.getPort());
             System.out.println("query neighbour");
         }
-
     }
 
     public void pingNeighbours() {
         for (Neighbour neighbour: peerInfo.getNeighbours()) { // TODO multithread this, probably with scheduler
-            PongMessage response = ping(neighbour);
+            PingMessage pingMessage = new PingMessage(peerInfo.getHost());
+            MessageResponse response = this.sender.sendRequestNTimes(pingMessage, neighbour.getPort());
+
             if (response == null) { // Went offline after n tries
                 System.out.println(peerInfo.getUsername() + " REMOVED " + neighbour.getUsername());
                 peerInfo.removeNeighbour(neighbour);
@@ -141,9 +127,10 @@ public class Peer implements Serializable {
                 continue;
             }
 
-            Neighbour updatedNeighbour = response.sender;
+            PongMessage pong = (PongMessage) response;
+            Neighbour updatedNeighbour = pong.sender;
             if (peerInfo.hasNeighbour(updatedNeighbour)) {
-                Set<Host> hostCache = response.hostCache;
+                Set<Host> hostCache = pong.hostCache;
                 System.out.println(peerInfo.getUsername() + " UPDATED " + neighbour.getUsername());
                 peerInfo.updateNeighbour(updatedNeighbour);
                 peerInfo.updateHostCache(hostCache);

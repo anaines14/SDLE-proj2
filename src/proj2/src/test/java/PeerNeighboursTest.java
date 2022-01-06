@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTimeout;
 
-public class PeerTest {
+public class PeerNeighboursTest {
     private Peer peer1;
     private Peer peer2;
     private Peer peer3;
@@ -82,7 +82,7 @@ public class PeerTest {
     }
 
     @Test
-    public void peerCommunication() {
+    public void peerNeighbours() {
         peer1.join(new Neighbour(peer3.getPeerInfo().getHost()));
         peer3.join(new Neighbour(peer1.getPeerInfo().getHost()));
 

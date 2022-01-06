@@ -2,8 +2,9 @@ import main.controller.network.Broker;
 import main.model.PeerInfo;
 import main.controller.message.MessageSender;
 import main.model.message.Message;
-import main.model.message.PingMessage;
-import main.model.message.PongMessage;
+import main.model.message.request.MessageRequest;
+import main.model.message.request.PingMessage;
+import main.model.message.response.PongMessage;
 import main.model.neighbour.Host;
 import org.junit.jupiter.api.Test;
 import org.zeromq.ZContext;
@@ -23,19 +24,18 @@ public class BrokerTest {
         } catch (UnknownHostException ignored) {}
 
         ZContext context = new ZContext();
-        MessageSender sender = new MessageSender(localhost, "8001", "user1", context);
+        MessageSender sender = new MessageSender(localhost, "8001", "user1", 3, 500, context);
         PeerInfo peerInfo = new PeerInfo(localhost, "8001", "user1", 50);
         Broker broker = new Broker(context, sender, peerInfo);
 
         Host peer2 = new Host("user2", localhost, "8002", 10, 10);
         broker.execute();
 
-        Message request = new PingMessage(peer2);
-        MessageSender sender2 = new MessageSender(localhost, "8002", "user2", context);
-
-        MessageSender sender3 = new MessageSender(localhost, "8002", "user4", context);
-        assertEquals(PongMessage.class, sender2.sendRequest(request, "8001", 500).getClass());
-        assertEquals(PongMessage.class, sender3.sendRequest(request, "8001", 500).getClass());
+        MessageRequest request = new PingMessage(peer2);
+        MessageSender sender2 = new MessageSender(localhost, "8002", "user2", 3, 500, context);
+        MessageSender sender3 = new MessageSender(localhost, "8002", "user4", 3, 500, context);
+        assertEquals(PongMessage.class, sender2.sendRequestNTimes(request, "8001").getClass());
+        assertEquals(PongMessage.class, sender3.sendRequestNTimes(request, "8001").getClass());
 
         try {
             Thread.sleep(1000);

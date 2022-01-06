@@ -1,4 +1,6 @@
-package main.model.message.sender;
+package main.model.message.request;
+
+import main.model.PeerInfo;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -11,6 +13,11 @@ public class Sender implements Serializable {
     public Sender(InetAddress address, String port) {
         this.address = address;
         this.port = port;
+    }
+
+    public Sender(PeerInfo peerInfo) {
+        this.address = peerInfo.getAddress();
+        this.port = peerInfo.getPort();
     }
 
     public String getPort() {

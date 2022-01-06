@@ -1,13 +1,8 @@
-package main.model.message;
+package main.model.message.response;
 
 import main.model.neighbour.Host;
 
 public class OkMessage extends MessageResponse {
-
-    public OkMessage(Host host) {
-        super(host);
-    }
-
     @Override
     public String getType() {
         return "OK";

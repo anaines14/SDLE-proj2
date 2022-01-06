@@ -2,6 +2,13 @@ package main.controller.message;
 
 import main.model.PeerInfo;
 import main.model.message.*;
+import main.model.message.request.MessageRequest;
+import main.model.message.request.PingMessage;
+import main.model.message.request.QueryMessage;
+import main.model.message.response.KoMessage;
+import main.model.message.response.MessageResponse;
+import main.model.message.response.OkMessage;
+import main.model.message.response.PongMessage;
 import main.model.neighbour.Neighbour;
 
 import java.net.InetAddress;
@@ -22,7 +29,7 @@ public class MessageHandler {
 
     public Message handle(Message message) {
         if (!(message instanceof MessageRequest)) // We only can handle message requests
-            return new KoMessage(peerInfo.getHost());
+            return new KoMessage();
 
         return handle((MessageRequest) message);
     }
@@ -32,6 +39,8 @@ public class MessageHandler {
         switch (message.getType()) {
             case "PING":
                 return handle((PingMessage) message);
+            case "QUERY":
+                return handle((QueryMessage) message);
             default:
                 return null;
         }
@@ -46,8 +55,8 @@ public class MessageHandler {
         return replyMsg;
     }
 
-    private void handle(QueryMessage message) {
-        // TODO
-        System.out.println("Received QueryMessage");
+    private MessageResponse handle(QueryMessage message) {
+        System.out.println("Received QueryMessage " + message);
+        return new OkMessage();
     }
 }

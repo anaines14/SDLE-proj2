@@ -2,7 +2,8 @@ package main.controller.message;
 
 import main.model.PeerInfo;
 import main.model.message.Message;
-import main.model.message.MessageResponse;
+import main.model.message.request.MessageRequest;
+import main.model.message.response.MessageResponse;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -10,6 +11,7 @@ import org.zeromq.ZMQ;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.UUID;
 
 public class MessageSender {
@@ -18,16 +20,21 @@ public class MessageSender {
     private final String senderPort;
     private String username;
     private final ZContext context;
+    private int maxRetries;
+    private int receiveTimeout;
 
-    public MessageSender(InetAddress senderAddress, String senderPort, String username, ZContext context) {
+    public MessageSender(InetAddress senderAddress, String senderPort,
+                         String username, int maxRetries, int receiveTimeout, ZContext context) {
         this.senderAddress = senderAddress;
         this.senderPort = senderPort;
         this.username = username;
+        this.maxRetries = maxRetries;
+        this.receiveTimeout = receiveTimeout;
         this.context = context;
     }
 
-    public MessageSender(PeerInfo peerInfo, ZContext context){
-        this(peerInfo.getAddress(), peerInfo.getPort(), peerInfo.getUsername(), context);
+    public MessageSender(PeerInfo peerInfo, int maxRetries, int receiveTimeout, ZContext context){
+        this(peerInfo.getAddress(), peerInfo.getPort(), peerInfo.getUsername(), maxRetries, receiveTimeout, context);
     }
 
     public void send(Message message, ZMQ.Socket socket) {
@@ -40,14 +47,15 @@ public class MessageSender {
         socket.send(bytes);
     }
 
-    public MessageResponse sendRequest(Message message, String port, int timeout) {
+    private MessageResponse sendRequest(MessageRequest message, String port) {
         ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-        socket.setReceiveTimeOut(timeout);
+        socket.setReceiveTimeOut(receiveTimeout);
         String uuid = username + "-" + UUID.randomUUID();
         // We use UUID's so that, when creating multiple sockets per user we don't override them
 
         socket.setIdentity(uuid.getBytes(StandardCharsets.UTF_8));
         socket.connect("tcp://localhost:" + port); // TODO convert to address
+
         this.send(message, socket);
         System.out.println(username + " SENT[" + message.getType() + "]: " + port);
 
@@ -62,7 +70,18 @@ public class MessageSender {
         return null;
     }
 
-    public Message sendRequest(Message message, String port) {
-        return sendRequest(message, port, -1);
+    public MessageResponse sendRequestNTimes(MessageRequest message, String port) {
+        int i = 0;
+        boolean done = false;
+        while (i < this.maxRetries && !done) {
+            MessageResponse response = this.sendRequest(message, port);
+            if (response != null && Objects.equals(response.getType(), "PONG")) {
+                System.out.println("Failed getting response to [" + message.getType() + "]" + port);
+                return response;
+            }
+            ++i;
+        }
+
+        return null;
     }
 }
