@@ -47,14 +47,7 @@ public class Peer implements Serializable {
 
     public Peer(String username, InetAddress address, int capacity) {
         this.context = new ZContext();
-
-        // assign random port
-        ZMQ.Socket socket = context.createSocket(SocketType.REP);
-        int p = socket.bindToRandomPort("tcp://" + address.getHostName());
-        String port = Integer.toString(p);
-        socket.close();
-
-        this.peerInfo = new PeerInfo(address, port, username, capacity);
+        this.peerInfo = new PeerInfo(address, username, capacity);
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker = new Broker(context, sender, peerInfo);
     }

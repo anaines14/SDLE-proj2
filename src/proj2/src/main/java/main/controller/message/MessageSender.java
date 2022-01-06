@@ -16,17 +16,12 @@ import java.util.UUID;
 
 public class MessageSender {
     // Each Peer has a MessageSender, and it sends all messages through it
-    private final InetAddress senderAddress;
-    private final String senderPort;
     private String username;
     private final ZContext context;
     private int maxRetries;
     private int receiveTimeout;
 
-    public MessageSender(InetAddress senderAddress, String senderPort,
-                         String username, int maxRetries, int receiveTimeout, ZContext context) {
-        this.senderAddress = senderAddress;
-        this.senderPort = senderPort;
+    public MessageSender(String username, int maxRetries, int receiveTimeout, ZContext context) {
         this.username = username;
         this.maxRetries = maxRetries;
         this.receiveTimeout = receiveTimeout;
@@ -34,7 +29,7 @@ public class MessageSender {
     }
 
     public MessageSender(PeerInfo peerInfo, int maxRetries, int receiveTimeout, ZContext context){
-        this(peerInfo.getAddress(), peerInfo.getPort(), peerInfo.getUsername(), maxRetries, receiveTimeout, context);
+        this(peerInfo.getUsername(), maxRetries, receiveTimeout, context);
     }
 
     public void send(Message message, ZMQ.Socket socket) {

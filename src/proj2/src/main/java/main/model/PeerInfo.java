@@ -17,15 +17,15 @@ public class PeerInfo {
     private Set<Neighbour> neighbours;
     private Set<Host> hostCache;
 
-    public PeerInfo(String username, InetAddress address, String port, int capacity, TimelineInfo timelineInfo) {
-        this.me = new Host(username, address, port, capacity, 0);
+    public PeerInfo(String username, InetAddress address, int capacity, TimelineInfo timelineInfo) {
+        this.me = new Host(username, address, "-1", capacity, 0);
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = new HashSet<>();
     }
 
-    public PeerInfo(InetAddress address, String port, String username, int capacity) {
-        this(username, address, port, capacity, new TimelineInfo(username));
+    public PeerInfo(InetAddress address, String username, int capacity) {
+        this(username, address, capacity, new TimelineInfo(username));
     }
 
     // Neighbours
@@ -156,5 +156,9 @@ public class PeerInfo {
         if (o == null || getClass() != o.getClass()) return false;
         PeerInfo peerInfo = (PeerInfo) o;
         return Objects.equals(me, peerInfo.me);
+    }
+
+    public void setPort(String port) {
+        this.me.setPort(port);
     }
 }
