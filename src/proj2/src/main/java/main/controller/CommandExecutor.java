@@ -1,6 +1,7 @@
 package main.controller;
 
 import main.Peer;
+import main.gui.GraphWrapper;
 import main.model.neighbour.Neighbour;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
@@ -17,11 +18,14 @@ public class CommandExecutor {
     private final MultipleNodeExecutor executor;
     private final Map<String, Peer> peers;
     private int curr_peer_id;
+    private final GraphWrapper graph;
 
     public CommandExecutor() {
         this.peers = new HashMap<>();
         this.executor = new MultipleNodeExecutor();
         this.curr_peer_id = 1;
+        this.graph = new GraphWrapper("Network");
+        this.executor.execute();
     }
 
     public int execCmd(String cmd) throws UnknownHostException, InterruptedException {
@@ -50,8 +54,6 @@ public class CommandExecutor {
                 return this.execPrintPeers();
             case "SLEEP":
                 return this.execSleep(opts);
-            case "GRAPH":
-                return this.execGraph();
             case "BREAK":
                 return this.execBreakpoint();
             default:
@@ -61,20 +63,26 @@ public class CommandExecutor {
     }
 
     private int execStart(String[] opts) throws UnknownHostException {
-        if (opts.length < 4) return -1;
+        if (opts.length < 3) return -1;
 
         // create and store peer
         String username = opts[1];
-        InetAddress address = InetAddress.getByName(opts[2]);
-        int capacity = Integer.parseInt(opts[3]);
+        int capacity = Integer.parseInt(opts[2]);
 
+        InetAddress address = InetAddress.getByName("localhost");
         Peer peer = new Peer(username, address, capacity);
+
         startPeer(username, peer);
 
         return 0;
     }
 
+    public void displayGraph() {
+        this.graph.display();
+    }
+
     private void startPeer(String username, Peer peer) {
+        peer.getPeerInfo().subscribe(this.graph);
         this.connectToNetwork(peer);
         peers.put(username, peer);
         executor.addNode(peer);
@@ -267,38 +275,6 @@ public class CommandExecutor {
         if (opts.length < 2) return -1;
         int time = Integer.parseInt(opts[1]) * 1000;
         Thread.sleep(time);
-        return 0;
-    }
-
-    private int execGraph() {
-        System.setProperty("org.graphstream.ui","swing");
-        Graph graph = new SingleGraph("Network");
-
-        // fetch file from resources
-        ClassLoader classLoader = getClass().getClassLoader();
-        URL resource = classLoader.getResource("stylesheet.css");
-
-        // set style
-        graph.setAttribute("ui.stylesheet.css", "url('" + resource + "')");
-
-        // create nodes
-        for (String username : this.peers.keySet()) {
-            Node node = graph.addNode(username);
-            node.setAttribute("ui.label", node.getId());
-        }
-        // create edges
-        for (Map.Entry<String, Peer> entry : this.peers.entrySet()) {
-            String username = entry.getKey();
-            Peer peer = entry.getValue();
-            for (Neighbour neigh : peer.getPeerInfo().getNeighbours()) {
-                String neigh_name = neigh.getUsername();
-                String id = username + neigh_name;
-                graph.addEdge(id, username, neigh_name);
-            }
-        }
-
-        graph.display();
-        System.out.println("Displayed GRAPH in external window.");
         return 0;
     }
 

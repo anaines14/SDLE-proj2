@@ -92,6 +92,5 @@ public class GraphTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
     }
 }

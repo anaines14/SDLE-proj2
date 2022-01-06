@@ -11,9 +11,7 @@ import main.model.message.response.PongMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.TimelineInfo;
-import org.zeromq.SocketType;
 import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -23,7 +21,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
-import static java.util.Collections.shuffle;
 
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
