@@ -216,6 +216,25 @@ public class CommandExecutor {
     }
 
     private int execTimeline(String[] opts) { // TODO
+        // get peer
+        String username = opts[1];
+        String timeline = opts[2];
+        Peer peer = peers.get(username);
+
+        if (peer == null) {
+            System.err.println("ERROR: Peer not found.");
+            return -1;
+        }
+
+        peer.pingNeighbours();
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Pinged neighbours");
+
+        peer.queryNeighbours(timeline);
 
         return 0;
     }

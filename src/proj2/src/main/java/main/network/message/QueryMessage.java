@@ -2,7 +2,7 @@ package main.network.message;
 
 import main.network.neighbour.Host;
 
-public class QueryMessage extends Message {
+public class QueryMessage extends MessageRequest {
     private final String wantedTimeline;
 
     public QueryMessage(String wantedTimeline, Host host) {
