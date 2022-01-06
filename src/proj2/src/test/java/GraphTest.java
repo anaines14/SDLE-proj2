@@ -37,7 +37,7 @@ public class GraphTest {
         Random rand = new Random();
         List<Peer> peers = new ArrayList<>();
 
-        int capacity = MIN_NODE_SIZE + rand.nextInt(MAX_NODE_SIZE);
+        int capacity = 1;
 
         // initiator peer
         Peer initPeer = new Peer(username + 1, address, capacity);

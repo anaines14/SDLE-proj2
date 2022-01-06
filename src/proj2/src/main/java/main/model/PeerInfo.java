@@ -87,7 +87,7 @@ public class PeerInfo {
         if (badNgbrs.isEmpty()) return null; // REJECT host if there are no worse neighbours
 
         // from neighbours with less capacity than host, get the one with max degree
-        return badNgbrs.stream().max(Host::compareTo).get();
+        return badNgbrs.stream().min(Host::compareTo).get();
     }
 
     public Neighbour getBestNeighbour() { // With highest capacity
