@@ -1,7 +1,7 @@
-package main.network.message;
+package main.model.message;
 
-import main.network.neighbour.Host;
-import main.network.neighbour.Neighbour;
+import main.model.neighbour.Host;
+import main.model.neighbour.Neighbour;
 
 import java.util.Set;
 

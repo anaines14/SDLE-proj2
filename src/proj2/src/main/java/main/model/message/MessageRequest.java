@@ -1,6 +1,6 @@
-package main.network.message;
+package main.model.message;
 
-import main.network.neighbour.Host;
+import main.model.neighbour.Host;
 
 public abstract class MessageRequest extends Message {
     public MessageRequest(Host host) {

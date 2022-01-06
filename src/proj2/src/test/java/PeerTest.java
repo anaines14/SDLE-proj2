@@ -1,5 +1,5 @@
-import main.network.Peer;
-import main.network.neighbour.Neighbour;
+import main.Peer;
+import main.model.neighbour.Neighbour;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -1,6 +1,8 @@
-package main.network.message;
+package main.controller.message;
 
-import main.network.PeerInfo;
+import main.model.PeerInfo;
+import main.model.message.Message;
+import main.model.message.MessageResponse;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;

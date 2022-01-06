@@ -1,7 +1,8 @@
-package main.network.message;
+package main.controller.message;
 
-import main.network.PeerInfo;
-import main.network.neighbour.Neighbour;
+import main.model.PeerInfo;
+import main.model.message.*;
+import main.model.neighbour.Neighbour;
 
 import java.net.InetAddress;
 

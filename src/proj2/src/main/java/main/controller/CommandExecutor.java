@@ -1,8 +1,8 @@
-package main;
+package main.controller;
 
-import main.network.Peer;
-import main.network.executor.MultipleNodeExecutor;
-import main.network.neighbour.Neighbour;
+import main.Peer;
+import main.controller.MultipleNodeExecutor;
+import main.model.neighbour.Neighbour;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;

@@ -1,4 +1,4 @@
-package main.network.neighbour;
+package main.model.neighbour;
 
 import java.io.Serializable;
 import java.net.InetAddress;

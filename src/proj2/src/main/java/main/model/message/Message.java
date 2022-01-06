@@ -1,8 +1,8 @@
-package main.network.message;
+package main.model.message;
 
-import main.network.message.sender.Path;
-import main.network.message.sender.Sender;
-import main.network.neighbour.Host;
+import main.model.message.sender.Path;
+import main.model.message.sender.Sender;
+import main.model.neighbour.Host;
 
 import java.io.Serializable;
 import java.net.InetAddress;

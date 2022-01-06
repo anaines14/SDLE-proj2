@@ -1,5 +1,5 @@
-import main.network.PeerInfo;
-import main.network.neighbour.Neighbour;
+import main.model.PeerInfo;
+import main.model.neighbour.Neighbour;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;

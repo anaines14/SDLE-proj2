@@ -1,5 +1,6 @@
-package main.network.message;
+package main.controller.message;
 
+import main.model.message.Message;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 

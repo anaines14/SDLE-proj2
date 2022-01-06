@@ -1,8 +1,8 @@
-package main.network;
+package main.model;
 
-import main.network.neighbour.Host;
-import main.network.neighbour.Neighbour;
-import main.timelines.Timeline;
+import main.model.neighbour.Host;
+import main.model.neighbour.Neighbour;
+import main.model.timelines.Timeline;
 
 import java.net.InetAddress;
 import java.util.*;

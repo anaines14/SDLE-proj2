@@ -1,7 +1,10 @@
-import main.network.Broker;
-import main.network.PeerInfo;
-import main.network.message.*;
-import main.network.neighbour.Host;
+import main.controller.network.Broker;
+import main.model.PeerInfo;
+import main.controller.message.MessageSender;
+import main.model.message.Message;
+import main.model.message.PingMessage;
+import main.model.message.PongMessage;
+import main.model.neighbour.Host;
 import org.junit.jupiter.api.Test;
 import org.zeromq.ZContext;
 

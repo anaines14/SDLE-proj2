@@ -1,15 +1,19 @@
-package main.network;
+package main;
 
-import main.network.executor.MultipleNodeExecutor;
-import main.network.message.*;
-import main.network.neighbour.Host;
-import main.network.neighbour.Neighbour;
-import main.timelines.TimelineInfo;
+import main.model.PeerInfo;
+import main.controller.network.Broker;
+import main.controller.message.MessageSender;
+import main.model.message.MessageResponse;
+import main.model.message.PingMessage;
+import main.model.message.PongMessage;
+import main.model.message.QueryMessage;
+import main.model.neighbour.Host;
+import main.model.neighbour.Neighbour;
+import main.model.timelines.TimelineInfo;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;

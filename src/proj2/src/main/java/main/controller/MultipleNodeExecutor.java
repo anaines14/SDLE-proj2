@@ -1,6 +1,6 @@
-package main.network.executor;
+package main.controller;
 
-import main.network.Peer;
+import main.Peer;
 
 import java.util.HashSet;
 import java.util.Set;

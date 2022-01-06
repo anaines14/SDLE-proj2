@@ -1,4 +1,4 @@
-package main.network.message.sender;
+package main.model.message.sender;
 
 import java.io.Serializable;
 import java.net.InetAddress;
