@@ -17,11 +17,13 @@ import org.zeromq.ZMQ;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+
+import static java.util.Collections.shuffle;
 
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
@@ -29,10 +31,10 @@ public class Peer implements Serializable {
     public static final int MAX_NGBRS = 2;
     public static final int MAX_RETRY = 3;
     public static final int RCV_TIMEOUT = 1000;
+    public static final int MAX_RANDOM_NEIGH = 2;
 
     // Model/Data members
     private final PeerInfo peerInfo;
-    private final TimelineInfo timelineInfo;
     private final ZContext context;
 
     // Network members
@@ -53,7 +55,6 @@ public class Peer implements Serializable {
         socket.close();
 
         this.peerInfo = new PeerInfo(address, port, username, capacity);
-        this.timelineInfo = new TimelineInfo(username);
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker = new Broker(context, sender, peerInfo);
     }
@@ -67,19 +68,23 @@ public class Peer implements Serializable {
     }
 
     public void printTimelines() {
-        this.timelineInfo.printTimelines();
+        TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
+        timelineInfo.printTimelines();
     }
 
     public void updatePost(int postId, String newContent) {
-        this.timelineInfo.updatePost(peerInfo.getUsername(), postId, newContent);
+        TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
+        timelineInfo.updatePost(peerInfo.getUsername(), postId, newContent);
     }
 
     public void addPost(String newContent) {
-        this.timelineInfo.addPost(peerInfo.getUsername(), newContent);
+        TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
+        timelineInfo.addPost(peerInfo.getUsername(), newContent);
     }
 
     public void deletePost(int postId) {
-        this.timelineInfo.deletePost(peerInfo.getUsername(), postId);
+        TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
+        timelineInfo.deletePost(peerInfo.getUsername(), postId);
     }
 
     public void execute(ScheduledThreadPoolExecutor scheduler) {
@@ -104,14 +109,19 @@ public class Peer implements Serializable {
     public void queryNeighbours(String username) {
         // check if neighbours have the username's timeline
         // TODO: BLOOM FILTERS
-        Set<Neighbour> neighbours = this.peerInfo.getNeighboursWithTimeline(username);
-        System.out.println("got neighbours with timelines: " + neighbours.size());
+        // TODO Tamos a dar flooding atm, dps temos que usar searches
+        // System.out.println("got neighbours with timelines: " + neighbours.size());
+        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
 
-        // query neighbours with timelines
-        for (Neighbour n: neighbours) {
+        // Get random N neighbours to send
+        int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
+
+        int i=0;
+        while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
+            Neighbour n = neighbours.get(i);
             MessageRequest request = new QueryMessage(username, this.peerInfo);
             this.sender.sendRequestNTimes(request, n.getPort());
-            System.out.println("query neighbour");
+            ++i;
         }
     }
 
