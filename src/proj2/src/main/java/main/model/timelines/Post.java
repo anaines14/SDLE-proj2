@@ -3,6 +3,7 @@ package main.model.timelines;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalTime;
+import java.util.Objects;
 
 public class Post implements Serializable {
     @Serial
@@ -32,5 +33,18 @@ public class Post implements Serializable {
         return  "\n\t\tID: " + Id + ": " +
                 "\n\t\t\tTimestamp: " + timestamp +
                 "\n\t\t\tContent: '" + content + '\'';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Post post = (Post) o;
+        return Id == post.Id && Objects.equals(timestamp, post.timestamp) && Objects.equals(content, post.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Id, timestamp, content);
     }
 }

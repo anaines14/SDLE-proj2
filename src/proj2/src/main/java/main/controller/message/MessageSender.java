@@ -3,6 +3,8 @@ package main.controller.message;
 import main.model.PeerInfo;
 import main.model.message.Message;
 import main.model.message.request.MessageRequest;
+import main.model.message.request.PingMessage;
+import main.model.message.request.QueryMessage;
 import main.model.message.response.MessageResponse;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -11,8 +13,7 @@ import org.zeromq.ZMQ;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class MessageSender {
     // Each Peer has a MessageSender, and it sends all messages through it
@@ -20,6 +21,15 @@ public class MessageSender {
     private final ZContext context;
     private int maxRetries;
     private int receiveTimeout;
+
+    // Used for testng
+    private static List<String> ignoredMessages = new ArrayList<>();
+    public static void removeIgnoredMsg(String msgType) {
+        ignoredMessages.remove(msgType);
+    }
+    public static void addIgnoredMsg(String msgType) {
+        ignoredMessages.add(msgType);
+    }
 
     public MessageSender(String username, int maxRetries, int receiveTimeout, ZContext context) {
         this.username = username;
@@ -42,41 +52,37 @@ public class MessageSender {
         socket.send(bytes);
     }
 
-    private MessageResponse sendRequest(MessageRequest message, String port) {
+    private String sendRequest(MessageRequest message, String port) {
         ZMQ.Socket socket = context.createSocket(SocketType.REQ);
         socket.setReceiveTimeOut(receiveTimeout);
-        String uuid = username + "-" + UUID.randomUUID();
-        // We use UUID's so that, when creating multiple sockets per user we don't override them
-
-        socket.setIdentity(uuid.getBytes(StandardCharsets.UTF_8));
         socket.connect("tcp://localhost:" + port); // TODO convert to address
 
         this.send(message, socket);
         System.out.println(username + " SENT[" + message.getType() + "]: " + port);
 
-        try {
-            return (MessageResponse) MessageBuilder.messageFromSocket(socket);
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        String res = socket.recvStr();
 
         socket.close();
         context.destroySocket(socket);
-        return null;
+        return res;
     }
 
-    public MessageResponse sendRequestNTimes(MessageRequest message, String port) {
+
+    public boolean sendRequestNTimes(MessageRequest message, String port) {
         int i = 0;
         boolean done = false;
         while (i < this.maxRetries && !done) {
-            MessageResponse response = this.sendRequest(message, port);
-            if (response != null) {
-                return response;
-            } else
-                System.out.println("Failed getting response to [" + message.getType() + "]" + port);
+            String response = this.sendRequest(message, port);
+            if (response != null && response.equals("OK")) {
+                done = true;
+            }
             ++i;
         }
 
-        return null;
+        if (!done) {
+            System.out.println("Failed getting response to [" + message.getType() + "]" + port);
+            return false;
+        }
+        return true;
     }
 }

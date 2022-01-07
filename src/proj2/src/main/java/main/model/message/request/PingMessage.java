@@ -6,6 +6,7 @@ public class PingMessage extends MessageRequest {
     private Host sender;
 
     public PingMessage(Host host) {
+        super();
         this.sender = host;
     }
 

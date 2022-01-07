@@ -47,7 +47,6 @@ public class MessageBuilder {
 
     public static Message messageFromSocket(ZMQ.Socket socket) throws ZMQException, IOException, ClassNotFoundException {
         byte[] bytes = socket.recv();
-        Message message = messageFromByteArray(bytes);
-        return message;
+        return messageFromByteArray(bytes);
     }
 }

@@ -3,7 +3,6 @@ import main.model.PeerInfo;
 import main.controller.message.MessageSender;
 import main.model.message.request.MessageRequest;
 import main.model.message.request.PingMessage;
-import main.model.message.response.PongMessage;
 import main.model.neighbour.Host;
 import org.junit.jupiter.api.Test;
 import org.zeromq.ZContext;
@@ -11,7 +10,7 @@ import org.zeromq.ZContext;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BrokerTest {
 
@@ -23,9 +22,8 @@ public class BrokerTest {
         } catch (UnknownHostException ignored) {}
 
         ZContext context = new ZContext();
-        MessageSender sender = new MessageSender("user1", 3, 500, context);
         PeerInfo peerInfo = new PeerInfo(localhost, "user1", 50);
-        Broker broker = new Broker(context, sender, peerInfo);
+        Broker broker = new Broker(context, peerInfo);
 
         Host peer2 = new Host("user2", localhost, "8002", 10, 10);
         broker.execute();
@@ -33,14 +31,8 @@ public class BrokerTest {
         MessageRequest request = new PingMessage(peer2);
         MessageSender sender2 = new MessageSender("user2", 3, 500, context);
         MessageSender sender3 = new MessageSender("user4", 3, 500, context);
-        assertEquals(PongMessage.class, sender2.sendRequestNTimes(request, broker.getFrontendPort()).getClass());
-        assertEquals(PongMessage.class, sender3.sendRequestNTimes(request, broker.getFrontendPort()).getClass());
+        assertTrue(sender2.sendRequestNTimes(new PingMessage(peer2), peerInfo.getPort()));
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        broker.close();
+        broker.stop();
     }
 }

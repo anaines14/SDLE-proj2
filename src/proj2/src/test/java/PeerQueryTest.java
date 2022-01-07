@@ -1,13 +1,14 @@
 import main.Peer;
-import main.model.neighbour.Neighbour;
+import main.controller.message.MessageSender;
+import main.model.timelines.Timeline;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -30,13 +31,14 @@ public class PeerQueryTest {
         peer3 = new Peer("u3", localhost, 30);
         peer4 = new Peer("u4", localhost, 30);
         peer5 = new Peer("u5", localhost, 50);
-        scheduler = new ScheduledThreadPoolExecutor(3);
+        scheduler = new ScheduledThreadPoolExecutor(5);
 
-        peer1.execute(scheduler);
-        peer2.execute(scheduler);
-        peer3.execute(scheduler);
-        peer4.execute(scheduler);
-        peer5.execute(scheduler);
+        List<Peer> peers = Arrays.asList(peer1, peer2, peer3, peer4, peer5);
+
+        for (Peer p: peers) {
+            p.execute(scheduler);
+            System.out.println(p.getPeerInfo().getUsername() + ": " + p.getPeerInfo().getPort());
+        }
 
         peer1.join(peer2);
         peer3.join(peer1);
@@ -46,12 +48,12 @@ public class PeerQueryTest {
 
     @Test
     public void queryPeer() throws InterruptedException {
-        Thread.sleep(20000); // Wait for peers to add eachother as neighbours
+        MessageSender.addIgnoredMsg("PING");
+        MessageSender.addIgnoredMsg("PONG");
+        Thread.sleep(4000); // Wait for peers to add eachother as neighbours
 
-        Set<String> peer1Neigh = peer1.getPeerInfo().getNeighbours().stream().map(Neighbour::getUsername).collect(Collectors.toSet());
-
-        assertEquals(2, peer1.getPeerInfo().getNeighbours().size());
-        peer1.queryNeighbours("u5");
+        Timeline peer5Timeline = peer1.queryNeighbours("u5");
+        assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
 
         peer1.stop();
         peer2.stop();

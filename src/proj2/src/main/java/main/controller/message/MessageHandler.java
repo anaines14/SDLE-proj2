@@ -2,87 +2,101 @@ package main.controller.message;
 
 import main.model.PeerInfo;
 import main.model.message.*;
-import main.model.message.request.MessageRequest;
-import main.model.message.request.PingMessage;
-import main.model.message.request.QueryMessage;
-import main.model.message.request.Sender;
-import main.model.message.response.KoMessage;
-import main.model.message.response.MessageResponse;
-import main.model.message.response.OkMessage;
-import main.model.message.response.PongMessage;
+import main.model.message.request.*;
+import main.model.message.request.PongMessage;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 
-import java.net.InetAddress;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.IntStream;
 
 import static main.Peer.MAX_RANDOM_NEIGH;
 
 // Dá handle só a mensagens que iniciam requests (PING)
 public class MessageHandler {
-    private InetAddress address;
-    private String port;
-    private PeerInfo peerInfo;
-    private MessageSender sender;
+    private final ConcurrentMap<UUID, CompletableFuture<Message>> promises;
+    private final PeerInfo peerInfo;
+    private final MessageSender sender;
 
-    public MessageHandler(PeerInfo peerInfo, MessageSender sender) {
-        this.address = peerInfo.getAddress();
-        this.port = peerInfo.getPort();
+    public MessageHandler(PeerInfo peerInfo, MessageSender sender,
+                          ConcurrentMap<UUID, CompletableFuture<Message>> promises) {
         this.peerInfo = peerInfo;
         this.sender = sender;
+        this.promises = promises;
     }
 
-    public Message handle(Message message) {
+    public void handle(Message message) {
         if (!(message instanceof MessageRequest)) // We only can handle message requests
-            return new KoMessage();
+            return;
 
-        return handle((MessageRequest) message);
+        handle((MessageRequest) message);
     }
 
-    private MessageResponse handle(MessageRequest message) {
+    private void handle(MessageRequest message) {
         // System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: " + message.getLastSender().getPort());
         switch (message.getType()) {
             case "PING":
-                return handle((PingMessage) message);
+                handle((PingMessage) message);
+                return;
+            case "PONG":
+                handle((PongMessage) message);
+                return;
             case "QUERY":
-                return handle((QueryMessage) message);
+                handle((QueryMessage) message);
+                return;
+            case "QUERY_HIT":
+                handle((QueryHitMessage) message);
+                return;
             default:
-                return null;
         }
     }
 
-    private MessageResponse handle(PingMessage message) {
+    private void handle(PingMessage message) {
         // Reply with a Pong message with our info
         Neighbour ourInfo = new Neighbour(peerInfo.getHost());
 
         peerInfo.addHost(message.getSender());
-        PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache());
-        return replyMsg;
+        PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache(), message.getId());
+        this.sender.sendRequestNTimes(replyMsg, message.getSender().getPort());
     }
 
-    private MessageResponse handle(QueryMessage message) {
-        System.out.println(this.peerInfo.getUsername() + " received QueryMessage " + message);
+    private void handle(PongMessage message) {
+        // Complete future of ping request
+        if (promises.containsKey(message.getId())) {
+            promises.get(message.getId()).complete(message);
+        }
+    }
+
+    private void handle(QueryMessage message) {
         TimelineInfo ourTimelineInfo = peerInfo.getTimelineInfo();
         String wantedUser = message.getWantedTimeline();
 
         if (message.isInPath(this.peerInfo))
-            return new KoMessage(); // Already redirected this message
+            return; // Already redirected this message
 
         if (ourTimelineInfo.hasTimeline(wantedUser)) {
-            System.out.println("We have the timeline " + wantedUser);
-            return new OkMessage();
+            // We have timeline, send query hit to initiator
+            Timeline requestedTimeline = ourTimelineInfo.getTimeline(wantedUser);
+            MessageRequest queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
+            this.sender.sendRequestNTimes(queryHit, message.getOriginalSender().getPort());
+            return;
         }
 
         if (!message.canResend()) {
-            return new KoMessage(); // Message has reached TTL 0
+            return; // Message has reached TTL 0
         }
 
         // Add ourselves to the message
         message.decreaseTtl();
         message.addToPath(new Sender(this.peerInfo));
 
-        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
+        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().filter(
+                n -> !message.isInPath(new Sender(n.getAddress(), n.getPort()))
+        ).toList();
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
 
@@ -92,7 +106,11 @@ public class MessageHandler {
             this.sender.sendRequestNTimes(message, n.getPort());
             ++i;
         }
+    }
 
-        return new OkMessage();
+    private void handle(QueryHitMessage message) {
+        if (promises.containsKey(message.getId())) {
+            promises.get(message.getId()).complete(message);
+        }
     }
 }
