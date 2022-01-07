@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,12 +13,15 @@ public class TimelineInfo {
     public static String FOLDER = "timelines" + File.separator;
     private final File timelines_folder;
     private final Map<String, Timeline> timelines;
+    private final String me;
+    private static final int MAX_KEEP_TIME = 30; // max time to keep timeline stored (in seconds)
 
     public TimelineInfo(String username) {
         // create folder
         this.timelines_folder = new File(FOLDER + username);
         this.timelines_folder.mkdirs();
         this.timelines = new HashMap<>();
+        this.me = username;
 
         // create own timeline file
         this.timelines.put(username, new Timeline(username));
@@ -46,6 +51,11 @@ public class TimelineInfo {
         }
     }
 
+    public void addTimeline(Timeline timeline) {
+        this.timelines.put(timeline.getUsername(), timeline);
+        this.cleanup();
+    }
+
     public void addPost(String username, String post_str) {
         // add post
         Timeline timeline = this.timelines.get(username);
@@ -53,6 +63,7 @@ public class TimelineInfo {
         // update timeline file
         try {
             timeline.save(this.timelines_folder);
+            this.cleanup();
         } catch (IOException e) {
             System.err.println("ERROR: Failed to save timeline.");
         }
@@ -67,6 +78,7 @@ public class TimelineInfo {
             // update timeline
             try {
                 timeline.save(this.timelines_folder);
+                this.cleanup();
             } catch (IOException e) {
                 System.err.println("ERROR: Failed to save timeline.");
             }
@@ -83,8 +95,30 @@ public class TimelineInfo {
             // update timeline
             try {
                 timeline.save(this.timelines_folder);
+                this.cleanup();
             } catch (IOException e) {
                 System.err.println("ERROR: Failed to save timeline.");
+            }
+        }
+    }
+
+    public void cleanup() {
+        LocalTime currentTime = LocalTime.now(); // TODO: ntp
+        for (Timeline timeline : this.timelines.values()) {
+            // don't delete own timeline
+            if (timeline.getUsername().equals(me))
+                continue;
+
+            int diff = (int) Duration.between(timeline.getLastUpdate(), currentTime).toSeconds(); // TODO: use minutes maybe?
+            if (diff > MAX_KEEP_TIME){
+                this.timelines.remove(timeline.getUsername());
+                try {
+                    if (!timeline.remove(this.timelines_folder)) {
+                        System.out.println("Couldn't delete timeline: " + timeline.getUsername());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

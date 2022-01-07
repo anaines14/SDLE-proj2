@@ -10,6 +10,7 @@ start mocho 6
 start skelo 12
 start fontao 8
 start toilmo 14
+post toilmo "toilmo posteedddd"
 
 sleep 10
 stop_all
