@@ -62,6 +62,11 @@ public class Peer implements Serializable {
         timelineInfo.printTimelines();
     }
 
+    public void addTimeline(Timeline timeline) {
+        TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
+        timelineInfo.addTimeline(timeline);
+    }
+
     public void updatePost(int postId, String newContent) {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
         timelineInfo.updatePost(peerInfo.getUsername(), postId, newContent);

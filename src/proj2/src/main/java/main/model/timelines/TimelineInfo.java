@@ -14,7 +14,7 @@ public class TimelineInfo {
     private final File timelines_folder;
     private final Map<String, Timeline> timelines;
     private final String me;
-    private static final int MAX_KEEP_TIME = 30; // max time to keep timeline stored (in seconds)
+    private static final int MAX_KEEP_TIME = 20; // max time to keep timeline stored (in seconds)
 
     public TimelineInfo(String username) {
         // create folder
@@ -53,6 +53,13 @@ public class TimelineInfo {
 
     public void addTimeline(Timeline timeline) {
         this.timelines.put(timeline.getUsername(), timeline);
+        try {
+            // save timeline in non volatile memory
+            timeline.save(this.timelines_folder);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Couldn't save timeline: " + timeline.getUsername());
+        }
         this.cleanup();
     }
 
@@ -111,6 +118,7 @@ public class TimelineInfo {
 
             int diff = (int) Duration.between(timeline.getLastUpdate(), currentTime).toSeconds(); // TODO: use minutes maybe?
             if (diff > MAX_KEEP_TIME){
+                System.out.println(me + " CLEANUP " + timeline.getUsername());
                 this.timelines.remove(timeline.getUsername());
                 try {
                     if (!timeline.remove(this.timelines_folder)) {

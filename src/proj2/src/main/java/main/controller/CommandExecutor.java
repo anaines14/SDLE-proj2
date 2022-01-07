@@ -3,6 +3,7 @@ package main.controller;
 import main.Peer;
 import main.gui.GraphWrapper;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Timeline;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
@@ -12,16 +13,18 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class CommandExecutor {
     private static final int MAX_CAPACITY = 31;
     private final MultipleNodeExecutor executor;
-    private final Map<String, Peer> peers;
+    private final ConcurrentMap<String, Peer> peers;
     private int curr_peer_id;
     private final GraphWrapper graph;
 
     public CommandExecutor() {
-        this.peers = new HashMap<>();
+        this.peers = new ConcurrentHashMap<>();
         this.executor = new MultipleNodeExecutor();
         this.curr_peer_id = 1;
         this.graph = new GraphWrapper("Network");
@@ -241,7 +244,10 @@ public class CommandExecutor {
         }
         System.out.println("Pinged neighbours");
 
-        peer.queryNeighbours(timeline);
+        Timeline requestedTimeline = peer.queryNeighbours(timeline);
+
+        System.out.println("REQUEST " + requestedTimeline);
+        peer.addTimeline(requestedTimeline);
 
         return 0;
     }

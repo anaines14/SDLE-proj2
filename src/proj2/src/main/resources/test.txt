@@ -11,6 +11,9 @@ start skelo 12
 start fontao 8
 start toilmo 14
 post toilmo "toilmo posteedddd"
-
-sleep 10
+timeline fontao toilmo
+sleep 25
+post chalch "I like wolves"
+timeline fontao chalch
+sleep 5
 stop_all
