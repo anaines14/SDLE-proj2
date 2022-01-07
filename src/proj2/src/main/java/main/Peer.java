@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
-    public static final int MAX_NGBRS = 3;
+    public static final int MAX_NGBRS = 2;
     public static final int MAX_RETRY = 3;
     public static final int RCV_TIMEOUT = 1000;
     public static final int MAX_RANDOM_NEIGH = 2;
@@ -187,9 +187,9 @@ public class Peer implements Serializable {
         Neighbour bestNgbr = peerInfo.getBestNeighbour();
 
         // host has higher capacity than every neighbour
-        boolean hostHigherCap = host.getCapacity() > bestNgbr.getCapacity(),
+        boolean hostHigherCap = host.getCapacity() > worstNgbr.getCapacity(),
                 // host has lower degree than worst neighbour (less busy)
-                hostLowerDegree = host.getDegree() < worstNgbr.getDegree();
+                hostLowerDegree = host.getDegree() < bestNgbr.getDegree();
 
         if (hostHigherCap || hostLowerDegree)
             peerInfo.replaceNeighbour(worstNgbr, new Neighbour(host));

@@ -1,3 +1,15 @@
-START_MULT 20
-PRINT_PEERS
-STOP_ALL
+start nachos 10
+start bibo 5
+start ferno 6
+start croc 1
+start irao 7
+start padoru 6
+start miranha 9
+start chalch 15
+start mocho 6
+start skelo 12
+start fontao 8
+start toilmo 14
+
+sleep 10
+stop_all

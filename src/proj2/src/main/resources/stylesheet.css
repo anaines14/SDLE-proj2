@@ -1,5 +1,6 @@
 graph {
-    fill-color:grey;
+    fill-color: #828bfc, #85e7d4;
+    fill-mode:gradient-horizontal;
 }
 
 node {
@@ -7,8 +8,11 @@ node {
     text-color:black;
     text-style:bold;
     text-alignment:under;
-    size:25;
-    fill-color:#848482;
+    fill-color: white;
+
+    stroke-mode: plain;
+    stroke-color: black;
+    stroke-width: 2;
 }
 
 edge {
@@ -16,4 +20,8 @@ edge {
     size:2;
     fill-color:black;
     text-alignment:center;
+}
+
+node:clicked {
+	fill-color: red;
 }

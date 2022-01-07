@@ -18,6 +18,7 @@ public class TestApp {
 
     public static void main(String[] args) {
         TestApp app = new TestApp();
+        app.cmdExecutor.displayGraph();
 
         // check number of arguments
         if (args.length == 1) { // run test from file
@@ -75,7 +76,7 @@ public class TestApp {
                 Avalable commands:
 
 
-                \t START <username> <IPaddress> <capacity>
+                \t START <username> <capacity>
                 \t START_MULT <n>
                 \t POST <username> "<content>"
                 \t UPDATE <username> <post_id> "<content>"
@@ -85,7 +86,6 @@ public class TestApp {
                 \t PRINT_PEERS
                 \t STOP <username>
                 \t STOP_ALL
-                \t GRAPH
                 \t BREAK
                 \t SLEEP <seconds>""");
     }

@@ -1,5 +1,6 @@
 package main.model;
 
+import main.gui.Observer;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.TimelineInfo;
@@ -15,6 +16,7 @@ public class PeerInfo {
     private TimelineInfo timelineInfo;
     private Set<Neighbour> neighbours;
     private Set<Host> hostCache;
+    private Observer observer;
 
     public PeerInfo(String username, InetAddress address, int capacity, TimelineInfo timelineInfo) {
         this.me = new Host(username, address, "-1", capacity, 0);
@@ -34,8 +36,8 @@ public class PeerInfo {
     }
 
     public void replaceNeighbour(Neighbour oldNeigh, Neighbour newNeigh) {
-        neighbours.remove(oldNeigh);
-        neighbours.add(newNeigh);
+        this.removeNeighbour(oldNeigh);
+        this.addNeighbour(newNeigh);
     }
 
     public void updateNeighbour(Neighbour updated) {
@@ -59,6 +61,10 @@ public class PeerInfo {
         neighbours.add(neighbour);
         this.me.setDegree(neighbours.size());
         hostCache.add(neighbour); // Everytime we add a neighbour, we also add to the hostcache
+
+        if (this.observer != null)
+            this.observer.newEdgeUpdate(this.getUsername(), neighbour.getUsername());
+
     }
 
     public void removeNeighbour(Neighbour neighbour) {
@@ -66,7 +72,11 @@ public class PeerInfo {
             return;
 
         neighbours.remove(neighbour);
+        System.out.println(this.getUsername() + " REMOVED " + neighbour.getUsername());
         this.me.setDegree(neighbours.size());
+
+        if (this.observer != null)
+            this.observer.removeEdgeUpdate(this.getUsername(), neighbour.getUsername());
     }
 
     public Neighbour getWorstNeighbour(int hostCapacity) {
@@ -76,7 +86,7 @@ public class PeerInfo {
         if (badNgbrs.isEmpty()) return null; // REJECT host if there are no worse neighbours
 
         // from neighbours with less capacity than host, get the one with max degree
-        return badNgbrs.stream().max(Host::compareTo).get();
+        return badNgbrs.stream().min(Host::compareTo).get();
     }
 
     public Neighbour getBestNeighbour() { // With highest capacity
@@ -112,11 +122,19 @@ public class PeerInfo {
                 .filter(f -> !neighbours.contains(f))
                 .collect(Collectors.toSet());
 
+
         Optional<Host> best_host = notNeighbors.stream().max(Host::compareTo);
         if(best_host.isEmpty()) return null;
-
         return best_host.get();
     }
+
+    // observers
+    public void subscribe(Observer o) {
+        this.observer = o;
+        this.observer.newNodeUpdate(this.getUsername(), this.getCapacity());
+    }
+
+    // getters
 
     public String getUsername() {
         return this.me.getUsername();
@@ -132,6 +150,10 @@ public class PeerInfo {
 
     public Host getHost() {
         return this.me;
+    }
+
+    public int getCapacity() {
+        return this.me.getCapacity();
     }
 
     public Set<Neighbour> getNeighbours() { return neighbours; }
