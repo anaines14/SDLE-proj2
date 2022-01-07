@@ -122,7 +122,7 @@ public class TimelineInfo {
     public void cleanup() {
         LocalTime currentTime = LocalTime.now(); // TODO: ntp
         Long clockOffset = this.timelines.get(me).getClockOffset();
-        currentTime.plusNanos(clockOffset);
+        currentTime = currentTime.plusNanos(clockOffset);
 
         for (Timeline timeline : this.timelines.values()) {
             // don't delete own timeline
