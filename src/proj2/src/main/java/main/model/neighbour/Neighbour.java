@@ -6,11 +6,8 @@ import com.google.common.hash.Funnels;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class Neighbour extends Host implements Serializable{

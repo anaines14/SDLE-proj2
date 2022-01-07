@@ -22,6 +22,7 @@ public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
     public static final int MAX_NGBRS = 2;
+    public static final int MIN_NGBRS = 1;
     public static final int MAX_RETRY = 3;
     public static final int RCV_TIMEOUT = 1000;
     public static final int MAX_RANDOM_NEIGH = 2;
@@ -206,6 +207,24 @@ public class Peer implements Serializable {
             else  // Can replace
                 peerInfo.replaceNeighbour(worstNgbr, new Neighbour(candidate));
         }
+    }
+
+    public double calculateSatisfaction() {
+        Set<Neighbour> neighbours = this.peerInfo.getNeighbours();
+        int num_neighbours = neighbours.size();
+
+        // limits
+        if (num_neighbours < MIN_NGBRS )
+            return 0;
+        if (num_neighbours >= MAX_NGBRS)
+            return 1;
+        System.out.println(neighbours.size());
+        int total = 0;
+        for (Neighbour n: neighbours) {
+            total += n.getCapacity()/num_neighbours;
+        }
+        double satisfaction = ((double) total) / this.peerInfo.getCapacity();
+        return satisfaction % 1;
     }
 
     public PeerInfo getPeerInfo() {
