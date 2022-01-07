@@ -140,7 +140,6 @@ public class Broker {
 
             if (items.pollin(2)) { // Frontend, client request
                 try {
-                    String clientAddr = frontend.recvStr();
                     //Remove empty msg between messages
                     Message request = null;
                     try {
