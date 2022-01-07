@@ -81,7 +81,7 @@ public class TestApp {
                 \t POST <username> "<content>"
                 \t UPDATE <username> <post_id> "<content>"
                 \t DELETE <username> <post_id>
-                \t TIMELINE <username>
+                \t TIMELINE <username> <req_timeline>
                 \t PRINT <username>
                 \t PRINT_PEERS
                 \t STOP <username>

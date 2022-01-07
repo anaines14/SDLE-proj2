@@ -66,8 +66,13 @@ public class Peer implements Serializable {
         timelineInfo.printTimelines();
     }
 
-    public Long getClockOffset(){
+    public Long getClockOffset() {
         return ntp.getOffsetValue();
+    }
+
+    public void addTimeline(Timeline timeline) {
+        TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
+        timelineInfo.addTimeline(timeline);
     }
 
     public void updatePost(int postId, String newContent) {
@@ -142,7 +147,9 @@ public class Peer implements Serializable {
         if (response == null)
             return null;
 
-        System.out.println(response.getTimeline());
+        // save requested timeline
+        this.addTimeline(response.getTimeline());
+
         return response.getTimeline();
     }
 
