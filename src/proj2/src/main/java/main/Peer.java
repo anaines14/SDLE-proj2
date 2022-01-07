@@ -4,11 +4,7 @@ import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
 import main.model.message.Message;
-import main.model.message.request.MessageRequest;
-import main.model.message.request.PingMessage;
-import main.model.message.request.QueryHitMessage;
-import main.model.message.request.QueryMessage;
-import main.model.message.request.PongMessage;
+import main.model.message.request.*;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
@@ -17,6 +13,7 @@ import org.zeromq.ZContext;
 
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
@@ -53,7 +50,7 @@ public class Peer implements Serializable {
     }
 
     public void join(Peer peer) {
-        peerInfo.addNeighbour(new Neighbour(peer.getPeerInfo().getHost()));
+        peerInfo.addHost(peer.getPeerInfo().getHost());
     }
 
     public void printTimelines() {
@@ -159,11 +156,15 @@ public class Peer implements Serializable {
                 continue;
             }
 
-            Neighbour updatedNeighbour = response.sender;
-            if (peerInfo.hasNeighbour(updatedNeighbour)) {
+            if (!response.isNeighbour) {
+                peerInfo.removeNeighbour(neighbour);
+                continue;
+            }
+
+            if (peerInfo.hasNeighbour(response.sender)) {
                 Set<Host> hostCache = response.hostCache;
                 // System.out.println(peerInfo.getUsername() + " UPDATED " + neighbour.getUsername());
-                peerInfo.updateNeighbour(updatedNeighbour);
+                peerInfo.updateNeighbour(response.sender);
                 peerInfo.updateHostCache(hostCache);
             }
         }
@@ -171,29 +172,40 @@ public class Peer implements Serializable {
 
     public void addNeighbour()  {
         // get higher capacity host not neighbour
-        Host host = peerInfo.getBestHostNotNeighbour();
-        if (host == null) return;
-        // ACCEPT host if limit not reached
-        if (peerInfo.getNeighbours().size() < MAX_NGBRS) {
-            peerInfo.addNeighbour(new Neighbour(host));
-            return;
+        Host candidate = peerInfo.getBestHostNotNeighbour();
+        if (candidate == null) return;
+
+        boolean neighboursFull = this.peerInfo.areNeighboursFull();
+        Neighbour worstNgbr = null;
+        boolean canReplace = false;
+        if (neighboursFull) {
+            worstNgbr = peerInfo.acceptNeighbour(candidate);
+            canReplace = worstNgbr == null;
         }
 
-        // from neighbours with less or equal capacity than host, get the one with max degree
-        Neighbour worstNgbr = peerInfo.getWorstNeighbour(host.getCapacity());
-        if (worstNgbr == null) return; // REJECT host if there are no worse neighbours
+        if (neighboursFull && !canReplace)
+            return; // We can't any neighbour
 
-        // get highest capacity node
-        Neighbour bestNgbr = peerInfo.getBestNeighbour();
+        PassouBem passouBem = new PassouBem(peerInfo.getHost());
+        this.sender.sendRequestNTimes(passouBem, candidate.getPort());
+        Future<Message> promise = broker.addPromise(passouBem.getId());
+        PassouBemResponse response;
+        try {
+            response = (PassouBemResponse) promise.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            return;
+        } catch (TimeoutException e) {
+            return; // We didn't get response, exit
+        }
+        broker.removePromise(passouBem.getId());
 
-        // host has higher capacity than every neighbour
-        boolean hostHigherCap = host.getCapacity() > worstNgbr.getCapacity(),
-                // host has lower degree than worst neighbour (less busy)
-                hostLowerDegree = host.getDegree() < bestNgbr.getDegree();
-
-        if (hostHigherCap || hostLowerDegree)
-            peerInfo.replaceNeighbour(worstNgbr, new Neighbour(host));
-        // REJECT host
+        if (response.isAccepted()) {
+            if (!neighboursFull)
+                peerInfo.addNeighbour(new Neighbour(candidate));
+            else  // Can replace
+                peerInfo.replaceNeighbour(worstNgbr, new Neighbour(candidate));
+        }
     }
 
     public PeerInfo getPeerInfo() {

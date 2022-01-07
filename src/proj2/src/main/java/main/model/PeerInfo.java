@@ -10,6 +10,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static main.Peer.MAX_NGBRS;
+
 // Data class that serves like a Model in an MVC
 public class PeerInfo {
     private Host me;
@@ -56,6 +58,7 @@ public class PeerInfo {
     public void addNeighbour(Neighbour neighbour) {
         if (neighbour.equals(this.me)) // We can't add ourselves as a neighbour
             return;
+        // System.out.println(this.getUsername() + " ADDED " + neighbour.getUsername());
 
         // System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
         neighbours.add(neighbour);
@@ -64,33 +67,18 @@ public class PeerInfo {
 
         if (this.observer != null)
             this.observer.newEdgeUpdate(this.getUsername(), neighbour.getUsername());
-
     }
 
     public void removeNeighbour(Neighbour neighbour) {
         if (!neighbours.contains(neighbour))
             return;
 
+        // System.out.println(this.getUsername() + " REMOVED " + neighbour.getUsername());
         neighbours.remove(neighbour);
-        System.out.println(this.getUsername() + " REMOVED " + neighbour.getUsername());
         this.me.setDegree(neighbours.size());
 
         if (this.observer != null)
             this.observer.removeEdgeUpdate(this.getUsername(), neighbour.getUsername());
-    }
-
-    public Neighbour getWorstNeighbour(int hostCapacity) {
-        // get neighbors with less capacity than host
-        List<Neighbour> badNgbrs = neighbours.stream()
-                .filter(n -> n.getCapacity() <= hostCapacity).toList();
-        if (badNgbrs.isEmpty()) return null; // REJECT host if there are no worse neighbours
-
-        // from neighbours with less capacity than host, get the one with max degree
-        return badNgbrs.stream().min(Host::compareTo).get();
-    }
-
-    public Neighbour getBestNeighbour() { // With highest capacity
-        return neighbours.stream().max(Host::compareTo).get();
     }
 
     public Set<Neighbour> getNeighboursWithTimeline(String username) {
@@ -123,7 +111,7 @@ public class PeerInfo {
                 .collect(Collectors.toSet());
 
 
-        Optional<Host> best_host = notNeighbors.stream().max(Host::compareTo);
+        Optional<Host> best_host = notNeighbors.stream().min(Host::compareTo);
         if(best_host.isEmpty()) return null;
         return best_host.get();
     }
@@ -156,6 +144,10 @@ public class PeerInfo {
         return this.me.getCapacity();
     }
 
+    public boolean areNeighboursFull() {
+        return this.neighbours.size() >= MAX_NGBRS;
+    }
+
     public Set<Neighbour> getNeighbours() { return neighbours; }
 
     public Set<Host> getHostCache() {
@@ -170,6 +162,32 @@ public class PeerInfo {
         return timelineInfo;
     }
 
+    // Returns worst neighbour if we need to replace Neighbour
+    // Returns null if we can't replace candidate
+    public Neighbour acceptNeighbour(Host candidate) {
+        // from neighbours with less or equal capacity than host, get the one with max degree
+
+
+        // get neighbors with less capacity than val
+        List<Neighbour> worstNgbrs = neighbours.stream()
+                .filter(n -> n.getCapacity() <= candidate.getCapacity()).toList();
+        if (worstNgbrs.isEmpty()) return null;
+
+        Neighbour highestDegNeigh = worstNgbrs.stream().max(Host::compareTo).get();
+
+        // get highest capacity neihbour
+        Neighbour highestCapNgbr = neighbours.stream().max(Comparator.comparingInt(Host::getCapacity)).get();
+
+        // candidate has higher capacity than every neighbour
+        boolean candidateHigherCap = candidate.getCapacity() > highestCapNgbr.getCapacity();
+        // candidate has fewer neighbours
+        int hysteresis = 0;
+        boolean candidateFewerNeighs = candidate.getDegree() + hysteresis <= highestDegNeigh.getDegree();
+
+        if (candidateHigherCap || candidateFewerNeighs)
+            return highestCapNgbr;
+        return null;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -182,4 +200,5 @@ public class PeerInfo {
     public void setPort(String port) {
         this.me.setPort(port);
     }
+
 }

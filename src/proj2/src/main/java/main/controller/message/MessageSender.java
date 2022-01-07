@@ -3,16 +3,11 @@ package main.controller.message;
 import main.model.PeerInfo;
 import main.model.message.Message;
 import main.model.message.request.MessageRequest;
-import main.model.message.request.PingMessage;
-import main.model.message.request.QueryMessage;
-import main.model.message.response.MessageResponse;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class MessageSender {
@@ -58,7 +53,8 @@ public class MessageSender {
         socket.connect("tcp://localhost:" + port); // TODO convert to address
 
         this.send(message, socket);
-        System.out.println(username + " SENT[" + message.getType() + "]: " + port);
+        if (!ignoredMessages.contains(message.getType()))
+            System.out.println(username + " SENT[" + message.getType() + "]: " + port);
 
         String res = socket.recvStr();
 
