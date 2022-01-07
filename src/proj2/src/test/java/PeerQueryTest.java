@@ -1,5 +1,6 @@
 import main.Peer;
 import main.controller.message.MessageSender;
+import main.gui.GraphWrapper;
 import main.model.timelines.Timeline;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,18 +20,22 @@ public class PeerQueryTest {
     private Peer peer4;
     private Peer peer5;
     private ScheduledThreadPoolExecutor scheduler;
+    private GraphWrapper graph;
 
     @BeforeEach
     public void setUp() {
+        this.graph = new GraphWrapper("Network");
+        this.graph.display();
+
         InetAddress localhost = null;
         try {
             localhost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ignored) {}
-        peer1 = new Peer("u1", localhost,  10);
-        peer2 = new Peer("u2", localhost, 20);
-        peer3 = new Peer("u3", localhost, 30);
-        peer4 = new Peer("u4", localhost, 30);
-        peer5 = new Peer("u5", localhost, 50);
+        peer1 = new Peer("u1", localhost,  5);
+        peer2 = new Peer("u2", localhost, 1);
+        peer3 = new Peer("u3", localhost, 10);
+        peer4 = new Peer("u4", localhost, 10);
+        peer5 = new Peer("u5", localhost, 20);
         scheduler = new ScheduledThreadPoolExecutor(5);
 
         List<Peer> peers = Arrays.asList(peer1, peer2, peer3, peer4, peer5);
@@ -38,6 +43,7 @@ public class PeerQueryTest {
         for (Peer p: peers) {
             p.execute(scheduler);
             System.out.println(p.getPeerInfo().getUsername() + ": " + p.getPeerInfo().getPort());
+            p.getPeerInfo().subscribe(this.graph);
         }
 
         peer1.join(peer2);
@@ -50,7 +56,7 @@ public class PeerQueryTest {
     public void queryPeer() throws InterruptedException {
         MessageSender.addIgnoredMsg("PING");
         MessageSender.addIgnoredMsg("PONG");
-        Thread.sleep(4000); // Wait for peers to add eachother as neighbours
+        Thread.sleep(10000); // Wait for peers to add eachother as neighbours
 
         Timeline peer5Timeline = peer1.queryNeighbours("u5");
         assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);

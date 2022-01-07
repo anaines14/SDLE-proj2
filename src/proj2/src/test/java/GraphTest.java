@@ -1,4 +1,5 @@
 import main.Peer;
+import main.controller.message.MessageSender;
 import main.gui.GraphWrapper;
 import main.model.PeerInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,6 +71,34 @@ public class GraphTest {
 
         try {
             Thread.sleep(8000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void multipleNodeViewWith4() {
+        // MessageSender.addIgnoredMsg("PING");
+        // MessageSender.addIgnoredMsg("PONG");
+        //MessageSender.addIgnoredMsg("PASSOU_BEM");
+        //MessageSender.addIgnoredMsg("PASSOU_BEM_RESPONSE");
+
+        List<Peer> peers = this.nodeFactory(5);
+
+        try {
+            Thread.sleep(30000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        this.scheduler.shutdown();
+
+        for (int i=0; i<peers.size(); ++i) {
+            System.out.println(peers.get(i).getPeerInfo().getHostCache() + " " + peers.get(i).getPeerInfo().getDegree());
+        }
+
+        try {
+            Thread.sleep(420000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
