@@ -139,7 +139,9 @@ public class Peer implements Serializable {
         if (response == null)
             return null;
 
-        System.out.println(response.getTimeline());
+        // save requested timeline
+        this.addTimeline(response.getTimeline());
+
         return response.getTimeline();
     }
 

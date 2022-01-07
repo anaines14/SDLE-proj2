@@ -225,7 +225,7 @@ public class CommandExecutor {
         return 0;
     }
 
-    private int execTimeline(String[] opts) { // TODO
+    private int execTimeline(String[] opts) {
         // get peer
         String username = opts[1];
         String timeline = opts[2];
@@ -246,7 +246,6 @@ public class CommandExecutor {
 
         Timeline requestedTimeline = peer.queryNeighbours(timeline);
 
-        System.out.println("REQUEST " + requestedTimeline);
         peer.addTimeline(requestedTimeline);
 
         return 0;

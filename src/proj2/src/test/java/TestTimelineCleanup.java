@@ -10,15 +10,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class PeerQueryTest {
+public class TestTimelineCleanup {
     private Peer peer1;
     private Peer peer2;
     private Peer peer3;
-    private Peer peer4;
-    private Peer peer5;
     private ScheduledThreadPoolExecutor scheduler;
+    private static final int MAX_KEEP_TIME = 5; // time for timeline to expire (seconds)
 
     @BeforeEach
     public void setUp() {
@@ -29,11 +28,9 @@ public class PeerQueryTest {
         peer1 = new Peer("u1", localhost,  10);
         peer2 = new Peer("u2", localhost, 20);
         peer3 = new Peer("u3", localhost, 30);
-        peer4 = new Peer("u4", localhost, 30);
-        peer5 = new Peer("u5", localhost, 50);
         scheduler = new ScheduledThreadPoolExecutor(5);
 
-        List<Peer> peers = Arrays.asList(peer1, peer2, peer3, peer4, peer5);
+        List<Peer> peers = Arrays.asList(peer1, peer2, peer3);
 
         for (Peer p: peers) {
             p.execute(scheduler);
@@ -41,26 +38,45 @@ public class PeerQueryTest {
         }
 
         peer1.join(peer2);
+        peer2.join(peer3);
         peer3.join(peer1);
-        peer4.join(peer1);
-        peer4.join(peer5);
     }
 
     @Test
     public void queryPeer() throws InterruptedException {
         MessageSender.addIgnoredMsg("PING");
         MessageSender.addIgnoredMsg("PONG");
-        Thread.sleep(4000); // Wait for peers to add eachother as neighbours
+        Thread.sleep(4000); // Wait for peers to add each other as neighbours
 
-        Timeline peer5Timeline = peer1.queryNeighbours("u5");
-        assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
-        // check if peer1 saved timeline
-        assertEquals(peer1.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
+        peer2.getPeerInfo().getTimelineInfo().setMaxKeepTime(MAX_KEEP_TIME);
+
+        peer1.addPost("TestingPost u1");
+        peer2.queryNeighbours("u1");
+
+        // wait for the u1's timeline to "expire"
+        try{
+            Thread.sleep((MAX_KEEP_TIME + 2) *1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // provoke change on u2's timelines so cleanup is executed
+        peer3.addPost("TestingPost u3");
+        peer2.queryNeighbours("u3");
+
+        // wait for responses
+        try{
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // check that peer2 does not have u1's timeline
+        assertNull(peer2.getPeerInfo().getTimelineInfo().getTimeline("u1"));
+        assertTrue(peer2.getPeerInfo().getTimelineInfo().hasTimeline("u3"));
 
         peer1.stop();
         peer2.stop();
         peer3.stop();
-        peer4.stop();
-        peer5.stop();
     }
 }
