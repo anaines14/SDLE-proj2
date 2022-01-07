@@ -2,7 +2,6 @@ package main.model;
 
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
-import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 
 import java.net.InetAddress;
@@ -21,7 +20,7 @@ public class PeerInfo {
         this.me = new Host(username, address, "-1", capacity, 0);
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
-        this.hostCache = new HashSet<>();
+        this.hostCache = ConcurrentHashMap.newKeySet();
     }
 
     public PeerInfo(InetAddress address, String username, int capacity) {
@@ -56,7 +55,7 @@ public class PeerInfo {
         if (neighbour.equals(this.me)) // We can't add ourselves as a neighbour
             return;
 
-        System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
+        // System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
         neighbours.add(neighbour);
         this.me.setDegree(neighbours.size());
         hostCache.add(neighbour); // Everytime we add a neighbour, we also add to the hostcache

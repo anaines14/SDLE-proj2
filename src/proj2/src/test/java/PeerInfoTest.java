@@ -1,4 +1,6 @@
+import main.controller.message.MessageSender;
 import main.model.PeerInfo;
+import main.model.message.request.PingMessage;
 import main.model.neighbour.Neighbour;
 import org.junit.jupiter.api.Test;
 

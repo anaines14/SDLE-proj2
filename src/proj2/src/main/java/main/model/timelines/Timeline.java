@@ -4,6 +4,7 @@ import java.io.*;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Timeline implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -65,5 +66,18 @@ public class Timeline implements Serializable {
         return username + "'s Timeline:" +
                 "\n\tLast Update:" + lastUpdate +
                 "\n\tPosts: \n\t\t" + posts;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Timeline timeline = (Timeline) o;
+        return lastPostId == timeline.lastPostId && Objects.equals(posts, timeline.posts) && Objects.equals(username, timeline.username) && Objects.equals(lastUpdate, timeline.lastUpdate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(posts, lastPostId, username, lastUpdate);
     }
 }

@@ -97,4 +97,8 @@ public class TimelineInfo {
     public boolean hasTimeline(String wantedUser) {
         return timelines.containsKey(wantedUser);
     }
+
+    public Timeline getTimeline(String wantedUser) {
+        return this.timelines.get(wantedUser);
+    }
 }

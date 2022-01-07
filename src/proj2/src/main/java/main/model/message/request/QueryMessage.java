@@ -2,29 +2,28 @@ package main.model.message.request;
 
 import main.model.PeerInfo;
 
-import java.util.UUID;
-
 // Message that will be redirected
 public class QueryMessage extends MessageRequest {
     private final static int TTL = 10;
-
     public Path path;
-    private final String id;
     private final String wantedUsername;
     private int timeToLive;
 
     public QueryMessage(String username, PeerInfo peerInfo) {
+        super();
         this.path = new Path();
         this.path.addSender(new Sender(peerInfo));
         // We put username in the beginning of the id so that no identifier is the same
-        this.id = peerInfo.getUsername() + ": " + UUID.randomUUID();
         this.wantedUsername = username;
         this.timeToLive = TTL;
     }
 
+    public boolean isInPath(Sender sender) {
+        return this.path.isInPath(sender);
+    }
+
     public boolean isInPath(PeerInfo peerInfo) {
-        Sender lookFor = new Sender(peerInfo);
-        return this.path.isInPath(lookFor);
+        return this.isInPath(new Sender(peerInfo));
     }
 
     public void addToPath(Sender sender) {

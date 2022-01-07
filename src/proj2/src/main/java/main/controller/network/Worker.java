@@ -12,6 +12,12 @@ import org.zeromq.ZMQException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+
+import static main.Peer.MAX_RETRY;
+import static main.Peer.RCV_TIMEOUT;
 
 public class Worker {
     private MessageHandler handler;
@@ -19,12 +25,12 @@ public class Worker {
     private ZMQ.Socket worker;
     private Thread thread;
 
-    public Worker(PeerInfo peerInfo, MessageSender sender, ZContext context, int id){
-        handler = new MessageHandler(peerInfo, sender);
-        this.sender = sender;
-        worker = context.createSocket(SocketType.REQ);
-
-        worker.setIdentity(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
+    public Worker(PeerInfo peerInfo, int id,
+                  ConcurrentMap<UUID, CompletableFuture<Message>> promises, ZContext context){
+        this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
+        this.handler = new MessageHandler(peerInfo, sender, promises);
+        this.worker = context.createSocket(SocketType.REQ);
+        this.worker.setIdentity(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
         this.thread = new Thread(this::run);
     }
 
@@ -52,16 +58,9 @@ public class Worker {
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                String clientAddress = worker.recvStr();
-                String empty = worker.recvStr();
-                assert(empty.length() == 0);
-
                 Message message =  MessageBuilder.messageFromSocket(worker);
-                worker.sendMore(clientAddress);
-                worker.sendMore("");
-
-                Message replyMsg = this.handler.handle(message);
-                this.sender.send(replyMsg, worker);
+                this.handler.handle(message);
+                worker.send("READY");
             } catch (ZMQException e) {
                 if (e.getErrorCode() == ZMQ.Error.ETERM.getCode() || // Context terminated
                         e.getErrorCode() == ZMQ.Error.EINTR.getCode()) // Interrupted
@@ -74,6 +73,6 @@ public class Worker {
                 this.stop();
                 return;
             }
+        }
     }
-}
 }

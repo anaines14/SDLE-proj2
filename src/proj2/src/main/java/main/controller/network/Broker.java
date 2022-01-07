@@ -3,17 +3,17 @@ package main.controller.network;
 import main.model.PeerInfo;
 import main.model.message.Message;
 import main.controller.message.MessageBuilder;
-import main.controller.message.MessageSender;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
 
 
 public class Broker {
@@ -31,10 +31,12 @@ public class Broker {
 
     private Thread thread;
     private String frontendPort; // For testing
+    // Messages that we are expecting to receive, workers fill these when they receive the request
+    private final ConcurrentMap<UUID, CompletableFuture<Message>> promises;
 
-    public Broker(ZContext context, MessageSender sender, PeerInfo peerInfo){
+    public Broker(ZContext context, PeerInfo peerInfo){
         this.context = context;
-        frontend = context.createSocket(SocketType.ROUTER);
+        frontend = context.createSocket(SocketType.REP);
         backend = context.createSocket(SocketType.ROUTER);
         control = context.createSocket(SocketType.PULL);
 
@@ -47,22 +49,36 @@ public class Broker {
         backend.bind("inproc://workers");
         control.bind("inproc://control");
 
+        promises = new ConcurrentHashMap<>();
         workers = new ArrayList<>();
         this.thread = new Thread(this::run);
         for(int id = 0; id < N_WORKERS; id++){
-            Worker worker = new Worker(peerInfo, sender, context, id);
+            Worker worker = new Worker(peerInfo, id, promises, context);
             workers.add(worker);
         }
     }
 
-    public void execute() {
-        this.thread.start();
+    public String getFrontendPort() {
+        return frontendPort;
     }
 
-    public void close() {
-        frontend.close();
-        backend.close();
-        control.close();
+    public Future<Message> addPromise(UUID id) {
+        if (promises.containsKey(id))
+            return promises.get(id);
+
+        CompletableFuture<Message> promise = new CompletableFuture<>();
+        promises.put(id, promise);
+        return promise;
+    }
+
+    public void removePromise(UUID id) {
+        if (!promises.containsKey(id))
+            return;
+        promises.remove(id);
+    }
+
+    public void execute() {
+        this.thread.start();
     }
 
     public void stop() {
@@ -73,7 +89,9 @@ public class Broker {
 
             try {
                 this.thread.join();
-                this.close();
+                frontend.close();
+                backend.close();
+                control.close();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -94,8 +112,9 @@ public class Broker {
             items.register(backend, ZMQ.Poller.POLLIN);
             items.register(control, ZMQ.Poller.POLLIN);
 
-            if(worker_queues.size() > 0)
+            if(worker_queues.size() > 0) {
                 items.register(frontend, ZMQ.Poller.POLLIN);
+            }
 
             if (items.poll() < 0)
                 return;
@@ -108,31 +127,12 @@ public class Broker {
                     String empty = backend.recvStr();
                     assert(empty.length() == 0);
 
-                    String clientAddr = backend.recvStr();
-                    if (!clientAddr.equals("READY")){
-                        //Remove empty msg between messages
-                        empty = backend.recvStr();
-                        assert(empty.length() == 0);
-
-                        Message reply = null;
-                        try {
-                            reply = MessageBuilder.messageFromSocket(backend);
-                        } catch (IOException | ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                        frontend.sendMore(clientAddr);
-                        frontend.sendMore("");
-                        try {
-                            frontend.send(MessageBuilder.messageToByteArray(reply));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    String workerResponse = backend.recvStr();
+                    assert(workerResponse.equals("READY"));
                 } catch (ZMQException e) {
                     e.printStackTrace();
                 }
             }
-
 
             if (items.pollin(1)) { // Control, shutdown now
                 return;
@@ -140,13 +140,7 @@ public class Broker {
 
             if (items.pollin(2)) { // Frontend, client request
                 try {
-                    System.out.println("Received request");
-                    String clientAddr = frontend.recvStr();
-
                     //Remove empty msg between messages
-                    String empty = frontend.recvStr();
-                    assert(empty.length() == 0);
-
                     Message request = null;
                     try {
                         request = MessageBuilder.messageFromSocket(frontend);
@@ -157,21 +151,16 @@ public class Broker {
 
                     backend.sendMore(workerAddr);
                     backend.sendMore("");
-                    backend.sendMore(clientAddr);
-                    backend.sendMore("");
                     try {
                         backend.send(MessageBuilder.messageToByteArray(request));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    frontend.send("OK");
                 } catch (ZMQException e) {
                     e.printStackTrace();
                 }
             }
         }
-    }
-
-    public String getFrontendPort() {
-        return frontendPort;
     }
 }

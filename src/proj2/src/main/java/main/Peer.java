@@ -3,27 +3,23 @@ package main;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
+import main.model.message.Message;
 import main.model.message.request.MessageRequest;
 import main.model.message.request.PingMessage;
+import main.model.message.request.QueryHitMessage;
 import main.model.message.request.QueryMessage;
-import main.model.message.response.MessageResponse;
-import main.model.message.response.PongMessage;
+import main.model.message.request.PongMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
-import org.zeromq.SocketType;
 import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
 
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.IntStream;
-
-import static java.util.Collections.shuffle;
 
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
@@ -49,7 +45,7 @@ public class Peer implements Serializable {
         this.context = new ZContext();
         this.peerInfo = new PeerInfo(address, username, capacity);
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
-        this.broker = new Broker(context, sender, peerInfo);
+        this.broker = new Broker(context, peerInfo);
     }
 
     public void join(Neighbour neighbour) {
@@ -99,42 +95,74 @@ public class Peer implements Serializable {
         this.context.close();
     }
 
-    public void queryNeighbours(String username) {
+    public Timeline queryNeighbours(String username) {
         // check if neighbours have the username's timeline
         // TODO: BLOOM FILTERS
         // TODO Tamos a dar flooding atm, dps temos que usar searches
         // System.out.println("got neighbours with timelines: " + neighbours.size());
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
+        if (neighbours.size() == 0)
+            return null;
 
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
 
         int i=0;
+        MessageRequest request = new QueryMessage(username, this.peerInfo);
+        Future<Message> responseFuture = broker.addPromise(request.getId());
         while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);
-            MessageRequest request = new QueryMessage(username, this.peerInfo);
             this.sender.sendRequestNTimes(request, n.getPort());
             ++i;
         }
+
+        boolean timed_out = false;
+        QueryHitMessage response = null;
+        while (!timed_out && response == null) {
+            try {
+                // TODO Get more recent by timeframe
+                response = (QueryHitMessage) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                timed_out = true;
+            }
+        }
+        broker.removePromise(request.getId());
+
+        if (response == null)
+            return null;
+
+        System.out.println(response.getTimeline());
+        return response.getTimeline();
     }
 
     public void pingNeighbours() {
-        for (Neighbour neighbour: peerInfo.getNeighbours()) { // TODO multithread this, probably with scheduler
+        List<Neighbour> neighbours = this.getPeerInfo().getNeighbours().stream().toList();
+        for (Neighbour neighbour: neighbours) { // TODO multithread this, probably with scheduler
             PingMessage pingMessage = new PingMessage(peerInfo.getHost());
-            MessageResponse response = this.sender.sendRequestNTimes(pingMessage, neighbour.getPort());
+            Future<Message> responseFuture = broker.addPromise(pingMessage.getId());
+
+            this.sender.sendRequestNTimes(pingMessage, neighbour.getPort());
+            PongMessage response = null;
+            try {
+                response = (PongMessage) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            } catch (TimeoutException ignored) {}
+            broker.removePromise(pingMessage.getId());
 
             if (response == null) { // Went offline after n tries
-                System.out.println(peerInfo.getUsername() + " REMOVED " + neighbour.getUsername());
+                // System.out.println(peerInfo.getUsername() + " REMOVED " + neighbour.getUsername());
                 peerInfo.removeNeighbour(neighbour);
                 peerInfo.removeHost(neighbour);
                 continue;
             }
 
-            PongMessage pong = (PongMessage) response;
-            Neighbour updatedNeighbour = pong.sender;
+            Neighbour updatedNeighbour = response.sender;
             if (peerInfo.hasNeighbour(updatedNeighbour)) {
-                Set<Host> hostCache = pong.hostCache;
-                System.out.println(peerInfo.getUsername() + " UPDATED " + neighbour.getUsername());
+                Set<Host> hostCache = response.hostCache;
+                // System.out.println(peerInfo.getUsername() + " UPDATED " + neighbour.getUsername());
                 peerInfo.updateNeighbour(updatedNeighbour);
                 peerInfo.updateHostCache(hostCache);
             }
