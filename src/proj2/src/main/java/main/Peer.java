@@ -35,8 +35,6 @@ public class Peer implements Serializable {
     private final PeerInfo peerInfo;
     private final ZContext context;
 
-    private NTP ntp;
-
     // Network members
     private final Broker broker;
     private final MessageSender sender;
@@ -50,7 +48,6 @@ public class Peer implements Serializable {
         this.peerInfo = new PeerInfo(address, username, capacity);
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker = new Broker(context, peerInfo);
-        this.ntp = new NTP();
     }
 
     public void join(Neighbour neighbour) {
@@ -64,10 +61,6 @@ public class Peer implements Serializable {
     public void printTimelines() {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
         timelineInfo.printTimelines();
-    }
-
-    public Long getClockOffset() {
-        return ntp.getOffsetValue();
     }
 
     public void addTimeline(Timeline timeline) {

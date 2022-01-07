@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TimelineInfo {
-    public static String FOLDER = "timelines" + File.separator;
+    public static String FOLDER = "stored_timelines" + File.separator;
     private final File timelines_folder;
     private final Map<String, Timeline> timelines;
     private final String me;
@@ -54,6 +54,14 @@ public class TimelineInfo {
     }
 
     public void addTimeline(Timeline timeline) {
+        LocalTime timelineToAddTimeStamp = timeline.getLastUpdate();
+        LocalTime savedTimelineTimeStamp = this.getTimeline(timeline.getUsername()).getLastUpdate();
+
+        //Returns <= 0 if saved timeline is more recent
+        if(timelineToAddTimeStamp.compareTo(savedTimelineTimeStamp) <= 0){
+            return;
+        }
+
         this.timelines.put(timeline.getUsername(), timeline);
         try {
             // save timeline in non volatile memory
@@ -113,6 +121,8 @@ public class TimelineInfo {
 
     public void cleanup() {
         LocalTime currentTime = LocalTime.now(); // TODO: ntp
+        Long clockOffset = this.timelines.get(me).getClockOffset();
+        currentTime.plusNanos(clockOffset);
 
         for (Timeline timeline : this.timelines.values()) {
             // don't delete own timeline

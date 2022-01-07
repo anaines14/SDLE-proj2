@@ -1,5 +1,7 @@
 package main.model.timelines;
 
+import main.controller.network.NTP;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -15,12 +17,16 @@ public class Timeline implements Serializable {
     private int lastPostId;
     private final String username;
     private LocalTime lastUpdate;
+    private Long clockOffset;
 
     public Timeline(String username) {
         this.posts = new HashMap<>();
         this.username = username;
-        this.lastUpdate = LocalTime.now(); // TODO ntp
+        NTP ntp = new NTP();
+        this.clockOffset = ntp.getOffsetValue();
+        this.lastUpdate = LocalTime.now().plusNanos(this.clockOffset); // TODO ntp
         this.lastPostId = 0;
+
     }
 
     public void addPost(String post_content) {
@@ -45,6 +51,14 @@ public class Timeline implements Serializable {
     }
 
     public LocalTime getLastUpdate() { return lastUpdate; }
+
+    public Long getClockOffset() {
+        return clockOffset;
+    }
+
+    public void setClockOffset(Long clockOffset) {
+        this.clockOffset = clockOffset;
+    }
 
     public boolean updatePost(int postId, String post_content) {
         Post post = this.posts.get(postId);
