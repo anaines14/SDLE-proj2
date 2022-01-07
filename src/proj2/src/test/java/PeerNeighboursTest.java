@@ -92,4 +92,34 @@ public class PeerNeighboursTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void satisfaction() {
+        InetAddress localhost = null;
+        try {
+            localhost = InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+        Peer peer = new Peer("peer1", localhost, 10);
+
+        // test 0 neighbours
+        assertEquals(0, peer.calculateSatisfaction());
+
+        // test 1 neighbours
+        Neighbour n1 = new Neighbour("peer2", localhost, "8000", 4, 1, new ArrayList<>());
+        peer.join(n1);
+        assertEquals(0.4, peer.calculateSatisfaction());
+
+        // test max neighbours
+        Neighbour n2 = new Neighbour("peer3", localhost, "8001", 4, 1, new ArrayList<>());
+        peer.join(n2);
+        assertEquals(1, peer.calculateSatisfaction());
+
+        // test more than max neighbours
+        Neighbour n3 = new Neighbour("peer4", localhost, "8001", 4, 1, new ArrayList<>());
+        peer.join(n3);
+        assertEquals(1, peer.calculateSatisfaction());
+    }
 }
