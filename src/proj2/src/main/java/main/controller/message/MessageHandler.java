@@ -105,9 +105,12 @@ public class MessageHandler {
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().filter(
                 n -> !message.isInPath(new Sender(n.getAddress(), n.getPort()))
         ).toList();
+        System.out.print(this.peerInfo.getUsername() + " SENDING TO: ");
+        for (Neighbour n: neighbours)
+            System.out.print(n.getUsername() + " ");
+        System.out.println();
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
-
         int i=0;
         while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);

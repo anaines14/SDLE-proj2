@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
-    public static final int MAX_NGBRS = 2;
+    public static final int MAX_NGBRS = 4;
     public static final int MIN_NGBRS = 1;
     public static final int MAX_RETRY = 3;
     public static final int RCV_TIMEOUT = 1000;

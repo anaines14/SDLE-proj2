@@ -83,10 +83,10 @@ public class GraphTest {
         //MessageSender.addIgnoredMsg("PASSOU_BEM");
         //MessageSender.addIgnoredMsg("PASSOU_BEM_RESPONSE");
 
-        List<Peer> peers = this.nodeFactory(4);
+        List<Peer> peers = this.nodeFactory(5);
 
         try {
-            Thread.sleep(20000);
+            Thread.sleep(30000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
