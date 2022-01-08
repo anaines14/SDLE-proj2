@@ -5,9 +5,8 @@ import org.apache.commons.net.ntp.TimeInfo;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 
+// Adapted from: https://commons.apache.org/proper/commons-net/examples/ntp/NTPClient.java
 public class NTP {
     private Long offsetValue;
     private Long delayValue;
@@ -24,16 +23,10 @@ public class NTP {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        assert info != null;
         info.computeDetails(); // compute offset/delay if not already done
         offsetValue = info.getOffset() * 1000000L;
         delayValue = info.getDelay() * 1000000L;
-
-        String delay = (delayValue == null) ? "N/A" : delayValue.toString();
-        String offset = (offsetValue == null) ? "N/A" : offsetValue.toString();
-
-        System.out.println(" Roundtrip delay(ns)=" + delay
-                + ", clock offset(ns)=" + offset); // offset in ms
-
         client.close();
     }
 
@@ -52,6 +45,4 @@ public class NTP {
     public void setOffsetValue(Long offsetValue) {
         this.offsetValue = offsetValue;
     }
-
-
 }

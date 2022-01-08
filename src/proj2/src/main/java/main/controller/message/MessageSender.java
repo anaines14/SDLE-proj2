@@ -99,7 +99,6 @@ public class MessageSender {
     private void notify(MessageRequest message, String port) {
         if (observer == null) return;
         String type = message.getType();
-        System.out.println(type);
         switch (type) {
             case QueryHitMessage.type -> this.observer.newQueryHitUpdate(this.port, port);
             case QueryMessage.type -> this.observer.newQueryUpdate(this.port, port);

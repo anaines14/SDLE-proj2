@@ -24,6 +24,8 @@ public class GraphTest {
     public void setUp() {
         MessageSender.addIgnoredMsg("PING");
         MessageSender.addIgnoredMsg("PONG");
+        MessageSender.addIgnoredMsg("PASSOU_BEM");
+        MessageSender.addIgnoredMsg("PASSOU_BEM_RESPONSE");
 
         scheduler = new ScheduledThreadPoolExecutor(10);
         this.graph = new GraphWrapper("Network");

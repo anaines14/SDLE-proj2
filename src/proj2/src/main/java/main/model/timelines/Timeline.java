@@ -1,7 +1,5 @@
 package main.model.timelines;
 
-import main.controller.network.NTP;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -17,16 +15,14 @@ public class Timeline implements Serializable {
     private int lastPostId;
     private final String username;
     private LocalTime lastUpdate;
-    private Long clockOffset;
+    private final Long clockOffset;
 
-    public Timeline(String username) {
+    public Timeline(String username, Long clockOffset) {
         this.posts = new HashMap<>();
         this.username = username;
-        NTP ntp = new NTP();
-        this.clockOffset = ntp.getOffsetValue();
-        this.lastUpdate = LocalTime.now().plusNanos(this.clockOffset); // TODO ntp
+        this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
         this.lastPostId = 0;
-
+        this.clockOffset = clockOffset;
     }
 
     public void addPost(String post_content) {
@@ -35,7 +31,7 @@ public class Timeline implements Serializable {
         System.out.println("ADDED post: \n" + "\tuser: " + username +
                 "\n\tID: " + lastPostId + "\n\tContent: " + post_content);
 
-        this.lastUpdate = LocalTime.now();
+        this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
     }
 
     public boolean deletePost(int postId) {
@@ -43,7 +39,7 @@ public class Timeline implements Serializable {
         if (deleted != null) {
             System.out.println("DELETED post: \n"  + "\tuser: " + username +
                     "\n\tID: " + postId);
-            this.lastUpdate = LocalTime.now();
+            this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
             return true;
         }
         System.err.println("ERROR: Failed to delete post " + postId + " from " + username);
@@ -52,20 +48,12 @@ public class Timeline implements Serializable {
 
     public LocalTime getLastUpdate() { return lastUpdate; }
 
-    public Long getClockOffset() {
-        return clockOffset;
-    }
-
-    public void setClockOffset(Long clockOffset) {
-        this.clockOffset = clockOffset;
-    }
-
     public boolean updatePost(int postId, String post_content) {
         Post post = this.posts.get(postId);
         if (post != null && post.update(post_content)) {
             System.out.println("UPDATED post: \n"  + "\tuser: " + username +
                     "\n\tID: " + postId + "\n\tContent: " + post_content);
-            this.lastUpdate = LocalTime.now();
+            this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
             return true;
         }
         System.err.println("ERROR: Failed to delete post " + postId + " from " + username);

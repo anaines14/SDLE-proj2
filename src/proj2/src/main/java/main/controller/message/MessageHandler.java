@@ -86,7 +86,7 @@ public class MessageHandler {
         if (message.isInPath(this.peerInfo))
             return; // Already redirected this message
 
-        if (ourTimelineInfo.hasTimeline(wantedUser)) {
+        if (ourTimelineInfo.hasTimeline(wantedUser)) { // TODO Add this to cache so that we don't resend a response
             // We have timeline, send query hit to initiator
             Timeline requestedTimeline = ourTimelineInfo.getTimeline(wantedUser);
             MessageRequest queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
