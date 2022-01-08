@@ -21,26 +21,19 @@ import static main.Peer.MAX_RANDOM_NEIGH;
 
 // Dá handle só a mensagens que iniciam requests (PING)
 public class MessageHandler {
-    private final ConcurrentMap<UUID, CompletableFuture<Message>> promises;
+    private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
     private final PeerInfo peerInfo;
     private final MessageSender sender;
 
     public MessageHandler(PeerInfo peerInfo, MessageSender sender,
-                          ConcurrentMap<UUID, CompletableFuture<Message>> promises) {
+                          ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises) {
         this.peerInfo = peerInfo;
         this.sender = sender;
         this.promises = promises;
     }
 
-//    public void handle(Message message) {
-//        if (!(message instanceof MessageRequest)) // We only can handle message requests
-//            return;
-//
-//        handle((MessageRequest) message);
-//    }
-
     public void handle(Message message) {
-        // System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: " + message.getLastSender().getPort());
+//         System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: ");
         switch (message.getType()) {
             case "PING":
                 handle((PingMessage) message);

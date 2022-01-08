@@ -20,13 +20,9 @@ public class PeerQueryTest {
     private Peer peer4;
     private Peer peer5;
     private ScheduledThreadPoolExecutor scheduler;
-    private GraphWrapper graph;
 
     @BeforeEach
     public void setUp() {
-        this.graph = new GraphWrapper("Network");
-        this.graph.display();
-
         InetAddress localhost = null;
         try {
             localhost = InetAddress.getByName("localhost");
@@ -43,7 +39,6 @@ public class PeerQueryTest {
         for (Peer p: peers) {
             p.execute(scheduler);
             System.out.println(p.getPeerInfo().getUsername() + ": " + p.getPeerInfo().getPort());
-            p.getPeerInfo().subscribe(this.graph);
         }
 
         peer1.join(peer2);

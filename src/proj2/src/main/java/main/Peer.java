@@ -6,6 +6,7 @@ import main.controller.network.Broker;
 import main.controller.message.MessageSender;
 import main.model.message.Message;
 import main.model.message.request.*;
+import main.model.message.response.MessageResponse;
 import main.model.message.response.PassouBemResponse;
 import main.model.message.response.PongMessage;
 import main.model.message.response.QueryHitMessage;
@@ -115,7 +116,7 @@ public class Peer implements Serializable {
 
         int i=0;
         MessageRequest request = new QueryMessage(username, this.peerInfo);
-        Future<Message> responseFuture = broker.addPromise(request.getId());
+        Future<MessageResponse> responseFuture = broker.addPromise(request.getId());
         while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);
             this.sender.sendMessageNTimes(request, n.getPort());
@@ -149,7 +150,7 @@ public class Peer implements Serializable {
         List<Neighbour> neighbours = this.getPeerInfo().getNeighbours().stream().toList();
         for (Neighbour neighbour: neighbours) { // TODO multithread this, probably with scheduler
             PingMessage pingMessage = new PingMessage(peerInfo.getHost());
-            Future<Message> responseFuture = broker.addPromise(pingMessage.getId());
+            Future<MessageResponse> responseFuture = broker.addPromise(pingMessage.getId());
 
             this.sender.sendMessageNTimes(pingMessage, neighbour.getPort());
             PongMessage response = null;
@@ -199,7 +200,7 @@ public class Peer implements Serializable {
 
         PassouBem passouBem = new PassouBem(peerInfo.getHost());
         this.sender.sendMessageNTimes(passouBem, candidate.getPort());
-        Future<Message> promise = broker.addPromise(passouBem.getId());
+        Future<MessageResponse> promise = broker.addPromise(passouBem.getId());
         PassouBemResponse response;
         try {
             response = (PassouBemResponse) promise.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);

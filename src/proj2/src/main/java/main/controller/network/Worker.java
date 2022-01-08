@@ -28,7 +28,7 @@ public class Worker {
     private Thread thread;
 
     public Worker(PeerInfo peerInfo, int id,
-                  ConcurrentMap<UUID, CompletableFuture<Message>> promises, ZContext context){
+                  ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, ZContext context){
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.handler = new MessageHandler(peerInfo, sender, promises);
         this.worker = context.createSocket(SocketType.REQ);
