@@ -11,6 +11,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,35 +40,16 @@ public class Broker {
     // Messages that we are expecting to receive, workers fill these when they receive the request
     private final ConcurrentMap<UUID, CompletableFuture<Message>> promises;
 
-
-    public Broker(ZContext context, MessageSender sender, PeerInfo peerInfo){
+    public Broker(ZContext context, InetAddress address){
         this.context = context;
         this.backend = context.createSocket(SocketType.ROUTER);
         this.control = context.createSocket(SocketType.PULL);
         this.frontend = context.createSocket(SocketType.REP);
         this.publisher = context.createSocket(SocketType.PUB);
-        String.valueOf(frontend.bindToRandomPort("tcp://" + peerInfo.getAddress()));
-        String.valueOf(frontend.bindToRandomPort("tcp://" + peerInfo.getAddress()));
-        this.backend.bind("inproc://workers");
-        this.control.bind("inproc://control");
-        this.promises = new ConcurrentHashMap<>();
-        this.workers = new ArrayList<>();
-        this.thread = new Thread(this::run);
-        this.subscriptions = new ConcurrentHashMap<>();
-        for(int id = 0; id < N_WORKERS; id++){
-            Worker worker = new Worker(peerInfo, id, sender, promises, context);
-            workers.add(worker);
-        }
-    }
 
-    public Broker(ZContext context, ZMQ.Socket frontend, ZMQ.Socket publisher, MessageSender sender, PeerInfo peerInfo){
-        this.context = context;
-        this.backend = context.createSocket(SocketType.ROUTER);
-        this.frontend = frontend;
-        this.control = context.createSocket(SocketType.PULL);
-        this.publisher = publisher;
-
-        String hostName = peerInfo.getAddress().getHostName();
+        String hostName = address.getHostName();
+        this.frontendPort = String.valueOf(frontend.bindToRandomPort("tcp://" + hostName));
+        this.publisherPort = String.valueOf(publisher.bindToRandomPort("tcp://" + hostName));
         // Bind each socket, bind frontend and publisher to random port
 
         this.backend.bind("inproc://workers");
@@ -78,9 +60,28 @@ public class Broker {
         this.thread = new Thread(this::run);
         this.subscriptions = new ConcurrentHashMap<>();
         for(int id = 0; id < N_WORKERS; id++){
-            Worker worker = new Worker(peerInfo, id, sender, promises, context);
+            Worker worker = new Worker(id, promises, context);
             workers.add(worker);
         }
+    }
+
+
+    public String getFrontendPort() {
+        return frontendPort;
+    }
+
+    public String getPublisherPort() {
+        return publisherPort;
+    }
+
+    public void setSender(MessageSender sender) {
+        for (Worker w: workers)
+            w.setSender(sender);
+    }
+
+    public void setPeerInfo(PeerInfo peerInfo) {
+        for (Worker w: workers)
+            w.setPeerInfo(peerInfo);
     }
 
     public Future<Message> addPromise(UUID id) {

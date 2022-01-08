@@ -19,14 +19,21 @@ import static main.Peer.MAX_RANDOM_NEIGH;
 // Dá handle só a mensagens que iniciam requests (PING)
 public class MessageHandler {
     private final ConcurrentMap<UUID, CompletableFuture<Message>> promises;
-    private final PeerInfo peerInfo;
-    private final MessageSender sender;
+    private PeerInfo peerInfo;
+    private MessageSender sender;
 
-    public MessageHandler(PeerInfo peerInfo, MessageSender sender,
-                          ConcurrentMap<UUID, CompletableFuture<Message>> promises) {
-        this.peerInfo = peerInfo;
-        this.sender = sender;
+    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<Message>> promises) {
+        this.peerInfo = null;
+        this.sender = null;
         this.promises = promises;
+    }
+
+    public void setSender(MessageSender sender) {
+        this.sender = sender;
+    }
+
+    public void setPeerInfo(PeerInfo peerInfo) {
+        this.peerInfo = peerInfo;
     }
 
     public void handle(Message message) {

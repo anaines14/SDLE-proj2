@@ -137,6 +137,10 @@ public class PeerInfo {
         return this.me.getPort();
     }
 
+    public String getPublishPort() {
+        return this.me.getPublishPort();
+    }
+
     public Host getHost() {
         return this.me;
     }

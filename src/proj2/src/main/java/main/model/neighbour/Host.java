@@ -35,6 +35,10 @@ public class Host implements Serializable, Comparable<Host> {
         return port;
     }
 
+    public String getPublishPort() {
+        return publisherPort;
+    }
+
     public int getCapacity() {
         return capacity;
     }
@@ -71,4 +75,5 @@ public class Host implements Serializable, Comparable<Host> {
     public int compareTo(Host host) {
         return Integer.compare(degree, host.degree);
     }
+
 }

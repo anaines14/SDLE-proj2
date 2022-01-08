@@ -44,14 +44,11 @@ public class Peer implements Serializable {
     public Peer(String username, InetAddress address, int capacity) {
         this.context = new ZContext();
 
-        ZMQ.Socket frontend = context.createSocket(SocketType.REP);
-        ZMQ.Socket publisher = context.createSocket(SocketType.PUB);
-        String frontendPort = String.valueOf(frontend.bindToRandomPort("tcp://" + address.getHostName()));
-        String publisherPort = String.valueOf(frontend.bindToRandomPort("tcp://" + address.getHostName()));
-
-        this.peerInfo = new PeerInfo(username, address, capacity, frontendPort, publisherPort);
+        this.broker = new Broker(context, address);
+        this.peerInfo = new PeerInfo(username, address, capacity, broker.getFrontendPort(), broker.getPublisherPort());
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
-        this.broker = new Broker(context, frontend, publisher, sender, peerInfo); // Broker updates the peerInfo's ports
+        this.broker.setSender(sender);
+        this.broker.setPeerInfo(peerInfo);
     }
 
     public void join(Neighbour neighbour) {

@@ -19,18 +19,24 @@ import java.util.concurrent.ConcurrentMap;
 
 public class Worker {
     private MessageHandler handler;
-    private MessageSender sender;
     private ZMQ.Socket worker;
     private Thread thread;
 
-    public Worker(PeerInfo peerInfo, int id, MessageSender sender,
-                  ConcurrentMap<UUID, CompletableFuture<Message>> promises, ZContext context){
-        this.sender = sender;
-        this.handler = new MessageHandler(peerInfo, sender, promises);
+    public Worker(int id, ConcurrentMap<UUID, CompletableFuture<Message>> promises, ZContext context){
+        this.handler = new MessageHandler(promises);
         this.worker = context.createSocket(SocketType.REQ);
         this.worker.setIdentity(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
         this.thread = new Thread(this::run);
     }
+
+    public void setSender(MessageSender sender) {
+        this.handler.setSender(sender);
+    }
+
+    public void setPeerInfo(PeerInfo peerInfo) {
+        this.handler.setPeerInfo(peerInfo);
+    }
+
 
     public void execute() {
         this.thread.start();
