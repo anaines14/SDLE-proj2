@@ -14,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.IntStream;
 
+import static main.Peer.MAX_NGBRS;
 import static main.Peer.MAX_RANDOM_NEIGH;
 
 // Dá handle só a mensagens que iniciam requests (PING)
@@ -51,16 +52,23 @@ public class MessageHandler {
             case "QUERY_HIT":
                 handle((QueryHitMessage) message);
                 return;
+            case "PASSOU_BEM":
+                handle((PassouBem) message);
+                return;
+            case "PASSOU_BEM_RESPONSE":
+                handle((PassouBemResponse) message);
+                return;
             default:
         }
     }
 
     private void handle(PingMessage message) {
         // Reply with a Pong message with our info
-        Neighbour ourInfo = new Neighbour(peerInfo.getHost());
-
         peerInfo.addHost(message.getSender());
-        PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache(), message.getId());
+        Neighbour ourInfo = new Neighbour(peerInfo.getHost());
+        boolean isNeighbour = peerInfo.hasNeighbour(new Neighbour(message.getSender()));
+
+        PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache(), message.getId(), isNeighbour);
         this.sender.sendRequestNTimes(replyMsg, message.getSender().getPort());
     }
 
@@ -97,9 +105,12 @@ public class MessageHandler {
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().filter(
                 n -> !message.isInPath(new Sender(n.getAddress(), n.getPort()))
         ).toList();
+        System.out.print(this.peerInfo.getUsername() + " SENDING TO: ");
+        for (Neighbour n: neighbours)
+            System.out.print(n.getUsername() + " ");
+        System.out.println();
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
-
         int i=0;
         while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);
@@ -112,5 +123,31 @@ public class MessageHandler {
         if (promises.containsKey(message.getId())) {
             promises.get(message.getId()).complete(message);
         }
+    }
+
+    private void handle(PassouBem message) {
+        boolean neighboursFull = this.peerInfo.areNeighboursFull();
+
+        boolean accepted = false;
+        if (!neighboursFull) {
+            this.peerInfo.addNeighbour(new Neighbour(message.getSender()));
+            accepted = true;
+        } else {
+            Neighbour toReplace = this.peerInfo.acceptNeighbour(message.getSender());
+            boolean canReplace = toReplace != null;
+            if (canReplace) {
+                accepted = true;
+                peerInfo.replaceNeighbour(toReplace, new Neighbour(message.getSender()));
+            }
+        }
+        PassouBemResponse response = new PassouBemResponse(message.getId(), peerInfo.getHostCache(), accepted);
+        this.sender.sendRequestNTimes(response, message.getSender().getPort());
+    }
+
+    private void handle(PassouBemResponse message) {
+        if (promises.containsKey(message.getId())) {
+            promises.get(message.getId()).complete(message);
+        }
+        this.peerInfo.updateHostCache(message.getHostCache());
     }
 }

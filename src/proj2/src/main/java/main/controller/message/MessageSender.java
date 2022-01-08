@@ -4,17 +4,13 @@ import main.gui.Observer;
 import main.model.PeerInfo;
 import main.model.message.Message;
 import main.model.message.request.MessageRequest;
-import main.model.message.request.PingMessage;
 import main.model.message.request.QueryHitMessage;
 import main.model.message.request.QueryMessage;
-import main.model.message.response.MessageResponse;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class MessageSender {

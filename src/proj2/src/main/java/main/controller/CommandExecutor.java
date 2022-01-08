@@ -3,13 +3,9 @@ package main.controller;
 import main.Peer;
 import main.gui.GraphWrapper;
 import main.model.neighbour.Neighbour;
-import org.graphstream.graph.Graph;
-import org.graphstream.graph.Node;
-import org.graphstream.graph.implementations.SingleGraph;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.*;
 
@@ -222,7 +218,7 @@ public class CommandExecutor {
         return 0;
     }
 
-    private int execTimeline(String[] opts) { // TODO
+    private int execTimeline(String[] opts) {
         // get peer
         String username = opts[1];
         String timeline = opts[2];

@@ -1,6 +1,10 @@
 package main.model.timelines;
 
+import main.controller.network.NTP;
+
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,12 +17,16 @@ public class Timeline implements Serializable {
     private int lastPostId;
     private final String username;
     private LocalTime lastUpdate;
+    private Long clockOffset;
 
     public Timeline(String username) {
         this.posts = new HashMap<>();
         this.username = username;
-        this.lastUpdate = LocalTime.now();
+        NTP ntp = new NTP();
+        this.clockOffset = ntp.getOffsetValue();
+        this.lastUpdate = LocalTime.now().plusNanos(this.clockOffset); // TODO ntp
         this.lastPostId = 0;
+
     }
 
     public void addPost(String post_content) {
@@ -27,6 +35,7 @@ public class Timeline implements Serializable {
         System.out.println("ADDED post: \n" + "\tuser: " + username +
                 "\n\tID: " + lastPostId + "\n\tContent: " + post_content);
 
+        this.lastUpdate = LocalTime.now();
     }
 
     public boolean deletePost(int postId) {
@@ -34,10 +43,21 @@ public class Timeline implements Serializable {
         if (deleted != null) {
             System.out.println("DELETED post: \n"  + "\tuser: " + username +
                     "\n\tID: " + postId);
+            this.lastUpdate = LocalTime.now();
             return true;
         }
         System.err.println("ERROR: Failed to delete post " + postId + " from " + username);
         return false;
+    }
+
+    public LocalTime getLastUpdate() { return lastUpdate; }
+
+    public Long getClockOffset() {
+        return clockOffset;
+    }
+
+    public void setClockOffset(Long clockOffset) {
+        this.clockOffset = clockOffset;
     }
 
     public boolean updatePost(int postId, String post_content) {
@@ -45,18 +65,23 @@ public class Timeline implements Serializable {
         if (post != null && post.update(post_content)) {
             System.out.println("UPDATED post: \n"  + "\tuser: " + username +
                     "\n\tID: " + postId + "\n\tContent: " + post_content);
+            this.lastUpdate = LocalTime.now();
             return true;
         }
         System.err.println("ERROR: Failed to delete post " + postId + " from " + username);
         return false;
     }
 
-    public void save(File timelines_folder) throws IOException {
-        FileOutputStream fos = new FileOutputStream(timelines_folder + File.separator + username);
+    public void save(File timelinesFolder) throws IOException {
+        FileOutputStream fos = new FileOutputStream(timelinesFolder + File.separator + username);
         ObjectOutputStream oos = new ObjectOutputStream(fos);
         oos.writeObject(this);
 
         oos.close();
+    }
+
+    public boolean remove(File timelinesFolder) throws  IOException {
+        return Files.deleteIfExists(Paths.get(timelinesFolder + File.separator + username)); //toDelete = new File(timelinesFolder + File.separator + username);
     }
 
     public String getUsername() { return this.username; }
