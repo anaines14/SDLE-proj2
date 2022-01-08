@@ -156,10 +156,11 @@ public class MessageHandler {
         if (message.isInPath(this.peerInfo))
             return; // Already redirected this message
 
-        // this is wanted sub
+        // TODO: Check if peer can accept another sub
         if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
-            // We have timeline, send query hit to initiator
-            MessageResponse queryHit = new SubHitMessage(message.getId());
+            // We are the requested sub, send query hit to initiator
+            MessageResponse queryHit = new SubHitMessage(message.getId(),
+                    this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
             this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
             return;
         }

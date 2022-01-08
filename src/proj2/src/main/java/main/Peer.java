@@ -33,6 +33,7 @@ public class Peer implements Serializable {
     public static final int MAX_RETRY = 3;
     public static final int RCV_TIMEOUT = 1000;
     public static final int MAX_RANDOM_NEIGH = 2;
+    public static final int MAX_SUBS = 3;
 
     // Model/Data members
     private final PeerInfo peerInfo;
@@ -138,10 +139,10 @@ public class Peer implements Serializable {
         MessageRequest request = new SubMessage(username, this.peerInfo);
         SubHitMessage response = (SubHitMessage) this.sendQueryNeighbours(request, neighbours);
 
+        // add subscription
         if (response != null) {
-            System.out.println("response " + response.getPort());
-            // TODO: something with sub
-            System.out.println("SUBBED TO " + username);
+            this.broker.subscribe(username, response.getAddress(), response.getPort());
+            System.out.println(this.peerInfo.getUsername() + " SUBBED TO " + username);
         }
     }
 
@@ -274,6 +275,10 @@ public class Peer implements Serializable {
 
     public Broker getBroker() {
         return broker;
+    }
+
+    public boolean isSubscribed(String username) {
+        return this.broker.isSubscribed(username);
     }
 
     @Override

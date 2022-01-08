@@ -26,7 +26,7 @@ public class Broker {
     // supporting socket interruption on receive calls recently
     private ZMQ.Socket control;
     private ZMQ.Socket publisher;
-    private ConcurrentMap<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
+    private Map<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
     private ConcurrentLinkedQueue<Post> subMessages; // New posts that are posted by our subs
     private List<Worker> workers;
 
@@ -138,6 +138,10 @@ public class Broker {
         } catch (IOException e) { // Thrown when we don't receive a post
             e.printStackTrace();
         }
+    }
+
+    public boolean isSubscribed(String username) {
+        return this.subscriptions.containsKey(username);
     }
 
     public void execute() {

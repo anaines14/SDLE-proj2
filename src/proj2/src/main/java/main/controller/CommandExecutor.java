@@ -44,6 +44,8 @@ public class CommandExecutor {
                 return this.execUpdate(cmd, opts);
             case "TIMELINE":
                 return this.execTimeline(opts);
+            case "SUB":
+                return this.execSub(opts);
             case "PRINT":
                 return this.execPrint(opts);
             case "PRINT_PEERS":
@@ -57,6 +59,7 @@ public class CommandExecutor {
 
         }
     }
+
 
     private int execStart(String[] opts) throws UnknownHostException {
         if (opts.length < 3) return -1;
@@ -239,6 +242,21 @@ public class CommandExecutor {
 
         peer.requestTimeline(timeline);
 
+        return 0;
+    }
+
+    private int execSub(String[] opts) {
+        String username = opts[1];
+        String target_user = opts[2];
+
+        Peer peer = peers.get(username);
+
+        if (peer == null) {
+            System.err.println("ERROR: Peer not found.");
+            return -1;
+        }
+
+        peer.requestSub(target_user);
         return 0;
     }
 
