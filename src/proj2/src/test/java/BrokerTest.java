@@ -1,7 +1,6 @@
 import main.controller.network.Broker;
 import main.model.PeerInfo;
 import main.controller.message.MessageSender;
-import main.model.message.request.MessageRequest;
 import main.model.message.request.PingMessage;
 import main.model.neighbour.Host;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,8 +43,7 @@ public class BrokerTest {
     @Test
     public void testBroker() {
         Host peer2 = new Host("user2", localhost, "8002", "8003", 10, 10);
-        assertTrue(sender.sendRequestNTimes(new PingMessage(peer2), peerInfo.getPort()));
-
+        assertTrue(sender.sendMessageNTimes(new PingMessage(peer2), peerInfo.getPort()));
         broker.stop();
     }
 

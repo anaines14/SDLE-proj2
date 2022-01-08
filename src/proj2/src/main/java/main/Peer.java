@@ -4,8 +4,13 @@ import main.gui.Observer;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
-import main.model.message.Message;
 import main.model.message.request.*;
+import main.model.message.request.query.QueryMessage;
+import main.model.message.request.query.SubMessage;
+import main.model.message.response.*;
+import main.model.message.response.query.QueryHitMessage;
+import main.model.message.response.query.QueryResponseImpl;
+import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
@@ -103,7 +108,7 @@ public class Peer implements Serializable {
         this.context.close();
     }
 
-    public Timeline queryNeighbours(String username) {
+    public Timeline requestTimeline(String username) {
         // check if neighbours have the username's timeline
         // TODO: BLOOM FILTERS
         // TODO Tamos a dar flooding atm, dps temos que usar searches
@@ -112,24 +117,50 @@ public class Peer implements Serializable {
         if (neighbours.size() == 0)
             return null;
 
+        MessageRequest request = new QueryMessage(username, this.peerInfo);
+
+        QueryHitMessage response = (QueryHitMessage) this.sendQueryNeighbours(request, neighbours);
+
+        if (response != null) {
+            // save requested timeline
+            this.addTimeline(response.getTimeline());
+
+            return response.getTimeline();
+        }
+        return null;
+    }
+
+    public void requestSub(String username) {
+        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
+        if (neighbours.size() == 0)
+            return;
+
+        MessageRequest request = new SubMessage(username, this.peerInfo);
+        SubHitMessage response = (SubHitMessage) this.sendQueryNeighbours(request, neighbours);
+
+        if (response != null) {
+            System.out.println("response " + response.getPort());
+            // TODO: something with sub
+            System.out.println("SUBBED TO " + username);
+        }
+    }
+
+    private QueryResponseImpl sendQueryNeighbours(MessageRequest request, List<Neighbour> neighbours) {
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
-
         int i=0;
-        MessageRequest request = new QueryMessage(username, this.peerInfo);
-        Future<Message> responseFuture = broker.addPromise(request.getId());
+        Future<MessageResponse> responseFuture = broker.addPromise(request.getId());
         while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);
-            this.sender.sendRequestNTimes(request, n.getPort());
+            this.sender.sendMessageNTimes(request, n.getPort());
             ++i;
         }
 
         boolean timed_out = false;
-        QueryHitMessage response = null;
+        QueryResponseImpl response = null;
         while (!timed_out && response == null) {
             try {
-                // TODO Get more recent by timeframe
-                response = (QueryHitMessage) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
+                response = (QueryResponseImpl) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             } catch (TimeoutException e) {
@@ -137,23 +168,16 @@ public class Peer implements Serializable {
             }
         }
         broker.removePromise(request.getId());
-
-        if (response == null)
-            return null;
-
-        // save requested timeline
-        this.addTimeline(response.getTimeline());
-
-        return response.getTimeline();
+        return response;
     }
 
     public void pingNeighbours() {
         List<Neighbour> neighbours = this.getPeerInfo().getNeighbours().stream().toList();
         for (Neighbour neighbour: neighbours) { // TODO multithread this, probably with scheduler
             PingMessage pingMessage = new PingMessage(peerInfo.getHost());
-            Future<Message> responseFuture = broker.addPromise(pingMessage.getId());
+            Future<MessageResponse> responseFuture = broker.addPromise(pingMessage.getId());
 
-            this.sender.sendRequestNTimes(pingMessage, neighbour.getPort());
+            this.sender.sendMessageNTimes(pingMessage, neighbour.getPort());
             PongMessage response = null;
             try {
                 response = (PongMessage) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -200,8 +224,8 @@ public class Peer implements Serializable {
             return; // We can't any neighbour
 
         PassouBem passouBem = new PassouBem(peerInfo.getHost());
-        this.sender.sendRequestNTimes(passouBem, candidate.getPort());
-        Future<Message> promise = broker.addPromise(passouBem.getId());
+        this.sender.sendMessageNTimes(passouBem, candidate.getPort());
+        Future<MessageResponse> promise = broker.addPromise(passouBem.getId());
         PassouBemResponse response;
         try {
             response = (PassouBemResponse) promise.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);

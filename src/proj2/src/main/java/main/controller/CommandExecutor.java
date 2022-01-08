@@ -237,7 +237,7 @@ public class CommandExecutor {
         }
         System.out.println("Pinged neighbours");
 
-        peer.queryNeighbours(timeline);
+        peer.requestTimeline(timeline);
 
         return 0;
     }

@@ -1,6 +1,5 @@
 import main.Peer;
 import main.controller.message.MessageSender;
-import main.gui.GraphWrapper;
 import main.model.timelines.Timeline;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +19,9 @@ public class PeerQueryTest {
     private Peer peer4;
     private Peer peer5;
     private ScheduledThreadPoolExecutor scheduler;
-    private GraphWrapper graph;
 
     @BeforeEach
     public void setUp() {
-        this.graph = new GraphWrapper("Network");
-        this.graph.display();
-
         InetAddress localhost = null;
         try {
             localhost = InetAddress.getByName("localhost");
@@ -43,7 +38,6 @@ public class PeerQueryTest {
         for (Peer p: peers) {
             p.execute(scheduler);
             System.out.println(p.getPeerInfo().getUsername() + ": " + p.getPeerInfo().getPort());
-            p.getPeerInfo().subscribe(this.graph);
         }
 
         peer1.join(peer2);
@@ -58,7 +52,7 @@ public class PeerQueryTest {
         MessageSender.addIgnoredMsg("PONG");
         Thread.sleep(10000); // Wait for peers to add eachother as neighbours
 
-        Timeline peer5Timeline = peer1.queryNeighbours("u5");
+        Timeline peer5Timeline = peer1.requestTimeline("u5");
         assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
         // check if peer1 saved timeline
         assertEquals(peer1.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);

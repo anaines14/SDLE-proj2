@@ -3,9 +3,8 @@ package main.controller.message;
 import main.gui.Observer;
 import main.model.PeerInfo;
 import main.model.message.Message;
-import main.model.message.request.MessageRequest;
-import main.model.message.request.QueryHitMessage;
-import main.model.message.request.QueryMessage;
+import main.model.message.response.query.QueryHitMessage;
+import main.model.message.request.query.QueryMessage;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -57,7 +56,7 @@ public class MessageSender {
         this.port = frontendPort;
     }
 
-    private String sendRequest(MessageRequest message, String port) {
+    private String sendMessage(Message message, String port) {
         ZMQ.Socket socket = context.createSocket(SocketType.REQ);
         socket.setReceiveTimeOut(receiveTimeout);
         socket.connect("tcp://localhost:" + port); // TODO convert to address
@@ -77,11 +76,11 @@ public class MessageSender {
         return res;
     }
 
-    public boolean sendRequestNTimes(MessageRequest message, String port) {
+    public boolean sendMessageNTimes(Message message, String port) {
         int i = 0;
         boolean done = false;
         while (i < this.maxRetries && !done) {
-            String response = this.sendRequest(message, port);
+            String response = this.sendMessage(message, port);
             if (response != null && response.equals("OK")) {
                 done = true;
             }
@@ -100,7 +99,7 @@ public class MessageSender {
         this.observer = o;
     }
 
-    private void notify(MessageRequest message, String port) {
+    private void notify(Message message, String port) {
         if (observer == null) return;
         String type = message.getType();
 

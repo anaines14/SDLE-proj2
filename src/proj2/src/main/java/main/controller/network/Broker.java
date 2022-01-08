@@ -5,6 +5,7 @@ import main.model.PeerInfo;
 import main.model.message.Message;
 import main.controller.message.MessageBuilder;
 import main.model.neighbour.Host;
+import main.model.message.response.MessageResponse;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -38,7 +39,7 @@ public class Broker {
     private String frontendPort; // For testing
     private String publisherPort; // For testing
     // Messages that we are expecting to receive, workers fill these when they receive the request
-    private final ConcurrentMap<UUID, CompletableFuture<Message>> promises;
+    private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
 
     public Broker(ZContext context, InetAddress address){
         this.context = context;
@@ -65,7 +66,6 @@ public class Broker {
         }
     }
 
-
     public String getFrontendPort() {
         return frontendPort;
     }
@@ -84,11 +84,11 @@ public class Broker {
             w.setPeerInfo(peerInfo);
     }
 
-    public Future<Message> addPromise(UUID id) {
+    public Future<MessageResponse> addPromise(UUID id) {
         if (promises.containsKey(id))
             return promises.get(id);
 
-        CompletableFuture<Message> promise = new CompletableFuture<>();
+        CompletableFuture<MessageResponse> promise = new CompletableFuture<>();
         promises.put(id, promise);
         return promise;
     }

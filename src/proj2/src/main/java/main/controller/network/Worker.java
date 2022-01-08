@@ -6,6 +6,7 @@ import main.model.message.Message;
 import main.controller.message.MessageBuilder;
 import main.controller.message.MessageHandler;
 import main.controller.message.MessageSender;
+import main.model.message.response.MessageResponse;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -22,7 +23,7 @@ public class Worker {
     private ZMQ.Socket worker;
     private Thread thread;
 
-    public Worker(int id, ConcurrentMap<UUID, CompletableFuture<Message>> promises, ZContext context){
+    public Worker(int id, ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, ZContext context){
         this.handler = new MessageHandler(promises);
         this.worker = context.createSocket(SocketType.REQ);
         this.worker.setIdentity(String.valueOf(id).getBytes(StandardCharsets.UTF_8));

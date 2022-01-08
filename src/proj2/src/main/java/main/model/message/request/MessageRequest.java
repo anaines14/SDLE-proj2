@@ -8,14 +8,10 @@ public abstract class MessageRequest extends Message {
     private UUID id;
 
     public MessageRequest(UUID id) {
-        this.id = id;
+        super(id);
     }
 
     public MessageRequest() {
-        this(UUID.randomUUID());
-    }
-
-    public UUID getId() {
-        return id;
+        super(UUID.randomUUID());
     }
 }
