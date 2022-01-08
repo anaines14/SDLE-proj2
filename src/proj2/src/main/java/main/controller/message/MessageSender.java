@@ -53,6 +53,10 @@ public class MessageSender {
         socket.send(bytes);
     }
 
+    public void setPort(String frontendPort) {
+        this.port = frontendPort;
+    }
+
     private String sendRequest(MessageRequest message, String port) {
         ZMQ.Socket socket = context.createSocket(SocketType.REQ);
         socket.setReceiveTimeOut(receiveTimeout);

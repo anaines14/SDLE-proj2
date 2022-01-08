@@ -10,11 +10,12 @@ import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
@@ -42,9 +43,15 @@ public class Peer implements Serializable {
 
     public Peer(String username, InetAddress address, int capacity) {
         this.context = new ZContext();
-        this.peerInfo = new PeerInfo(address, username, capacity);
-        this.broker = new Broker(context, peerInfo);
+
+        ZMQ.Socket frontend = context.createSocket(SocketType.REP);
+        ZMQ.Socket publisher = context.createSocket(SocketType.PUB);
+        String frontendPort = String.valueOf(frontend.bindToRandomPort("tcp://" + address.getHostName()));
+        String publisherPort = String.valueOf(frontend.bindToRandomPort("tcp://" + address.getHostName()));
+
+        this.peerInfo = new PeerInfo(username, address, capacity, frontendPort, publisherPort);
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
+        this.broker = new Broker(context, frontend, publisher, sender, peerInfo); // Broker updates the peerInfo's ports
     }
 
     public void join(Neighbour neighbour) {
@@ -238,7 +245,6 @@ public class Peer implements Serializable {
     public void subscribe(Observer o) {
         this.getPeerInfo().subscribe(o);
         this.sender.subscribe(o);
-        this.broker.subscribe(o);
     }
 
     public PeerInfo getPeerInfo() {

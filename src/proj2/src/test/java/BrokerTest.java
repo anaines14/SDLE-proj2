@@ -22,10 +22,11 @@ public class BrokerTest {
         } catch (UnknownHostException ignored) {}
 
         ZContext context = new ZContext();
-        PeerInfo peerInfo = new PeerInfo(localhost, "user1", 50);
-        Broker broker = new Broker(context, peerInfo);
+        PeerInfo peerInfo = new PeerInfo("user1", localhost, 3, "8003", "8003");
+        MessageSender sender1 = new MessageSender("user1", "8083", 3, 500, context);
+        Broker broker = new Broker(context, sender1, peerInfo);
 
-        Host peer2 = new Host("user2", localhost, "8002", 10, 10);
+        Host peer2 = new Host("user2", localhost, "8002", "8003", 10, 10);
         broker.execute();
 
         MessageRequest request = new PingMessage(peer2);

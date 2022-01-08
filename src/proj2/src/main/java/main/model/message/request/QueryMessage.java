@@ -5,7 +5,7 @@ import main.model.PeerInfo;
 // Message that will be redirected
 public class QueryMessage extends MessageRequest {
     public static final String type = "QUERY";
-    private final static int TTL = 10;
+    private final static int TTL = 10; // TODO Param this
     public Path path;
     private final String wantedUsername;
     private int timeToLive;

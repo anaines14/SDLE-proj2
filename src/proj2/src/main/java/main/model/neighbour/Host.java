@@ -7,22 +7,24 @@ import java.util.Objects;
 // Data class
 public class Host implements Serializable, Comparable<Host> {
     private final InetAddress address;
-    private String port;
+    private final String port;
+    private final String publisherPort;
     private final int capacity; // Quantity of messages that we can handle, arbitrary for us
     // needed to add as neighbor
     private final String username;
     private int degree;
 
-    public Host(String username, InetAddress address, String port, int capacity, int degree) {
+    public Host(String username, InetAddress address, String port, String publishPort, int capacity, int degree) {
         this.address = address;
         this.port = port;
+        this.publisherPort = publishPort;
         this.capacity = capacity;
         this.username = username;
         this.degree = degree;
     }
 
     public Host(Host host) {
-        this(host.username, host.address, host.port, host.capacity, host.degree);
+        this(host.username, host.address, host.port, host.publisherPort, host.capacity, host.degree);
     }
 
     public InetAddress getAddress() {
@@ -45,10 +47,6 @@ public class Host implements Serializable, Comparable<Host> {
 
     public void setDegree(int size) {
         this.degree = size;
-    }
-
-    public void setPort(String port) {
-        this.port = port;
     }
 
     @Override

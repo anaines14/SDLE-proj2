@@ -14,7 +14,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.IntStream;
 
-import static main.Peer.MAX_NGBRS;
 import static main.Peer.MAX_RANDOM_NEIGH;
 
 // Dá handle só a mensagens que iniciam requests (PING)

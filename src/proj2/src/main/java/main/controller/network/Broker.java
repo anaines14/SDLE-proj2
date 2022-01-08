@@ -1,9 +1,10 @@
 package main.controller.network;
 
-import main.gui.Observer;
+import main.controller.message.MessageSender;
 import main.model.PeerInfo;
 import main.model.message.Message;
 import main.controller.message.MessageBuilder;
+import main.model.neighbour.Host;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -28,39 +29,58 @@ public class Broker {
     // We could use interrupts here, but it would cause too many try catches (smelly code) and JeroMQ only started
     // supporting socket interruption on receive calls recently
     private ZMQ.Socket control;
+    private ZMQ.Socket publisher;
+    private ConcurrentMap<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
     private List<Worker> workers;
 
     private Thread thread;
     private String frontendPort; // For testing
+    private String publisherPort; // For testing
     // Messages that we are expecting to receive, workers fill these when they receive the request
     private final ConcurrentMap<UUID, CompletableFuture<Message>> promises;
 
-    public Broker(ZContext context, PeerInfo peerInfo){
+
+    public Broker(ZContext context, MessageSender sender, PeerInfo peerInfo){
         this.context = context;
-        frontend = context.createSocket(SocketType.REP);
-        backend = context.createSocket(SocketType.ROUTER);
-        control = context.createSocket(SocketType.PULL);
-
-        // Bind each socket, bind frontend to random port
-        String hostName = peerInfo.getAddress().getHostName();
-        int intP = frontend.bindToRandomPort("tcp://" + hostName);
-        String port = Integer.toString(intP);
-        peerInfo.setPort(port); // Set port to one that was bound to
-        this.frontendPort = port;
-        backend.bind("inproc://workers");
-        control.bind("inproc://control");
-
-        promises = new ConcurrentHashMap<>();
-        workers = new ArrayList<>();
+        this.backend = context.createSocket(SocketType.ROUTER);
+        this.control = context.createSocket(SocketType.PULL);
+        this.frontend = context.createSocket(SocketType.REP);
+        this.publisher = context.createSocket(SocketType.PUB);
+        String.valueOf(frontend.bindToRandomPort("tcp://" + peerInfo.getAddress()));
+        String.valueOf(frontend.bindToRandomPort("tcp://" + peerInfo.getAddress()));
+        this.backend.bind("inproc://workers");
+        this.control.bind("inproc://control");
+        this.promises = new ConcurrentHashMap<>();
+        this.workers = new ArrayList<>();
         this.thread = new Thread(this::run);
+        this.subscriptions = new ConcurrentHashMap<>();
         for(int id = 0; id < N_WORKERS; id++){
-            Worker worker = new Worker(peerInfo, id, promises, context);
+            Worker worker = new Worker(peerInfo, id, sender, promises, context);
             workers.add(worker);
         }
     }
 
-    public String getFrontendPort() {
-        return frontendPort;
+    public Broker(ZContext context, ZMQ.Socket frontend, ZMQ.Socket publisher, MessageSender sender, PeerInfo peerInfo){
+        this.context = context;
+        this.backend = context.createSocket(SocketType.ROUTER);
+        this.frontend = frontend;
+        this.control = context.createSocket(SocketType.PULL);
+        this.publisher = publisher;
+
+        String hostName = peerInfo.getAddress().getHostName();
+        // Bind each socket, bind frontend and publisher to random port
+
+        this.backend.bind("inproc://workers");
+        this.control.bind("inproc://control");
+
+        this.promises = new ConcurrentHashMap<>();
+        this.workers = new ArrayList<>();
+        this.thread = new Thread(this::run);
+        this.subscriptions = new ConcurrentHashMap<>();
+        for(int id = 0; id < N_WORKERS; id++){
+            Worker worker = new Worker(peerInfo, id, sender, promises, context);
+            workers.add(worker);
+        }
     }
 
     public Future<Message> addPromise(UUID id) {
@@ -78,9 +98,17 @@ public class Broker {
         promises.remove(id);
     }
 
-    public void subscribe(Observer o) {
-        for (Worker worker: workers)
-            worker.subscribe(o);
+    public void subscribe(Host publisher) {
+        ZMQ.Socket subscription = context.createSocket(SocketType.SUB);
+        String hostName = publisher.getAddress().getHostName();
+        subscription.connect("tcp://" + hostName + ":" + publisher.getPort());
+        subscriptions.put(publisher.getUsername(), subscription);
+    }
+
+    public void unsubscribe(String username) {
+        ZMQ.Socket subscription = subscriptions.get(username);
+        subscription.setLinger(0);
+        subscription.close();
     }
 
     public void execute() {
@@ -114,7 +142,7 @@ public class Broker {
         Queue<String> worker_queues = new LinkedList<>();
 
         while (!Thread.currentThread().isInterrupted()) {
-            ZMQ.Poller items = context.createPoller(3);
+            ZMQ.Poller items = context.createPoller(4);
             items.register(backend, ZMQ.Poller.POLLIN);
             items.register(control, ZMQ.Poller.POLLIN);
 
