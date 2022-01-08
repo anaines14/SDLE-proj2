@@ -3,7 +3,10 @@ package main.controller.message;
 import main.model.PeerInfo;
 import main.model.message.*;
 import main.model.message.request.*;
-import main.model.message.request.PongMessage;
+import main.model.message.response.PassouBemResponse;
+import main.model.message.response.PongMessage;
+import main.model.message.response.MessageResponse;
+import main.model.message.response.QueryHitMessage;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
@@ -14,7 +17,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.IntStream;
 
-import static main.Peer.MAX_NGBRS;
 import static main.Peer.MAX_RANDOM_NEIGH;
 
 // Dá handle só a mensagens que iniciam requests (PING)
@@ -30,14 +32,14 @@ public class MessageHandler {
         this.promises = promises;
     }
 
+//    public void handle(Message message) {
+//        if (!(message instanceof MessageRequest)) // We only can handle message requests
+//            return;
+//
+//        handle((MessageRequest) message);
+//    }
+
     public void handle(Message message) {
-        if (!(message instanceof MessageRequest)) // We only can handle message requests
-            return;
-
-        handle((MessageRequest) message);
-    }
-
-    private void handle(MessageRequest message) {
         // System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: " + message.getLastSender().getPort());
         switch (message.getType()) {
             case "PING":
@@ -69,7 +71,7 @@ public class MessageHandler {
         boolean isNeighbour = peerInfo.hasNeighbour(new Neighbour(message.getSender()));
 
         PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache(), message.getId(), isNeighbour);
-        this.sender.sendRequestNTimes(replyMsg, message.getSender().getPort());
+        this.sender.sendMessageNTimes(replyMsg, message.getSender().getPort());
     }
 
     private void handle(PongMessage message) {
@@ -89,8 +91,8 @@ public class MessageHandler {
         if (ourTimelineInfo.hasTimeline(wantedUser)) { // TODO Add this to cache so that we don't resend a response
             // We have timeline, send query hit to initiator
             Timeline requestedTimeline = ourTimelineInfo.getTimeline(wantedUser);
-            MessageRequest queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
-            this.sender.sendRequestNTimes(queryHit, message.getOriginalSender().getPort());
+            MessageResponse queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
+            this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
             return;
         }
 
@@ -114,7 +116,7 @@ public class MessageHandler {
         int i=0;
         while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);
-            this.sender.sendRequestNTimes(message, n.getPort());
+            this.sender.sendMessageNTimes(message, n.getPort());
             ++i;
         }
     }
@@ -141,7 +143,7 @@ public class MessageHandler {
             }
         }
         PassouBemResponse response = new PassouBemResponse(message.getId(), peerInfo.getHostCache(), accepted);
-        this.sender.sendRequestNTimes(response, message.getSender().getPort());
+        this.sender.sendMessageNTimes(response, message.getSender().getPort());
     }
 
     private void handle(PassouBemResponse message) {

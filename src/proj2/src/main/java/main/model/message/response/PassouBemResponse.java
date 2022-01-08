@@ -1,11 +1,12 @@
-package main.model.message.request;
+package main.model.message.response;
 
+import main.model.message.request.MessageRequest;
 import main.model.neighbour.Host;
 
 import java.util.Set;
 import java.util.UUID;
 
-public class PassouBemResponse extends MessageRequest {
+public class PassouBemResponse extends MessageResponse {
     private Set<Host> hostCache;
     private boolean accepted;
 

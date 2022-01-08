@@ -31,7 +31,7 @@ public class BrokerTest {
         MessageRequest request = new PingMessage(peer2);
         MessageSender sender2 = new MessageSender("user2", "8080", 3, 500, context);
         MessageSender sender3 = new MessageSender("user4", "8081",3, 500, context);
-        assertTrue(sender2.sendRequestNTimes(new PingMessage(peer2), peerInfo.getPort()));
+        assertTrue(sender2.sendMessageNTimes(new PingMessage(peer2), peerInfo.getPort()));
 
         broker.stop();
     }

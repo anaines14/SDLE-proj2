@@ -6,6 +6,9 @@ import main.controller.network.Broker;
 import main.controller.message.MessageSender;
 import main.model.message.Message;
 import main.model.message.request.*;
+import main.model.message.response.PassouBemResponse;
+import main.model.message.response.PongMessage;
+import main.model.message.response.QueryHitMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
@@ -14,7 +17,6 @@ import org.zeromq.ZContext;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
@@ -116,7 +118,7 @@ public class Peer implements Serializable {
         Future<Message> responseFuture = broker.addPromise(request.getId());
         while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);
-            this.sender.sendRequestNTimes(request, n.getPort());
+            this.sender.sendMessageNTimes(request, n.getPort());
             ++i;
         }
 
@@ -149,7 +151,7 @@ public class Peer implements Serializable {
             PingMessage pingMessage = new PingMessage(peerInfo.getHost());
             Future<Message> responseFuture = broker.addPromise(pingMessage.getId());
 
-            this.sender.sendRequestNTimes(pingMessage, neighbour.getPort());
+            this.sender.sendMessageNTimes(pingMessage, neighbour.getPort());
             PongMessage response = null;
             try {
                 response = (PongMessage) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -196,7 +198,7 @@ public class Peer implements Serializable {
             return; // We can't any neighbour
 
         PassouBem passouBem = new PassouBem(peerInfo.getHost());
-        this.sender.sendRequestNTimes(passouBem, candidate.getPort());
+        this.sender.sendMessageNTimes(passouBem, candidate.getPort());
         Future<Message> promise = broker.addPromise(passouBem.getId());
         PassouBemResponse response;
         try {

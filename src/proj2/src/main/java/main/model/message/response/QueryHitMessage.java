@@ -1,10 +1,11 @@
-package main.model.message.request;
+package main.model.message.response;
 
+import main.model.message.request.MessageRequest;
 import main.model.timelines.Timeline;
 
 import java.util.UUID;
 
-public class QueryHitMessage extends MessageRequest {
+public class QueryHitMessage extends MessageResponse {
     private final Timeline timeline;
     public static final String type = "QUERY_HIT";
 

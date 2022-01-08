@@ -1,12 +1,13 @@
-package main.model.message.request;
+package main.model.message.response;
 
+import main.model.message.request.MessageRequest;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 
 import java.util.Set;
 import java.util.UUID;
 
-public class PongMessage extends MessageRequest {
+public class PongMessage extends MessageResponse {
     public Neighbour sender;
     public Set<Host> hostCache;
     public boolean isNeighbour;
