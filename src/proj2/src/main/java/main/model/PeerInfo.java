@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static main.Peer.MAX_NGBRS;
+import static main.Peer.SP_MIN;
 
 // Data class that serves like a Model in an MVC
 public class PeerInfo {
@@ -110,6 +111,19 @@ public class PeerInfo {
                 .filter(f -> !neighbours.contains(f))
                 .collect(Collectors.toSet());
 
+        // if we arent a super peer
+        if (!this.isSuperPeer()) {
+            for (Neighbour n: neighbours) {
+                // if we already are connected to a super peer
+                if (this.isSuperPeer(n)) {
+                    // remove super peers from set => Clusters
+                    notNeighbors = notNeighbors.stream()
+                            .filter(f -> !this.isSuperPeer(f))
+                            .collect(Collectors.toSet());
+                    break;
+                }
+            }
+        }
 
         Optional<Host> best_host = notNeighbors.stream().min(Host::compareTo);
         if(best_host.isEmpty()) return null;
@@ -120,6 +134,14 @@ public class PeerInfo {
     public void subscribe(Observer o) {
         this.observer = o;
         this.observer.newNodeUpdate(this.getUsername(), this.getPort(), this.getCapacity());
+    }
+
+    boolean isSuperPeer() {
+        return this.neighbours.size() >= SP_MIN;
+    }
+
+    public boolean isSuperPeer(Host host) {
+        return host.getDegree() >= SP_MIN;
     }
 
     // getters

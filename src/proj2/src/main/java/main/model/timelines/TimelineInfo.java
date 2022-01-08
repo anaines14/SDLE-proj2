@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TimelineInfo {
@@ -164,6 +165,10 @@ public class TimelineInfo {
 
     public Timeline getTimeline(String wantedUser) {
         return this.timelines.get(wantedUser);
+    }
+
+    public Set<String> getStoredTimelines() {
+        return this.timelines.keySet();
     }
 
     // for testing

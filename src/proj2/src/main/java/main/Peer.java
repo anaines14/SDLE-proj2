@@ -1,5 +1,7 @@
 package main;
 
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import main.gui.Observer;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
@@ -18,6 +20,7 @@ import org.zeromq.ZContext;
 
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
@@ -25,15 +28,18 @@ import java.util.stream.IntStream;
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
-    public static final int MAX_NGBRS = 4;
+    public static final int MAX_NGBRS = 4; // TODO: capacity * ????
     public static final int MIN_NGBRS = 1;
     public static final int MAX_RETRY = 3;
     public static final int RCV_TIMEOUT = 1000;
     public static final int MAX_RANDOM_NEIGH = 2;
+    // Minimun number of neighbours necessary to be considered a super peers
+    public static final int SP_MIN = 5;
 
     // Model/Data members
     private final PeerInfo peerInfo;
     private final ZContext context;
+    private BloomFilter<String> timelinesFilter;
 
     // Network members
     private final Broker broker;
@@ -48,6 +54,7 @@ public class Peer implements Serializable {
         this.peerInfo = new PeerInfo(address, username, capacity);
         this.broker = new Broker(context, peerInfo);
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
+        this.timelinesFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
     }
 
     public void join(Neighbour neighbour) {
@@ -147,6 +154,9 @@ public class Peer implements Serializable {
     }
 
     public void pingNeighbours() {
+        // reset bloom filter
+        this.resetFilter();
+
         List<Neighbour> neighbours = this.getPeerInfo().getNeighbours().stream().toList();
         for (Neighbour neighbour: neighbours) { // TODO multithread this, probably with scheduler
             PingMessage pingMessage = new PingMessage(peerInfo.getHost());
@@ -178,6 +188,7 @@ public class Peer implements Serializable {
                 // System.out.println(peerInfo.getUsername() + " UPDATED " + neighbour.getUsername());
                 peerInfo.updateNeighbour(response.sender);
                 peerInfo.updateHostCache(hostCache);
+                this.mergeFilter(response.sender);
             }
         }
     }
@@ -236,6 +247,16 @@ public class Peer implements Serializable {
         }
         double satisfaction = ((double) total) / this.peerInfo.getCapacity();
         return satisfaction % 1;
+    }
+
+    private void resetFilter() {
+        this.timelinesFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
+    }
+
+    private void mergeFilter(Neighbour neighbour) {
+        // merge filters only if neighbour isn't a super peer
+        if (this.peerInfo.isSuperPeer(neighbour))
+            this.timelinesFilter.putAll(neighbour.getTimelines());
     }
 
     public void subscribe(Observer o) {
