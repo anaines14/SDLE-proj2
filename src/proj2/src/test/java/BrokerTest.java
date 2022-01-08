@@ -3,6 +3,7 @@ import main.model.PeerInfo;
 import main.controller.message.MessageSender;
 import main.model.message.request.PingMessage;
 import main.model.neighbour.Host;
+import main.model.timelines.Post;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.zeromq.SocketType;
@@ -11,7 +12,9 @@ import org.zeromq.ZMQ;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BrokerTest {
@@ -50,6 +53,50 @@ public class BrokerTest {
     @Test
     public void subscribe() {
         ZMQ.Socket subscribe = context.createSocket(SocketType.SUB);
-        subscribe.connect("tcp://" + peerInfo.getAddress().getHostName() + ":" + peerInfo.getPublishPort());
+        subscribe.setReceiveTimeOut(2000);
+        subscribe.connect("tcp://localhost:" + peerInfo.getPublishPort());
+        subscribe.subscribe("".getBytes(StandardCharsets.UTF_8));
+        System.out.println("tcp://localhost:" + peerInfo.getPublishPort());
+
+        Post carlos = new Post(0, "Carlos");
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        broker.publishPost(carlos);
+        assertEquals(carlos.toString(), subscribe.recvStr());
+    }
+
+    @Test
+    public void publish() {
+        // Create a new broker that subscribes to the original broker
+        ZContext ctx = new ZContext();
+        Broker broker2 = new Broker(ctx, localhost);
+        PeerInfo peerInfo2 = new PeerInfo("user2", localhost, 3,
+                broker2.getFrontendPort(), broker2.getPublisherPort());
+        MessageSender sender2 = new MessageSender("user2", broker2.getFrontendPort(),
+                3, 500, ctx);
+        broker2.setSender(sender2);
+        broker2.setPeerInfo(peerInfo2);
+        broker2.execute();
+
+        broker2.subscribe(peerInfo.getUsername(), peerInfo.getAddress(), peerInfo.getPublishPort());
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // If broker publishes a post, broker must be able to see it
+        Post carlos = new Post(0, "Carlos");
+        broker.publishPost(carlos);
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(1, broker2.popSubMessages().size());
     }
 }

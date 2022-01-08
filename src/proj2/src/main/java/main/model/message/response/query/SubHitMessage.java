@@ -1,10 +1,5 @@
 package main.model.message.response.query;
 
-import main.model.message.response.MessageResponse;
-import main.model.timelines.Timeline;
-import org.zeromq.SocketType;
-import org.zeromq.ZSocket;
-
 import java.util.UUID;
 
 public class SubHitMessage extends QueryResponseImpl {

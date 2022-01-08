@@ -45,7 +45,7 @@ public class MessageSender {
     public void send(Message message, ZMQ.Socket socket) {
         byte[] bytes = new byte[0];
         try {
-            bytes = MessageBuilder.messageToByteArray(message);
+            bytes = MessageBuilder.objectToByteArray(message);
         } catch (IOException e) {
             e.printStackTrace();
         }
