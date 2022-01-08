@@ -32,7 +32,7 @@ public class Broker {
     // supporting socket interruption on receive calls recently
     private ZMQ.Socket control;
     private ZMQ.Socket publisher;
-    private ConcurrentMap<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
+    private Map<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
     private List<Worker> workers;
 
     private Thread thread;
@@ -59,7 +59,7 @@ public class Broker {
         this.promises = new ConcurrentHashMap<>();
         this.workers = new ArrayList<>();
         this.thread = new Thread(this::run);
-        this.subscriptions = new ConcurrentHashMap<>();
+        this.subscriptions = new ConcurrentHashMap<String, ZMQ.Socket>();
         for(int id = 0; id < N_WORKERS; id++){
             Worker worker = new Worker(id, promises, context);
             workers.add(worker);
@@ -99,17 +99,21 @@ public class Broker {
         promises.remove(id);
     }
 
-    public void subscribe(Host publisher) {
+    public void subscribe(String pubUsername, InetAddress pubAddress, String pubPort) {
         ZMQ.Socket subscription = context.createSocket(SocketType.SUB);
-        String hostName = publisher.getAddress().getHostName();
-        subscription.connect("tcp://" + hostName + ":" + publisher.getPort());
-        subscriptions.put(publisher.getUsername(), subscription);
+        String hostName = pubAddress.getHostName();
+        subscription.connect("tcp://" + hostName + ":" + pubPort);
+        subscriptions.put(pubUsername, subscription);
     }
 
     public void unsubscribe(String username) {
         ZMQ.Socket subscription = subscriptions.get(username);
         subscription.setLinger(0);
         subscription.close();
+    }
+
+    public boolean isSubscribed(String username) {
+        return this.subscriptions.containsKey(username);
     }
 
     public void execute() {

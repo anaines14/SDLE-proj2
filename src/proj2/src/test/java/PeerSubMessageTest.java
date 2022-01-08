@@ -7,8 +7,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class PeerSubMessageTest {
     private Peer peer1;
@@ -50,6 +49,14 @@ public class PeerSubMessageTest {
         }
 
         peer1.requestSub("u2");
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        assertTrue(peer1.isSubscribed("u2"));
 
         this.close();
     }
