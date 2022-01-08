@@ -3,6 +3,7 @@ package main.controller.message;
 import main.model.PeerInfo;
 import main.model.message.*;
 import main.model.message.request.*;
+import main.model.message.request.query.QueryMessage;
 import main.model.message.response.PassouBemResponse;
 import main.model.message.response.PongMessage;
 import main.model.message.response.MessageResponse;

@@ -1,6 +1,7 @@
 package main.model.message.response;
 
 import main.model.message.request.MessageRequest;
+import main.model.message.response.MessageResponse;
 import main.model.timelines.Timeline;
 
 import java.util.UUID;
