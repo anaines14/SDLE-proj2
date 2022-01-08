@@ -1,7 +1,6 @@
 import main.Peer;
 import main.controller.message.MessageSender;
 import main.gui.GraphWrapper;
-import main.model.PeerInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -139,7 +138,7 @@ public class GraphTest {
             e.printStackTrace();
         }
 
-        peer1.queryNeighbours(peer2.getPeerInfo().getUsername());
+        peer1.requestTimeline(peer2.getPeerInfo().getUsername());
 
         try {
             Thread.sleep(6000);

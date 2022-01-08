@@ -5,10 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.time.Duration;
-import java.util.*;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTimeout;
@@ -52,7 +49,7 @@ public class PeerSubMessageTest {
             e.printStackTrace();
         }
 
-        peer1.subQueryNeighbours("u2");
+        peer1.requestSub("u2");
 
         this.close();
     }

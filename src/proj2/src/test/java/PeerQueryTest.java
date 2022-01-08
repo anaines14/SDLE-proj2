@@ -1,6 +1,5 @@
 import main.Peer;
 import main.controller.message.MessageSender;
-import main.gui.GraphWrapper;
 import main.model.timelines.Timeline;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +52,7 @@ public class PeerQueryTest {
         MessageSender.addIgnoredMsg("PONG");
         Thread.sleep(10000); // Wait for peers to add eachother as neighbours
 
-        Timeline peer5Timeline = peer1.queryNeighbours("u5");
+        Timeline peer5Timeline = peer1.requestTimeline("u5");
         assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
         // check if peer1 saved timeline
         assertEquals(peer1.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);

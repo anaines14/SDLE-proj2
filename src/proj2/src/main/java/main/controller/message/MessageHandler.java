@@ -7,6 +7,8 @@ import main.model.message.request.query.QueryMessage;
 import main.model.message.request.query.QueryMessageImpl;
 import main.model.message.request.query.SubMessage;
 import main.model.message.response.*;
+import main.model.message.response.query.QueryHitMessage;
+import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;

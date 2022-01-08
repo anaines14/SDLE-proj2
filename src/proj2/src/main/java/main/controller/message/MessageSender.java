@@ -3,7 +3,7 @@ package main.controller.message;
 import main.gui.Observer;
 import main.model.PeerInfo;
 import main.model.message.Message;
-import main.model.message.response.QueryHitMessage;
+import main.model.message.response.query.QueryHitMessage;
 import main.model.message.request.query.QueryMessage;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
