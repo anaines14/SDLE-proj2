@@ -8,11 +8,15 @@ import java.util.UUID;
 
 public class SubHitMessage extends MessageResponse {
     public static final String type = "SUB_HIT";
-    private final ZSocket socket;
+    private final String port;
 
     public SubHitMessage(UUID id) {
         super(id);
-        this.socket = new ZSocket(SocketType.PUB); // TODO: do socket things
+        this.port = "123123";
+    }
+
+    public String getPort() {
+        return port;
     }
 
     @Override

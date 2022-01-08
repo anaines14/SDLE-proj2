@@ -4,10 +4,9 @@ import main.model.PeerInfo;
 import main.model.message.*;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
-import main.model.message.response.PassouBemResponse;
-import main.model.message.response.PongMessage;
-import main.model.message.response.MessageResponse;
-import main.model.message.response.QueryHitMessage;
+import main.model.message.request.query.QueryMessageImpl;
+import main.model.message.request.query.SubMessage;
+import main.model.message.response.*;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
@@ -36,25 +35,16 @@ public class MessageHandler {
     public void handle(Message message) {
 //         System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: ");
         switch (message.getType()) {
-            case "PING":
-                handle((PingMessage) message);
-                return;
-            case "PONG":
-                handle((PongMessage) message);
-                return;
-            case "QUERY":
-                handle((QueryMessage) message);
-                return;
-            case "QUERY_HIT":
-                handle((QueryHitMessage) message);
-                return;
-            case "PASSOU_BEM":
-                handle((PassouBem) message);
-                return;
-            case "PASSOU_BEM_RESPONSE":
-                handle((PassouBemResponse) message);
-                return;
-            default:
+            case "PING" -> handle((PingMessage) message);
+            case "PONG" -> handle((PongMessage) message);
+            case "QUERY" -> handle((QueryMessage) message);
+            case "QUERY_HIT" -> handle((QueryHitMessage) message);
+            case "PASSOU_BEM" -> handle((PassouBem) message);
+            case "PASSOU_BEM_RESPONSE" -> handle((PassouBemResponse) message);
+            case "SUB" -> handle((SubMessage) message);
+            case "SUB_HIT" -> handle((SubHitMessage) message);
+            default -> {
+            }
         }
     }
 
@@ -75,21 +65,7 @@ public class MessageHandler {
         }
     }
 
-    private void handle(QueryMessage message) {
-        TimelineInfo ourTimelineInfo = peerInfo.getTimelineInfo();
-        String wantedUser = message.getWantedTimeline();
-
-        if (message.isInPath(this.peerInfo))
-            return; // Already redirected this message
-
-        if (ourTimelineInfo.hasTimeline(wantedUser)) { // TODO Add this to cache so that we don't resend a response
-            // We have timeline, send query hit to initiator
-            Timeline requestedTimeline = ourTimelineInfo.getTimeline(wantedUser);
-            MessageResponse queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
-            this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
-            return;
-        }
-
+    private void propagateQueryMessage(QueryMessageImpl message) {
         if (!message.canResend()) {
             return; // Message has reached TTL 0
         }
@@ -113,6 +89,24 @@ public class MessageHandler {
             this.sender.sendMessageNTimes(message, n.getPort());
             ++i;
         }
+    }
+
+    private void handle(QueryMessage message) {
+        TimelineInfo ourTimelineInfo = peerInfo.getTimelineInfo();
+        String wantedUser = message.getWantedTimeline();
+
+        if (message.isInPath(this.peerInfo))
+            return; // Already redirected this message
+
+        if (ourTimelineInfo.hasTimeline(wantedUser)) { // TODO Add this to cache so that we don't resend a response
+            // We have timeline, send query hit to initiator
+            Timeline requestedTimeline = ourTimelineInfo.getTimeline(wantedUser);
+            MessageResponse queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
+            this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+            return;
+        }
+
+        this.propagateQueryMessage(message);
     }
 
     private void handle(QueryHitMessage message) {
@@ -145,5 +139,27 @@ public class MessageHandler {
             promises.get(message.getId()).complete(message);
         }
         this.peerInfo.updateHostCache(message.getHostCache());
+    }
+
+    private void handle(SubMessage message) {
+        String wantedUser = message.getWantedSub();
+
+        if (message.isInPath(this.peerInfo))
+            return; // Already redirected this message
+
+        // this is wanted sub
+        if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
+            // We have timeline, send query hit to initiator
+            MessageResponse queryHit = new SubHitMessage(message.getId());
+            this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+            return;
+        }
+        this.propagateQueryMessage(message);
+    }
+
+    private void handle(SubHitMessage message) {
+        if (promises.containsKey(message.getId())) {
+            promises.get(message.getId()).complete(message);
+        }
     }
 }

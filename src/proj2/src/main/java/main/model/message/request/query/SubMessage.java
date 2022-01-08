@@ -9,7 +9,7 @@ public class SubMessage extends QueryMessageImpl {
         super(username, peerInfo);
     }
 
-    public String getSubbedUser() {
+    public String getWantedSub() {
         return wantedUsername;
     }
 

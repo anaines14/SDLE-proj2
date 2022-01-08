@@ -6,10 +6,8 @@ import main.controller.network.Broker;
 import main.controller.message.MessageSender;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
-import main.model.message.response.MessageResponse;
-import main.model.message.response.PassouBemResponse;
-import main.model.message.response.PongMessage;
-import main.model.message.response.QueryHitMessage;
+import main.model.message.request.query.SubMessage;
+import main.model.message.response.*;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
@@ -144,6 +142,44 @@ public class Peer implements Serializable {
         this.addTimeline(response.getTimeline());
 
         return response.getTimeline();
+    }
+
+    public void subQueryNeighbours(String username) {
+        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
+        if (neighbours.size() == 0)
+            return;
+
+        // Get random N neighbours to send
+        int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
+
+        int i=0;
+        MessageRequest request = new SubMessage(username, this.peerInfo);
+        Future<MessageResponse> responseFuture = broker.addPromise(request.getId());
+        while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
+            Neighbour n = neighbours.get(i);
+            this.sender.sendMessageNTimes(request, n.getPort());
+            ++i;
+        }
+
+        boolean timed_out = false;
+        SubHitMessage response = null;
+        while (!timed_out && response == null) {
+            try {
+                response = (SubHitMessage) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                timed_out = true;
+            }
+        }
+        broker.removePromise(request.getId());
+
+        if (response == null)
+            return;
+
+        System.out.println("reponse " + response.getPort());
+        // TODO: something with sub
+        System.out.println("SUBBED TO " + username);
     }
 
     public void pingNeighbours() {
