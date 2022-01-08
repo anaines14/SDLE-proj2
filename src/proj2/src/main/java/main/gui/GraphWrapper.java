@@ -6,6 +6,7 @@ import org.graphstream.ui.spriteManager.Sprite;
 import org.graphstream.ui.spriteManager.SpriteManager;
 
 import java.net.URL;
+import java.util.UUID;
 
 
 public class GraphWrapper implements Observer{
@@ -41,17 +42,20 @@ public class GraphWrapper implements Observer{
 
     public void addEdge(String peer1, String peer2) throws IdAlreadyInUseException,
             ElementNotFoundException, EdgeRejectedException {
-        String edgeId = peer1 + peer2;
+        String edgeId1 = peer1 + peer2, edgeId2 = peer2 + peer1;
 
         // if edge not in graph => add it
-        if (graph.getEdge(edgeId) == null) {
-            this.graph.addEdge(edgeId, peer1, peer2, true);
-        }
+        if (graph.getEdge(edgeId1) == null && graph.getEdge(edgeId2) == null)
+            this.graph.addEdge(edgeId1, peer1, peer2);
     }
 
     public void removeEdge(String peer1, String peer2) throws ElementNotFoundException {
-        String edgeId = peer1 + peer2;
-        this.graph.removeEdge(edgeId);
+        String edgeId1 = peer1 + peer2, edgeId2 = peer2 + peer1;
+
+        if (graph.getEdge(edgeId1) != null)
+            this.graph.removeEdge(edgeId1);
+        else if (graph.getEdge(edgeId2) != null)
+            this.graph.removeEdge(edgeId2);
     }
 
     // updates
@@ -87,26 +91,16 @@ public class GraphWrapper implements Observer{
 
     // new query message
     public void newQueryUpdate(String source, String destination) {
-        String id = source + destination + "Msg";
-
-        try {
-            Edge e = this.graph.addEdge(id, source, destination);
-            e.setAttribute("ui.class", "message");
-
-            Sprite sprite = sprites.addSprite(id);
-            sprite.attachToEdge(id);
-            sprite.setAttribute("ui.class", "query");
-
-            this.sendMsgView(sprite, id);
-            this.graph.removeEdge(id);
-        } catch(IdAlreadyInUseException | EdgeRejectedException | ElementNotFoundException e ) {
-            e.printStackTrace();
-        }
+        this.sendMsgView(source, destination, "query");
     }
 
     // new hit message
     public void newQueryHitUpdate(String source, String destination) {
-        String id = source + destination + "Msg";
+        this.sendMsgView(source, destination, "hit");
+    }
+
+    public void sendMsgView(String source, String destination, String spriteClass) {
+        String id = String.valueOf(UUID.randomUUID());
 
         try {
             Edge e = this.graph.addEdge(id, source, destination);
@@ -114,26 +108,18 @@ public class GraphWrapper implements Observer{
 
             Sprite sprite = sprites.addSprite(id);
             sprite.attachToEdge(id);
-            sprite.setAttribute("ui.class", "hit");
+            sprite.setAttribute("ui.class", spriteClass);
 
-            this.sendMsgView(sprite, id);
-            this.graph.removeEdge(id);
-        } catch(IdAlreadyInUseException | EdgeRejectedException | ElementNotFoundException e ) {
-            e.printStackTrace();
-        }
-    }
-
-    public void sendMsgView(Sprite sprite, String id) {
-        try {
             for (double x = 0.0; x < 1; x += 0.1){
                 sprite.setPosition(x, 0, 0);
                 Thread.sleep(100);
             }
-        } catch (InterruptedException e) {
+
+            sprites.removeSprite(id);
+            sprite.detach();
+            this.graph.removeEdge(id);
+        } catch(IdAlreadyInUseException | EdgeRejectedException | ElementNotFoundException | InterruptedException e ) {
             e.printStackTrace();
         }
-
-        sprites.removeSprite(id);
-        sprite.detach();
     }
 }
