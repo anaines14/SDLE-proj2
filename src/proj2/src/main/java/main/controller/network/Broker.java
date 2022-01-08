@@ -1,5 +1,6 @@
 package main.controller.network;
 
+import main.gui.Observer;
 import main.model.PeerInfo;
 import main.model.message.Message;
 import main.controller.message.MessageBuilder;
@@ -75,6 +76,11 @@ public class Broker {
         if (!promises.containsKey(id))
             return;
         promises.remove(id);
+    }
+
+    public void subscribe(Observer o) {
+        for (Worker worker: workers)
+            worker.subscribe(o);
     }
 
     public void execute() {

@@ -1,5 +1,6 @@
 package main.controller.network;
 
+import main.gui.Observer;
 import main.model.PeerInfo;
 import main.model.message.Message;
 import main.controller.message.MessageBuilder;
@@ -32,6 +33,10 @@ public class Worker {
         this.worker = context.createSocket(SocketType.REQ);
         this.worker.setIdentity(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
         this.thread = new Thread(this::run);
+    }
+
+    public void subscribe(Observer o) {
+        this.sender.subscribe(o);
     }
 
     public void execute() {

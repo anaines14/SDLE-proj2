@@ -1,5 +1,7 @@
 package main.model.timelines;
 
+import main.controller.network.NTP;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -14,6 +16,7 @@ public class TimelineInfo {
     private final File timelines_folder;
     private final Map<String, Timeline> timelines;
     private final String me;
+    private final Long clockOffset;
     private int maxKeepTime; // max time to keep timeline stored (in seconds)
 
     public TimelineInfo(String username) {
@@ -23,8 +26,10 @@ public class TimelineInfo {
         this.timelines = new ConcurrentHashMap<>();
         this.me = username;
 
+        NTP ntp = new NTP();
+        this.clockOffset = ntp.getOffsetValue();
         // create own timeline file
-        this.timelines.put(username, new Timeline(username));
+        this.timelines.put(username, new Timeline(username, clockOffset));
 
         this.maxKeepTime = 120; // in seconds
 
@@ -55,11 +60,14 @@ public class TimelineInfo {
 
     public void addTimeline(Timeline timeline) {
         LocalTime timelineToAddTimeStamp = timeline.getLastUpdate();
-        LocalTime savedTimelineTimeStamp = this.getTimeline(timeline.getUsername()).getLastUpdate();
+        Timeline t = this.getTimeline(timeline.getUsername());
 
         //Returns <= 0 if saved timeline is more recent
-        if(timelineToAddTimeStamp.compareTo(savedTimelineTimeStamp) <= 0){
-            return;
+        if(t != null) {
+            LocalTime savedTimelineTimeStamp = t.getLastUpdate();
+            if(timelineToAddTimeStamp.compareTo(savedTimelineTimeStamp) <= 0) {
+                return;
+            }
         }
 
         this.timelines.put(timeline.getUsername(), timeline);
@@ -121,7 +129,6 @@ public class TimelineInfo {
 
     public void cleanup() {
         LocalTime currentTime = LocalTime.now(); // TODO: ntp
-        Long clockOffset = this.timelines.get(me).getClockOffset();
         currentTime = currentTime.plusNanos(clockOffset);
 
         for (Timeline timeline : this.timelines.values()) {

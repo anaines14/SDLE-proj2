@@ -238,6 +238,7 @@ public class Peer implements Serializable {
     public void subscribe(Observer o) {
         this.getPeerInfo().subscribe(o);
         this.sender.subscribe(o);
+        this.broker.subscribe(o);
     }
 
     public PeerInfo getPeerInfo() {

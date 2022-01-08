@@ -106,19 +106,26 @@ public class GraphWrapper implements Observer{
             Edge e = this.graph.addEdge(id, source, destination);
             e.setAttribute("ui.class", "message");
 
-            Sprite sprite = sprites.addSprite(id);
+            Sprite sprite = null;
+            synchronized (sprites) {
+                sprite = sprites.addSprite(id);
+            }
             sprite.attachToEdge(id);
             sprite.setAttribute("ui.class", spriteClass);
 
             for (double x = 0.0; x < 1; x += 0.1){
-                sprite.setPosition(x, 0, 0);
+                synchronized (sprites) {
+                    sprite.setPosition(x, 0, 0);
+                }
                 Thread.sleep(100);
             }
 
-            sprites.removeSprite(id);
-            sprite.detach();
+            synchronized (sprites) {
+                sprites.removeSprite(id);
+            }
+            ;
             this.graph.removeEdge(id);
-        } catch(IdAlreadyInUseException | EdgeRejectedException | ElementNotFoundException | InterruptedException e ) {
+        } catch(IdAlreadyInUseException | EdgeRejectedException | ElementNotFoundException | InterruptedException | IndexOutOfBoundsException e ) {
             e.printStackTrace();
         }
     }
