@@ -30,7 +30,7 @@ public class Post implements Serializable {
 
     @Override
     public String toString() {
-        return  "\n\t\tID: " + Id + ": " +
+        return  "\t\tID: " + Id + ": " +
                 "\n\t\t\tTimestamp: " + timestamp +
                 "\n\t\t\tContent: '" + content + '\'';
     }

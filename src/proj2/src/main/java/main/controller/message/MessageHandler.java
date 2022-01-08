@@ -164,6 +164,11 @@ public class MessageHandler {
             this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
             return;
         }
+
+        if (tenhoSubscription(message.getWantedSub())) { // Redirect para o gajo
+            String port = peerInfo.getNewPort(message.getWantedSub());
+
+        }
         this.propagateQueryMessage(message);
     }
 

@@ -49,6 +49,7 @@ public class PeerSubMessageTest {
         }
 
         peer1.requestSub("u2");
+        peer1.requestSub("u3");
 
         try {
             Thread.sleep(1000);
@@ -57,6 +58,19 @@ public class PeerSubMessageTest {
         }
 
         assertTrue(peer1.isSubscribed("u2"));
+        assertTrue(peer1.isSubscribed("u3"));
+
+        peer2.addPost("Uma posta");
+        peer3.addPost("Duas postas");
+        peer2.addPost("Duas postas");
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(peer1.getPostOfSubscriptions());
 
         this.close();
     }

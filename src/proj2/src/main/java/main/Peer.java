@@ -13,6 +13,7 @@ import main.model.message.response.query.QueryResponseImpl;
 import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Post;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 import org.zeromq.SocketType;
@@ -82,7 +83,8 @@ public class Peer implements Serializable {
 
     public void addPost(String newContent) {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
-        timelineInfo.addPost(peerInfo.getUsername(), newContent);
+        Post addedPost = timelineInfo.addPost(peerInfo.getUsername(), newContent);
+        this.broker.publishPost(addedPost);
     }
 
     public void deletePost(int postId) {
@@ -143,7 +145,16 @@ public class Peer implements Serializable {
         if (response != null) {
             this.broker.subscribe(username, response.getAddress(), response.getPort());
             System.out.println(this.peerInfo.getUsername() + " SUBBED TO " + username);
-        }
+        } else
+            System.out.println(this.peerInfo.getUsername() + " COULDN'T SUB TO " + username);
+    }
+
+    public void requestUnsub(String username) {
+        broker.unsubscribe(username);
+    }
+
+    public Map<String, List<Post>> getPostOfSubscriptions() {
+        return broker.popSubMessages();
     }
 
     private QueryResponseImpl sendQueryNeighbours(MessageRequest request, List<Neighbour> neighbours) {

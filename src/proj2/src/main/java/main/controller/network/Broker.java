@@ -10,6 +10,7 @@ import org.zeromq.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.PortUnreachableException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -27,7 +28,7 @@ public class Broker {
     private ZMQ.Socket control;
     private ZMQ.Socket publisher;
     private Map<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
-    private ConcurrentLinkedQueue<Post> subMessages; // New posts that are posted by our subs
+    private final Map<String, List<Post>> subMessages; // New posts that are posted by our subs
     private List<Worker> workers;
 
     private Thread thread;
@@ -57,7 +58,7 @@ public class Broker {
         this.workers = new ArrayList<>();
         this.thread = new Thread(this::run);
         this.subscriptions = new ConcurrentHashMap<>();
-        this.subMessages = new ConcurrentLinkedQueue<>();
+        this.subMessages = new ConcurrentHashMap<>();
         for(int id = 0; id < N_WORKERS; id++){
             Worker worker = new Worker(id, promises, context);
             workers.add(worker);
@@ -72,10 +73,10 @@ public class Broker {
         return publisherPort;
     }
 
-    public List<Post> popSubMessages() {
-        List<Post> res = null;
+    public Map<String, List<Post>> popSubMessages() {
+        Map<String, List<Post>> res;
         synchronized (subMessages) {
-            res = subMessages.stream().toList();
+            res = new HashMap<>(subMessages);
             subMessages.clear();
         }
         return res;
@@ -167,7 +168,7 @@ public class Broker {
             worker.stop();
     }
 
-    public void run(){
+    public void run() {
         for (Worker worker: workers)
             worker.execute();
         Queue<String> worker_queues = new LinkedList<>();
@@ -180,7 +181,7 @@ public class Broker {
             for (ZMQ.Socket socket: subscriptions.values())
                 items.register(socket, ZMQ.Poller.POLLIN);
 
-            if(worker_queues.size() > 0) {
+            if (worker_queues.size() > 0) {
                 items.register(frontend, ZMQ.Poller.POLLIN);
             }
 
@@ -211,11 +212,13 @@ public class Broker {
 
             Set<String> subscribedUsers = this.subscriptions.keySet();
             int i=0;
-            for (String ignored : subscribedUsers) {
+            for (String username : subscribedUsers) {
                 if (items.pollin(2 + i)) { // Received post from subscription
                     ZMQ.Socket subscription = items.getSocket(2 + i);
                     try {
-                        this.subMessages.add(MessageBuilder.postFromSocket(subscription));
+                        Post post = MessageBuilder.postFromSocket(subscription);
+                        this.subMessages.putIfAbsent(username, new ArrayList<>());
+                        this.subMessages.get(username).add(post);
                     } catch (IOException | ClassNotFoundException e) {
                         e.printStackTrace();
                     }
