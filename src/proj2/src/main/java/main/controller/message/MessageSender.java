@@ -1,9 +1,11 @@
 package main.controller.message;
 
+import main.gui.Observer;
 import main.model.PeerInfo;
 import main.model.message.Message;
 import main.model.message.request.MessageRequest;
 import main.model.message.request.PingMessage;
+import main.model.message.request.QueryHitMessage;
 import main.model.message.request.QueryMessage;
 import main.model.message.response.MessageResponse;
 import org.zeromq.SocketType;
@@ -21,6 +23,8 @@ public class MessageSender {
     private final ZContext context;
     private int maxRetries;
     private int receiveTimeout;
+    private Observer observer;
+    private String port;
 
     // Used for testng
     private static List<String> ignoredMessages = new ArrayList<>();
@@ -31,15 +35,16 @@ public class MessageSender {
         ignoredMessages.add(msgType);
     }
 
-    public MessageSender(String username, int maxRetries, int receiveTimeout, ZContext context) {
+    public MessageSender(String username, String port, int maxRetries, int receiveTimeout, ZContext context) {
         this.username = username;
+        this.port = port;
         this.maxRetries = maxRetries;
         this.receiveTimeout = receiveTimeout;
         this.context = context;
     }
 
     public MessageSender(PeerInfo peerInfo, int maxRetries, int receiveTimeout, ZContext context){
-        this(peerInfo.getUsername(), maxRetries, receiveTimeout, context);
+        this(peerInfo.getUsername(), peerInfo.getPort(), maxRetries, receiveTimeout, context);
     }
 
     public void send(Message message, ZMQ.Socket socket) {
@@ -58,7 +63,12 @@ public class MessageSender {
         socket.connect("tcp://localhost:" + port); // TODO convert to address
 
         this.send(message, socket);
-        System.out.println(username + " SENT[" + message.getType() + "]: " + port);
+
+        // notify observer
+        this.notify(message, port);
+
+        if (!ignoredMessages.contains(message.getType()))
+            System.out.println(username + " SENT[" + message.getType() + "]: " + port);
 
         String res = socket.recvStr();
 
@@ -66,7 +76,6 @@ public class MessageSender {
         context.destroySocket(socket);
         return res;
     }
-
 
     public boolean sendRequestNTimes(MessageRequest message, String port) {
         int i = 0;
@@ -84,5 +93,20 @@ public class MessageSender {
             return false;
         }
         return true;
+    }
+
+    // observers
+    public void subscribe(Observer o) {
+        this.observer = o;
+    }
+
+    private void notify(MessageRequest message, String port) {
+        if (observer == null) return;
+        String type = message.getType();
+        System.out.println(type);
+        switch (type) {
+            case QueryHitMessage.type -> this.observer.newQueryHitUpdate(this.port, port);
+            case QueryMessage.type -> this.observer.newQueryUpdate(this.port, port);
+        }
     }
 }

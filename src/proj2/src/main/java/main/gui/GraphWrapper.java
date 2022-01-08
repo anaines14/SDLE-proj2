@@ -2,12 +2,15 @@ package main.gui;
 
 import org.graphstream.graph.*;
 import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.ui.spriteManager.Sprite;
+import org.graphstream.ui.spriteManager.SpriteManager;
 
 import java.net.URL;
 
 
 public class GraphWrapper implements Observer{
     private final Graph graph;
+    private final SpriteManager sprites;
 
     public GraphWrapper(String graphName) {
         System.setProperty("org.graphstream.ui","swing");
@@ -19,6 +22,8 @@ public class GraphWrapper implements Observer{
 
         // set style
         graph.setAttribute("ui.stylesheet", "url('" + resource + "')");
+
+        this.sprites = new SpriteManager(this.graph);
     }
 
     public void display() {
@@ -26,10 +31,10 @@ public class GraphWrapper implements Observer{
         System.out.println("Displayed GRAPH in external window.");
     }
 
-    public void addNode(String name, int capacity) throws IdAlreadyInUseException {
-        if (graph.getNode(name) == null) {
-            Node node = graph.addNode(name);
-            node.setAttribute("ui.label", node.getId());
+    public void addNode(String name, String port, int capacity) throws IdAlreadyInUseException {
+        if (graph.getNode(port) == null) {
+            Node node = graph.addNode(port);
+            node.setAttribute("ui.label", name);
             node.setAttribute("ui.style", "size: " + capacity*5 + ";");
         }
     }
@@ -71,12 +76,64 @@ public class GraphWrapper implements Observer{
     }
 
     // new node
-    public void newNodeUpdate(String username, int capacity) {
+    public void newNodeUpdate(String username, String port, int capacity) {
         // if node not in graph => add it
         try {
-            this.addNode(username, capacity);
+            this.addNode(username, port, capacity);
         } catch(IdAlreadyInUseException e) {
             System.err.println("ERROR: Failed to add node on graph");
         }
+    }
+
+    // new query message
+    public void newQueryUpdate(String source, String destination) {
+        String id = source + destination + "Msg";
+
+        try {
+            Edge e = this.graph.addEdge(id, source, destination);
+            e.setAttribute("ui.class", "message");
+
+            Sprite sprite = sprites.addSprite(id);
+            sprite.attachToEdge(id);
+            sprite.setAttribute("ui.class", "query");
+
+            this.sendMsgView(sprite, id);
+            this.graph.removeEdge(id);
+        } catch(IdAlreadyInUseException | EdgeRejectedException | ElementNotFoundException e ) {
+            e.printStackTrace();
+        }
+    }
+
+    // new hit message
+    public void newQueryHitUpdate(String source, String destination) {
+        String id = source + destination + "Msg";
+
+        try {
+            Edge e = this.graph.addEdge(id, source, destination);
+            e.setAttribute("ui.class", "message");
+
+            Sprite sprite = sprites.addSprite(id);
+            sprite.attachToEdge(id);
+            sprite.setAttribute("ui.class", "hit");
+
+            this.sendMsgView(sprite, id);
+            this.graph.removeEdge(id);
+        } catch(IdAlreadyInUseException | EdgeRejectedException | ElementNotFoundException e ) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendMsgView(Sprite sprite, String id) {
+        try {
+            for (double x = 0.0; x < 1; x += 0.1){
+                sprite.setPosition(x, 0, 0);
+                Thread.sleep(100);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        sprites.removeSprite(id);
+        sprite.detach();
     }
 }

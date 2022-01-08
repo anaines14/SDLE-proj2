@@ -1,5 +1,6 @@
 package main;
 
+import main.gui.Observer;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
@@ -45,8 +46,8 @@ public class Peer implements Serializable {
     public Peer(String username, InetAddress address, int capacity) {
         this.context = new ZContext();
         this.peerInfo = new PeerInfo(address, username, capacity);
-        this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker = new Broker(context, peerInfo);
+        this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
     }
 
     public void join(Neighbour neighbour) {
@@ -213,6 +214,11 @@ public class Peer implements Serializable {
         }
         double satisfaction = ((double) total) / this.peerInfo.getCapacity();
         return satisfaction % 1;
+    }
+
+    public void subscribe(Observer o) {
+        this.getPeerInfo().subscribe(o);
+        this.sender.subscribe(o);
     }
 
     public PeerInfo getPeerInfo() {

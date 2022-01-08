@@ -63,7 +63,7 @@ public class PeerInfo {
         hostCache.add(neighbour); // Everytime we add a neighbour, we also add to the hostcache
 
         if (this.observer != null)
-            this.observer.newEdgeUpdate(this.getUsername(), neighbour.getUsername());
+            this.observer.newEdgeUpdate(this.getPort(), neighbour.getPort());
 
     }
 
@@ -131,7 +131,7 @@ public class PeerInfo {
     // observers
     public void subscribe(Observer o) {
         this.observer = o;
-        this.observer.newNodeUpdate(this.getUsername(), this.getCapacity());
+        this.observer.newNodeUpdate(this.getUsername(), this.getPort(), this.getCapacity());
     }
 
     // getters

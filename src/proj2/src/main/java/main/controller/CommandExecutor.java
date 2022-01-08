@@ -82,7 +82,7 @@ public class CommandExecutor {
     }
 
     private void startPeer(String username, Peer peer) {
-        peer.getPeerInfo().subscribe(this.graph);
+        peer.subscribe(this.graph);
         this.connectToNetwork(peer);
         peers.put(username, peer);
         executor.addNode(peer);

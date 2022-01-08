@@ -1,4 +1,5 @@
 import main.Peer;
+import main.controller.message.MessageSender;
 import main.gui.GraphWrapper;
 import main.model.PeerInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,9 @@ public class GraphTest {
 
     @BeforeEach
     public void setUp() {
+        MessageSender.addIgnoredMsg("PING");
+        MessageSender.addIgnoredMsg("PONG");
+
         scheduler = new ScheduledThreadPoolExecutor(10);
         this.graph = new GraphWrapper("Network");
 
@@ -37,11 +41,11 @@ public class GraphTest {
         Random rand = new Random();
         List<Peer> peers = new ArrayList<>();
 
-        int capacity = 1;
+        int capacity = 15;
 
         // initiator peer
         Peer initPeer = new Peer(username + 1, address, capacity);
-        initPeer.getPeerInfo().subscribe(this.graph);
+        initPeer.subscribe(this.graph);
         initPeer.execute(scheduler);
         peers.add(initPeer);
 
@@ -53,7 +57,7 @@ public class GraphTest {
             }
             capacity = MIN_NODE_SIZE + rand.nextInt(MAX_NODE_SIZE);
             Peer p = new Peer(username + i, address, capacity);
-            p.getPeerInfo().subscribe(this.graph);
+            p.subscribe(this.graph);
             p.execute(scheduler);
             p.join(initPeer);
             peers.add(p);
@@ -65,8 +69,7 @@ public class GraphTest {
     @Test
     public void nodeView() {
         Peer peer = new Peer("username", address, 10);
-        PeerInfo publisher = peer.getPeerInfo();
-        publisher.subscribe(this.graph);
+        peer.subscribe(this.graph);
 
         try {
             Thread.sleep(8000);
@@ -77,10 +80,39 @@ public class GraphTest {
 
     @Test
     public void multipleNodeView() {
-        List<Peer> peers = this.nodeFactory(30);
+        List<Peer> peers = this.nodeFactory(3);
 
         try {
-            Thread.sleep(10000);
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        this.scheduler.shutdown();
+
+        try {
+            Thread.sleep(120000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void messageView() {
+        List<Peer> peers = this.nodeFactory(4);
+        Peer peer1 = peers.get(0);
+        Peer peer2 = peers.get(1);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        peer1.queryNeighbours(peer2.getPeerInfo().getUsername());
+
+        try {
+            Thread.sleep(6000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

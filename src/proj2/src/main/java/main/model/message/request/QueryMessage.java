@@ -4,6 +4,7 @@ import main.model.PeerInfo;
 
 // Message that will be redirected
 public class QueryMessage extends MessageRequest {
+    public static final String type = "QUERY";
     private final static int TTL = 10;
     public Path path;
     private final String wantedUsername;
@@ -52,7 +53,7 @@ public class QueryMessage extends MessageRequest {
 
     @Override
     public String getType() {
-        return "QUERY";
+        return type;
     }
 
     @Override
