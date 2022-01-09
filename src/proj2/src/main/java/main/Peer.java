@@ -92,6 +92,7 @@ public class Peer implements Serializable {
         if (peerInfo.isAuth())
             addedPost.addSignature(peerInfo.getPrivateKey());
         this.broker.publishPost(addedPost);
+        this.peerInfo.notifyNewPost();
     }
 
     public void deletePost(int postId) {

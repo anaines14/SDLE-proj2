@@ -5,9 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class Timeline implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -30,7 +28,7 @@ public class Timeline implements Serializable {
 
     public Post addPost(String post_content) {
         this.lastPostId++;
-        Post res = new Post(lastPostId, post_content);
+        Post res = new Post(lastPostId, username, post_content);
         this.posts.put(this.lastPostId, res);
         this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
         return res;
@@ -84,6 +82,9 @@ public class Timeline implements Serializable {
 
     public String getUsername() { return this.username; }
 
+    public List<Post> getPosts() {
+        return new ArrayList<>(this.posts.values());
+    }
 
     @Override
     public String toString() {

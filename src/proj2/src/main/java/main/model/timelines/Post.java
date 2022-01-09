@@ -7,16 +7,18 @@ import java.security.*;
 import java.time.LocalTime;
 import java.util.Objects;
 
-public class Post implements Serializable {
+public class Post implements Serializable, Comparable<Post> {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final String username;
     private final int Id;
     private final LocalTime timestamp;
     private String content;
     private final Cipher cipher;
 
-    public Post(int Id, String content) {
+    public Post(int Id, String username, String content) {
+        this.username = username;
         this.Id = Id;
         this.timestamp = LocalTime.now();
         this.content = content;
@@ -40,13 +42,30 @@ public class Post implements Serializable {
         return this.cipher.verifySignature(this.toString(), publicKey);
     }
 
-    public boolean hasSignature(){
+    public boolean hasSignature() {
         return cipher.hasSignature();
+    }
+
+    public int getId() {
+        return Id;
+    }
+
+    public LocalTime getTimestamp() {
+        return timestamp;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getContent() {
+        return content;
     }
 
     @Override
     public String toString() {
         return  "\t\tID: " + Id + ": " +
+                "\n\t\tuser: " + username +
                 "\n\t\t\tTimestamp: " + timestamp +
                 "\n\t\t\tContent: '" + content + '\'';
     }
@@ -62,5 +81,11 @@ public class Post implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(Id, timestamp, content);
+    }
+
+
+    @Override
+    public int compareTo(Post o) {
+        return this.timestamp.compareTo(o.timestamp);
     }
 }

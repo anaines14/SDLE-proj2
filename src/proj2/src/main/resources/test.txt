@@ -1,6 +1,4 @@
-start nachos 10
 start bibo 5
-start ferno 6
+print bibo
 sleep 10
-sub nachos ferno
 stop_all

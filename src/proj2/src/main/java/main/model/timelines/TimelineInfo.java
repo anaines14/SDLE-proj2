@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.time.Duration;
 import java.time.LocalTime;
-import java.util.Map;
-import java.util.Set;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TimelineInfo {
@@ -44,8 +44,22 @@ public class TimelineInfo {
     }
 
     public void showFeed() {
-        // TODO: Ordenar posts todos
-        // TODO: Printar os posts
+        List<Timeline> timelines = new ArrayList<>(this.timelines.values());
+        List<Post> posts = new ArrayList<>();
+        for (Timeline timeline : timelines) {
+            posts.addAll(timeline.getPosts());
+        }
+
+        Collections.sort(posts);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+        System.out.println("============================");
+        System.out.println("\t\t\t" + this.me.toUpperCase());
+        for (Post post : posts) {
+            System.out.println("============================");
+            System.out.printf("\t%s\t\t%s\n",post.getUsername(), post.getTimestamp().format(formatter));
+            System.out.println("\t" + post.getContent());
+        }
+
     }
 
     public void loadTimelines() throws IOException, ClassNotFoundException {
