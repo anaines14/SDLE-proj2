@@ -25,7 +25,7 @@ public class BrokerTest {
         PeerInfo peerInfo = new PeerInfo(localhost, "user1", 50);
         Broker broker = new Broker(context, peerInfo);
 
-        Host peer2 = new Host("user2", localhost, "8002", 10, 10);
+        Host peer2 = new Host("user2", localhost, "8002", 10, 10, 3);
         broker.execute();
 
         MessageRequest request = new PingMessage(peer2);

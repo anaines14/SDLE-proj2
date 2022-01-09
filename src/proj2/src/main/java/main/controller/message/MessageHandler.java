@@ -12,6 +12,7 @@ import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -97,13 +98,14 @@ public class MessageHandler {
         message.decreaseTtl();
         message.addToPath(new Sender(this.peerInfo));
 
-        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().filter(
-                n -> !message.isInPath(new Sender(n.getAddress(), n.getPort()))
-        ).toList();
-        System.out.print(this.peerInfo.getUsername() + " SENDING TO: ");
-        for (Neighbour n: neighbours)
-            System.out.print(n.getUsername() + " ");
-        System.out.println();
+        Set<Neighbour> ngbrsToReceive = peerInfo.getNeighbours();
+        if (this.peerInfo.isSuperPeer()) // super peer => use bloom filter
+            ngbrsToReceive = this.peerInfo.getNeighboursWithTimeline(wantedUser);
+
+        List<Neighbour> neighbours = ngbrsToReceive.stream().filter(
+                n -> !message.isInPath(new Sender(n.getAddress(), n.getPort())))
+                .toList();
+
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
         int i=0;
@@ -126,7 +128,6 @@ public class MessageHandler {
         boolean accepted = false;
         if (!neighboursFull) {
             this.peerInfo.addNeighbour(new Neighbour(message.getSender()));
-            accepted = true;
         } else {
             Neighbour toReplace = this.peerInfo.acceptNeighbour(message.getSender());
             boolean canReplace = toReplace != null;

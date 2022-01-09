@@ -1,12 +1,9 @@
 package main;
 
-import com.google.common.hash.BloomFilter;
-import com.google.common.hash.Funnels;
 import main.gui.Observer;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
-import main.model.message.Message;
 import main.model.message.request.*;
 import main.model.message.response.MessageResponse;
 import main.model.message.response.PassouBemResponse;
@@ -28,7 +25,6 @@ import java.util.stream.IntStream;
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
-    public static final int MAX_NGBRS = 4; // TODO: capacity * ????
     public static final int MIN_NGBRS = 1;
     public static final int MAX_RETRY = 3;
     public static final int RCV_TIMEOUT = 1000;
@@ -39,7 +35,6 @@ public class Peer implements Serializable {
     // Model/Data members
     private final PeerInfo peerInfo;
     private final ZContext context;
-    private BloomFilter<String> timelinesFilter;
 
     // Network members
     private final Broker broker;
@@ -54,7 +49,6 @@ public class Peer implements Serializable {
         this.peerInfo = new PeerInfo(address, username, capacity);
         this.broker = new Broker(context, peerInfo);
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
-        this.timelinesFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
     }
 
     public void join(Neighbour neighbour) {
@@ -111,7 +105,6 @@ public class Peer implements Serializable {
 
     public Timeline queryNeighbours(String username) {
         // check if neighbours have the username's timeline
-        // TODO: BLOOM FILTERS
         // TODO Tamos a dar flooding atm, dps temos que usar searches
         // System.out.println("got neighbours with timelines: " + neighbours.size());
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
@@ -155,7 +148,7 @@ public class Peer implements Serializable {
 
     public void pingNeighbours() {
         // reset bloom filter
-        this.resetFilter();
+        this.peerInfo.resetFilter();
 
         List<Neighbour> neighbours = this.getPeerInfo().getNeighbours().stream().toList();
         for (Neighbour neighbour: neighbours) { // TODO multithread this, probably with scheduler
@@ -188,7 +181,7 @@ public class Peer implements Serializable {
                 // System.out.println(peerInfo.getUsername() + " UPDATED " + neighbour.getUsername());
                 peerInfo.updateNeighbour(response.sender);
                 peerInfo.updateHostCache(hostCache);
-                this.mergeFilter(response.sender);
+                this.peerInfo.mergeFilter(response.sender);
             }
         }
     }
@@ -238,7 +231,7 @@ public class Peer implements Serializable {
         // limits
         if (num_neighbours < MIN_NGBRS )
             return 0;
-        if (num_neighbours >= MAX_NGBRS)
+        if (this.peerInfo.areNeighboursFull())
             return 1;
         System.out.println(neighbours.size());
         int total = 0;
@@ -247,16 +240,6 @@ public class Peer implements Serializable {
         }
         double satisfaction = ((double) total) / this.peerInfo.getCapacity();
         return satisfaction % 1;
-    }
-
-    private void resetFilter() {
-        this.timelinesFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
-    }
-
-    private void mergeFilter(Neighbour neighbour) {
-        // merge filters only if neighbour isn't a super peer
-        if (this.peerInfo.isSuperPeer(neighbour))
-            this.timelinesFilter.putAll(neighbour.getTimelines());
     }
 
     public void subscribe(Observer o) {

@@ -1,16 +1,18 @@
 package main.model;
 
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import main.gui.Observer;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.TimelineInfo;
 
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static main.Peer.MAX_NGBRS;
 import static main.Peer.SP_MIN;
 
 // Data class that serves like a Model in an MVC
@@ -20,12 +22,17 @@ public class PeerInfo {
     private Set<Neighbour> neighbours;
     private Set<Host> hostCache;
     private Observer observer;
+    private BloomFilter<String> timelinesFilter;
+    private final int max_nbrs;
 
     public PeerInfo(String username, InetAddress address, int capacity, TimelineInfo timelineInfo) {
-        this.me = new Host(username, address, "-1", capacity, 0);
+        this.max_nbrs = (int) Math.floor(capacity * 0.3);
+        this.me = new Host(username, address, "-1", capacity, 0, max_nbrs);
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = ConcurrentHashMap.newKeySet();
+        this.timelinesFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
+        this.timelinesFilter.put(username);
     }
 
     public PeerInfo(InetAddress address, String username, int capacity) {
@@ -83,8 +90,6 @@ public class PeerInfo {
     }
 
     public Set<Neighbour> getNeighboursWithTimeline(String username) {
-        for (Neighbour n: neighbours)
-            System.out.println(n.getUsername());
         return neighbours.stream().filter(n -> n.hasTimeline(username)).collect(Collectors.toSet());
     }
 
@@ -136,12 +141,28 @@ public class PeerInfo {
         this.observer.newNodeUpdate(this.getUsername(), this.getPort(), this.getCapacity());
     }
 
-    boolean isSuperPeer() {
-        return this.neighbours.size() >= SP_MIN;
+    // bloom filters
+
+    public boolean isSuperPeer() {
+        return this.getMaxNbrs() >= SP_MIN;
     }
 
     public boolean isSuperPeer(Host host) {
-        return host.getDegree() >= SP_MIN;
+        return host.getMaxNbrs() >= SP_MIN;
+    }
+
+    public void resetFilter() {
+        this.timelinesFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
+        this.timelinesFilter.put(this.getUsername());
+    }
+
+    public void mergeFilter(Neighbour neighbour) {
+        // merge filters only if neighbour isn't a super peer
+        System.out.println(neighbour.getUsername() + " tem " + neighbour.getMaxNbrs());
+        if (!this.isSuperPeer(neighbour)) {
+            this.timelinesFilter.putAll(neighbour.getTimelines());
+            System.out.println("PUt");
+        }
     }
 
     // getters
@@ -167,7 +188,7 @@ public class PeerInfo {
     }
 
     public boolean areNeighboursFull() {
-        return this.neighbours.size() >= MAX_NGBRS;
+        return this.neighbours.size() >= max_nbrs;
     }
 
     public Set<Neighbour> getNeighbours() { return neighbours; }
@@ -182,6 +203,10 @@ public class PeerInfo {
 
     public TimelineInfo getTimelineInfo() {
         return timelineInfo;
+    }
+
+    public int getMaxNbrs() {
+        return max_nbrs;
     }
 
     // Returns worst neighbour if we need to replace Neighbour

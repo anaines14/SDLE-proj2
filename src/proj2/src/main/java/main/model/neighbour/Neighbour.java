@@ -14,8 +14,8 @@ import java.util.Set;
 public class Neighbour extends Host implements Serializable{
     private BloomFilter<String> timelines;
 
-    public Neighbour(String username, InetAddress address, String port, int capacity, int degree) {
-        super(username, address, port, capacity, degree);
+    public Neighbour(String username, InetAddress address, String port, int capacity, int degree, int maxNbrs) {
+        super(username, address, port, capacity, degree, maxNbrs);
     }
 
     public Neighbour(Host host) {
