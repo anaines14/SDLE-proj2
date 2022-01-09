@@ -154,4 +154,28 @@ public class GraphTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void testEdges() {
+        Peer peer1 = new Peer("user1", address, 50);
+        Peer peer2 = new Peer("user2", address, 20);
+        Peer peer3 = new Peer("user3", address, 3);
+
+        peer1.subscribe(this.graph);
+        peer2.subscribe(this.graph);
+        peer3.subscribe(this.graph);
+
+        peer2.join(peer1);
+        peer3.join(peer2);
+
+        peer1.execute(scheduler);
+        peer2.execute(scheduler);
+        peer3.execute(scheduler);
+
+        try {
+            Thread.sleep(120000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }
