@@ -23,6 +23,7 @@ public class SocketInfo {
 
     private Map<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
     private Map<String, ZMQ.Socket> redirects; // Nodes to which we have to send post from subscribers
+    private Map<String, String> redirectPorts; // username => port
 
     public SocketInfo(String publisherPort, String frontendPort) { // For testing
         this.publisherPort = publisherPort;
@@ -42,6 +43,7 @@ public class SocketInfo {
 
         this.subscriptions = new ConcurrentHashMap<>();
         this.redirects = new ConcurrentHashMap<>();
+        this.redirectPorts = new ConcurrentHashMap<>();
     }
 
     public String getPublisherPort() {
@@ -88,6 +90,7 @@ public class SocketInfo {
         subscription.connect("tcp://" + hostName + ":" + port);
         System.out.println("SUBBED TO " + "tcp://" + hostName + ":" + port);
         subscription.subscribe("".getBytes());
+        this.subscriptions.put(username, subscription);
     }
 
     public void removeSubscription(String username) {
@@ -97,8 +100,16 @@ public class SocketInfo {
         subscriptions.remove(username);
     }
 
-    public void addRedirect(String username, InetAddress address, String port) {
+    public String addRedirect(String username, InetAddress address) {
 
+        ZMQ.Socket pub = context.createSocket(SocketType.PUB);
+        String hostName = address.getHostName();
+        int p = pub.bindToRandomPort("tcp://" + hostName);
+        String port = Integer.toString(p);
+        this.redirects.put(username, pub);
+        this.redirectPorts.put(username, port);
+        System.out.println("ADDING REDIRECT =========================== " + port + " " + username);
+        return port;
     }
 
     public void close() {
