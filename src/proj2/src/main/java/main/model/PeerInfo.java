@@ -130,6 +130,11 @@ public class PeerInfo {
             this.observer.newSubUpdate(this.getPort(), port);
     }
 
+    public void notifyNewPost() {
+        if (this.observer != null)
+            this.observer.newSubUpdate(this.getPort(), this.subscribers);
+    }
+
     // HostCache
 
     public void addHost(Host host) {

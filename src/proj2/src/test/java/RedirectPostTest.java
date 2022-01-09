@@ -5,6 +5,7 @@ import main.model.timelines.Post;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.sound.sampled.Port;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -84,11 +85,14 @@ public class RedirectPostTest {
             e.printStackTrace();
         }
 
-        Map<String, List<Post>> posts = peer1.getPostOfSubscriptions();
 
-        assertTrue(posts.get("u2").size() == 2);
-        assertEquals(posts.get("u2").get(0), "Uma posta");
-        assertEquals(posts.get("u2").get(2), "Duas postas");
+        Map<String, List<Post>> peer1Posts = peer1.getPostOfSubscriptions();
+        assertTrue(peer1Posts.containsKey("u2"));
+
+        List<Post> posts = peer1Posts.get("u2");
+        assertEquals(2, posts.size());
+        assertEquals(posts.get(0).getContent(), "Uma posta");
+        assertEquals(posts.get(1).getContent(), "Duas postas");
         this.close();
     }
 }

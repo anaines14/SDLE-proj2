@@ -11,4 +11,5 @@ public interface Observer {
     void newQueryUpdate(String source, String destination);
     void newQueryHitUpdate(String source, String destination);
     void newSubUpdate(String source, String destination);
+    void newPostUpdate(String source, Set<String> destinations);
 }

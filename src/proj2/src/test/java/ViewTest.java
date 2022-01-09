@@ -200,12 +200,6 @@ public class ViewTest {
     public void subscriptionView() {
         List<Peer> peers = setUpSubscriptions();
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         Peer peer1 = peers.get(0);
         peer1.requestSub("u2");
         peer1.requestSub("u3");
@@ -217,7 +211,26 @@ public class ViewTest {
         }
     }
 
+    @Test
     public void redirectView() {
+        List<Peer> peers = setUpSubscriptions();
+        Peer peer1 = peers.get(0), peer2 = peers.get(1), peer3 = peers.get(2);
+
+        peer3.requestSub("u2");
+
+        try {
+            Thread.sleep(4000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        peer1.requestSub("u2");
+
+        try {
+            Thread.sleep(4000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private List<Peer> setUpSubscriptions() {
@@ -233,6 +246,12 @@ public class ViewTest {
 
         for (Peer peer: peers)
             peer.execute(scheduler);
+
+        try {
+            Thread.sleep(4000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         return peers;
     }

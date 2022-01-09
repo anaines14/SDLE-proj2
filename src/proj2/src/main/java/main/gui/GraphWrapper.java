@@ -6,6 +6,7 @@ import org.graphstream.ui.spriteManager.Sprite;
 import org.graphstream.ui.spriteManager.SpriteManager;
 
 import java.net.URL;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -111,6 +112,23 @@ public class GraphWrapper implements Observer{
         }
     }
 
+    // new post
+    public void newPostUpdate(String source, Set<String> destinations) {
+        for (String destination: destinations) {
+            String edgeId = source + destination;
+            // if edge exists => send post
+            Edge edge = graph.getEdge(edgeId);
+            if (edge != null) {
+                try {
+                    this.animateSprite(edgeId, "post");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
     // new query message
     public void newQueryUpdate(String source, String destination) {
         this.sendMsgView(source, destination, "query");
@@ -121,34 +139,37 @@ public class GraphWrapper implements Observer{
         this.sendMsgView(source, destination, "hit");
     }
 
-    public void sendMsgView(String source, String destination, String spriteClass) {
+    private void sendMsgView(String source, String destination, String spriteClass) {
         String id = String.valueOf(UUID.randomUUID());
 
         try {
             Edge e = this.graph.addEdge(id, source, destination);
             e.setAttribute("ui.class", "message");
 
-            Sprite sprite = null;
-            synchronized (sprites) {
-                sprite = sprites.addSprite(id);
-            }
-            sprite.attachToEdge(id);
-            sprite.setAttribute("ui.class", spriteClass);
-
-            for (double x = 0.0; x < 1; x += 0.1){
-                synchronized (sprites) {
-                    sprite.setPosition(x, 0, 0);
-                }
-                Thread.sleep(100);
-            }
-
-            synchronized (sprites) {
-                sprites.removeSprite(id);
-            }
-
+            this.animateSprite(id, spriteClass);
             this.graph.removeEdge(id);
         } catch(IdAlreadyInUseException | EdgeRejectedException | ElementNotFoundException | InterruptedException | IndexOutOfBoundsException e ) {
             e.printStackTrace();
+        }
+    }
+
+    private void animateSprite(String edgeId, String spriteClass) throws InterruptedException {
+        Sprite sprite = null;
+        synchronized (sprites) {
+            sprite = sprites.addSprite(edgeId);
+        }
+        sprite.attachToEdge(edgeId);
+        sprite.setAttribute("ui.class", spriteClass);
+
+        for (double x = 0.0; x < 1; x += 0.1){
+            synchronized (sprites) {
+                sprite.setPosition(x, 0, 0);
+            }
+            Thread.sleep(100);
+        }
+
+        synchronized (sprites) {
+            sprites.removeSprite(edgeId);
         }
     }
 }

@@ -85,6 +85,7 @@ public class Peer implements Serializable {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
         Post addedPost = timelineInfo.addPost(peerInfo.getUsername(), newContent);
         this.broker.publishPost(addedPost);
+        this.peerInfo.notifyNewPost();
     }
 
     public void deletePost(int postId) {
