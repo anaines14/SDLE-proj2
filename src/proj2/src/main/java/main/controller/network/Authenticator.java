@@ -20,8 +20,8 @@ public class Authenticator {
     private String socketPort;
     private AuthMessageHandler authHandler;
 
-    Authenticator(ZContext context, InetAddress address) throws NoSuchAlgorithmException {
-        this.context = context;
+    Authenticator(InetAddress address) throws NoSuchAlgorithmException {
+        this.context = new ZContext();
         this.socket = context.createSocket(SocketType.REP);
         this.authHandler = new AuthMessageHandler();
 
