@@ -1,6 +1,7 @@
 package main.controller.message;
 
 import main.model.PeerInfo;
+import main.model.SocketInfo;
 import main.model.message.*;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
@@ -26,11 +27,13 @@ import static main.Peer.MAX_RANDOM_NEIGH;
 public class MessageHandler {
     private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
     private PeerInfo peerInfo;
+    private SocketInfo socketInfo;
     private MessageSender sender;
 
-    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises) {
+    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, SocketInfo socketInfo) {
         this.peerInfo = null;
         this.sender = null;
+        this.socketInfo = socketInfo;
         this.promises = promises;
     }
 
@@ -168,6 +171,7 @@ public class MessageHandler {
             }
             else if (this.peerInfo.hasSubscription(wantedUser)) {
                 // TODO: create socket and add to redirects
+
                 // We are subbed to the requested sub, send query hit to initiator
                 MessageResponse queryHit = new SubHitMessage(message.getId(),
                         this.peerInfo.getPublishPort(), this.peerInfo.getAddress());

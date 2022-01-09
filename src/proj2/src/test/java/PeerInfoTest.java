@@ -27,7 +27,7 @@ public class PeerInfoTest {
             localhost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ignored) {}
 
-        peer1 = new PeerInfo("user1", localhost, 30, "8001", "8101");
+        peer1 = new PeerInfo("user1", localhost, 30);
         List<String> timelines1 = new ArrayList<>(Arrays.asList("u1", "u2", "u3"));
         List<String> timelines2 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4"));
         List<String> timelines3 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4", "u5"));

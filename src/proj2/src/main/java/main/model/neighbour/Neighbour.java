@@ -14,7 +14,7 @@ public class Neighbour extends Host implements Serializable{
     private final BloomFilter<String> timelines;
 
     public Neighbour(String username, InetAddress address, String port, String frontendPort, int capacity, int degree, List<String> timelines) {
-        super(username, address, port, frontendPort, capacity, degree);
+        super(username, address, capacity, degree, port, frontendPort);
         this.timelines = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
 
         for(String str: timelines) {

@@ -8,35 +8,43 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static main.Peer.MAX_SUBS;
 
+import static main.Peer.MAX_SUBS;
+
 // Data class
 public class Host implements Serializable, Comparable<Host> {
-    private final InetAddress address;
-    private final String port;
-    private final String publisherPort;
-    private final int capacity; // Quantity of messages that we can handle, arbitrary for us
-    private int maxSubCapacity; // capacity at a given time (starts at a given number and decreases with new subs)
-    // needed to add as neighbor
     private final String username;
-    private int degree;
+    private final InetAddress address;
+    private final int capacity; // Quantity of messages that we can handle, arbitrary for us
+    private int degree; // needed to add as neighbor
+    private int maxSubCapacity; // capacity at a given time (starts at a given number and decreases with new subs)
+    private String port;
+    private String publisherPort;
 
-    public Host(String username, InetAddress address, String port, String publishPort,
-                int capacity, int degree, int subCapacity) {
-        this.address = address;
-        this.port = port;
-        this.publisherPort = publishPort;
-        this.capacity = capacity;
+    public Host(String username, InetAddress address, int capacity, int degree, int maxSubCapacity, String port, String publisherPort) {
         this.username = username;
+        this.address = address;
+        this.capacity = capacity;
         this.degree = degree;
-        this.maxSubCapacity = subCapacity;
+        this.maxSubCapacity = maxSubCapacity;
+        this.port = port;
+        this.publisherPort = publisherPort;
     }
 
     public Host(String username, InetAddress address, String port, String publishPort,
                 int capacity, int degree) {
-        this(username, address, port, publishPort, capacity, degree, MAX_SUBS);
+        this(username, address, capacity, degree, MAX_SUBS, port, publishPort);
+    }
+
+    public Host(String username, InetAddress address, int capacity, int degree, int subCapacity) {
+        this(username, address, capacity, degree, subCapacity, "-1", "-1");
+    }
+
+    public Host(String username, InetAddress address, int capacity, int degree, String port, String publisherPort) {
+        this(username, address, capacity, degree, MAX_SUBS, port, publisherPort);
     }
 
     public Host(Host host) {
-        this(host.username, host.address, host.port, host.publisherPort, host.capacity, host.degree, host.maxSubCapacity);
+        this(host.username, host.address, host.capacity, host.degree, host.maxSubCapacity, host.port, host.publisherPort);
     }
 
     public InetAddress getAddress() {
@@ -47,8 +55,15 @@ public class Host implements Serializable, Comparable<Host> {
         return port;
     }
 
+    public void setPort(String frontendPort) {
+        this.port = frontendPort;
+    }
+
     public String getPublishPort() {
         return publisherPort;
+    }
+    public void setPublishPort(String publisherPort) {
+        this.publisherPort = publisherPort;
     }
 
     public int getCapacity() {
@@ -92,5 +107,4 @@ public class Host implements Serializable, Comparable<Host> {
     public int compareTo(Host host) {
         return Integer.compare(degree, host.degree);
     }
-
 }
