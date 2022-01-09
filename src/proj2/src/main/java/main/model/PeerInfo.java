@@ -22,16 +22,16 @@ public class PeerInfo {
     private Set<Host> hostCache;
     private Observer observer;
 
-    public PeerInfo(String username, InetAddress address, int capacity, TimelineInfo timelineInfo) {
-        this.me = new Host(username, address, capacity, 0, MAX_SUBS);
+    public PeerInfo(String username, InetAddress address, int capacity, TimelineInfo timelineInfo, SocketInfo socketInfo) {
+        this.me = new Host(username, address, capacity, 0, MAX_SUBS, socketInfo);
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = ConcurrentHashMap.newKeySet();
         this.subscribedPeers = ConcurrentHashMap.newKeySet();
     }
 
-    public PeerInfo(String username, InetAddress address, int capacity) {
-        this(username, address, capacity, new TimelineInfo(username));
+    public PeerInfo(String username, InetAddress address, int capacity, SocketInfo socketInfo) {
+        this(username, address, capacity, new TimelineInfo(username), socketInfo);
     }
 
     // Neighbours

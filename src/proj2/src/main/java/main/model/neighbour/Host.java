@@ -1,5 +1,7 @@
 package main.model.neighbour;
 
+import main.model.SocketInfo;
+
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;
@@ -36,6 +38,10 @@ public class Host implements Serializable, Comparable<Host> {
 
     public Host(Host host) {
         this(host.username, host.address, host.capacity, host.degree, host.subCapacity, host.port, host.publisherPort);
+    }
+
+    public Host(String username, InetAddress address, int capacity, int degree, int subCapacity, SocketInfo socketInfo) {
+        this(username, address, capacity, degree, subCapacity, socketInfo.getFrontendPort(), socketInfo.getPublisherPort());
     }
 
     public InetAddress getAddress() {

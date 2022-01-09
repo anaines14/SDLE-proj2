@@ -1,4 +1,5 @@
 import main.model.PeerInfo;
+import main.model.SocketInfo;
 import main.model.neighbour.Neighbour;
 import org.junit.jupiter.api.Test;
 
@@ -26,8 +27,8 @@ public class PeerInfoTest {
         try {
             localhost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ignored) {}
-
-        peer1 = new PeerInfo("user1", localhost, 30);
+        SocketInfo socketInfo = new SocketInfo("8000", "8101");
+        peer1 = new PeerInfo("user1", localhost, 30, socketInfo);
         List<String> timelines1 = new ArrayList<>(Arrays.asList("u1", "u2", "u3"));
         List<String> timelines2 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4"));
         List<String> timelines3 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4", "u5"));
