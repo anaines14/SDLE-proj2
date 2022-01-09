@@ -2,6 +2,10 @@ package main.controller.message;
 
 import main.model.PeerInfo;
 import main.model.message.*;
+import main.model.message.auth.GetPrivateKeyMessage;
+import main.model.message.auth.GetPublicKeyMessage;
+import main.model.message.auth.LoginMessage;
+import main.model.message.auth.RegisterMessage;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
 import main.model.message.request.query.QueryMessageImpl;
