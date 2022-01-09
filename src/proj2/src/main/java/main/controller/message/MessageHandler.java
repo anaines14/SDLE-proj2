@@ -157,32 +157,29 @@ public class MessageHandler {
         if (message.isInPath(this.peerInfo))
             return; // Already redirected this message
 
-        Host myHost = peerInfo.getHost();
-        if (myHost.canAcceptSub()) {
+        if (peerInfo.canAcceptSub()) {
             if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
                 // We are the requested sub, send query hit to initiator
                 MessageResponse queryHit = new SubHitMessage(message.getId(),
                         this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
                 this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
-                // decrement subCapacity
-                myHost.addSubscriber();
+                peerInfo.addSubscriber(this.sender.getUsername());
                 return;
             }
-            else if (this.peerInfo.isSubscribedTo(wantedUser)) { // TODO: redirects if am subscribed to target
+            else if (this.peerInfo.hasSubscription(wantedUser)) {
+                // TODO: create socket and add to redirects
                 // We are subbed to the requested sub, send query hit to initiator
                 MessageResponse queryHit = new SubHitMessage(message.getId(),
                         this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
                 this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
-                // decrement subCapacity
-                myHost.addSubscriber();
+                // add subscriber to this peer
+                peerInfo.addSubscriber(this.sender.getUsername());
             }
         }
-
-//        if (tenhoSubscription(message.getWantedSub())) { // Redirect para o gajo
-//            String port = peerInfo.getNewPort(message.getWantedSub());
-//
-//        }
-        this.propagateQueryMessage(message);
+        else {
+            System.out.println("NOT ENOUGH CAPACITY");
+            this.propagateQueryMessage(message);
+        }
     }
 
     private void handle(SubHitMessage message) {

@@ -18,7 +18,8 @@ public class PeerInfo {
     private Host me;
     private TimelineInfo timelineInfo;
     private Set<Neighbour> neighbours;
-    private Set<String> subscribedPeers;
+    private Set<String> subscriptions; // peers subscribed by me
+    private final Set<String> subscribers;
     private Set<Host> hostCache;
     private Observer observer;
 
@@ -28,7 +29,8 @@ public class PeerInfo {
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = ConcurrentHashMap.newKeySet();
-        this.subscribedPeers = ConcurrentHashMap.newKeySet();
+        this.subscriptions = ConcurrentHashMap.newKeySet();
+        this.subscribers = ConcurrentHashMap.newKeySet();
     }
 
     public PeerInfo(String username, InetAddress address, int capacity, String port, String publishPort) {
@@ -91,12 +93,15 @@ public class PeerInfo {
         return neighbours.stream().filter(n -> n.hasTimeline(username)).collect(Collectors.toSet());
     }
 
-    public void addSubscribed(String username) {
-        this.subscribedPeers.add(username);
-    }
+    public void addSubscription(String username) { this.subscriptions.add(username); }
+    public void removeSubscription(String username) { this.subscriptions.remove(username); }
+    public boolean hasSubscription(String username) { return this.subscriptions.contains(username); }
 
-    public boolean isSubscribedTo(String username) {
-        return this.subscribedPeers.contains(username);
+    public void addSubscriber(String username) { this.subscribers.add(username); }
+    public void removeSubscriber(String username) { this.subscribers.remove(username); }
+    public boolean canAcceptSub() { return this.subscribers.size() < this.me.getMaxSubCapacity(); }
+    public boolean hasSubscriber(String username) {
+        return this.subscribers.contains(username);
     }
 
     // HostCache

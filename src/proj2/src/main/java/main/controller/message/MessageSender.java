@@ -108,4 +108,6 @@ public class MessageSender {
             case QueryMessage.type -> this.observer.newQueryUpdate(this.port, port);
         }
     }
+
+    public String getUsername() { return username; }
 }

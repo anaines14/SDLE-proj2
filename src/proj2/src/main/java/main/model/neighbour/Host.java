@@ -3,6 +3,10 @@ package main.model.neighbour;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static main.Peer.MAX_SUBS;
 
 // Data class
 public class Host implements Serializable, Comparable<Host> {
@@ -10,7 +14,7 @@ public class Host implements Serializable, Comparable<Host> {
     private final String port;
     private final String publisherPort;
     private final int capacity; // Quantity of messages that we can handle, arbitrary for us
-    private int subCapacity; // capacity at a given time (starts at a given number and decreases with new subs)
+    private int maxSubCapacity; // capacity at a given time (starts at a given number and decreases with new subs)
     // needed to add as neighbor
     private final String username;
     private int degree;
@@ -23,11 +27,16 @@ public class Host implements Serializable, Comparable<Host> {
         this.capacity = capacity;
         this.username = username;
         this.degree = degree;
-        this.subCapacity = subCapacity;
+        this.maxSubCapacity = subCapacity;
+    }
+
+    public Host(String username, InetAddress address, String port, String publishPort,
+                int capacity, int degree) {
+        this(username, address, port, publishPort, capacity, degree, MAX_SUBS);
     }
 
     public Host(Host host) {
-        this(host.username, host.address, host.port, host.publisherPort, host.capacity, host.degree, host.subCapacity);
+        this(host.username, host.address, host.port, host.publisherPort, host.capacity, host.degree, host.maxSubCapacity);
     }
 
     public InetAddress getAddress() {
@@ -56,11 +65,10 @@ public class Host implements Serializable, Comparable<Host> {
         this.degree = size;
     }
 
-    public boolean canAcceptSub() { return this.subCapacity > 0; }
+    public int getMaxSubCapacity() { return maxSubCapacity; }
 
-    public void addSubscriber() { this.subCapacity--; }
-
-    public void removeSubscriber() { this.subCapacity++; }
+    // for testing
+    public void setMaxSubCapacity(int newCap) { this.maxSubCapacity = newCap; }
 
     @Override
     public String toString() {
