@@ -50,8 +50,7 @@ public class Peer implements Serializable {
         this.context = new ZContext();
 
         this.broker = new Broker(context, address);
-        this.peerInfo = new PeerInfo(username, address, capacity);
-        this.peerInfo.setPorts(broker.getSocketInfo());
+        this.peerInfo = new PeerInfo(username, address, capacity, broker.getSocketInfo());
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker.setSender(sender);
         this.broker.setPeerInfo(peerInfo);

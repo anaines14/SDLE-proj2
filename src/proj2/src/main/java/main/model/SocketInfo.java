@@ -25,6 +25,11 @@ public class SocketInfo {
     private Map<String, ZMQ.Socket> redirects; // Nodes to which we have to send post from subscribers
     private Map<String, String> redirectPorts; // username => port
 
+    public SocketInfo(String publisherPort, String frontendPort) { // For testing
+        this.publisherPort = publisherPort;
+        this.frontendPort = frontendPort;
+    }
+
     public SocketInfo(ZContext context, InetAddress address, SocketType frontendType, SocketType publisherType) {
         this.context = context;
         this.address = address;
