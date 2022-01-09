@@ -186,10 +186,6 @@ public class MessageHandler {
             return;
         }
 
-        if (tenhoSubscription(message.getWantedSub())) { // Redirect para o gajo
-            String port = peerInfo.getNewPort(message.getWantedSub());
-
-        }
         this.propagateQueryMessage(message);
     }
 
