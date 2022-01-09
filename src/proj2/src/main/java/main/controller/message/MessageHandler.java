@@ -165,7 +165,7 @@ public class MessageHandler {
                 MessageResponse queryHit = new SubHitMessage(message.getId(),
                         this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
                 this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
-                peerInfo.addSubscriber(this.sender.getUsername());
+                peerInfo.addSubscriber(this.sender.getPort());
                 return;
             }
             else if (this.peerInfo.hasSubscription(wantedUser)) {

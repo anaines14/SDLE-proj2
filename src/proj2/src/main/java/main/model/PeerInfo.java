@@ -105,11 +105,11 @@ public class PeerInfo {
     public void removeSubscription(String username) { this.subscriptions.remove(username); }
     public boolean hasSubscription(String username) { return this.subscriptions.contains(username); }
 
-    public void addSubscriber(String username) { this.subscribers.add(username); }
+    public void addSubscriber(String port) { this.subscribers.add(port); }
     public void removeSubscriber(String username) { this.subscribers.remove(username); }
     public boolean canAcceptSub() { return this.subscribers.size() < this.me.getMaxSubCapacity(); }
-    public boolean hasSubscriber(String username) {
-        return this.subscribers.contains(username);
+    public boolean hasSubscriber(String port) {
+        return this.subscribers.contains(port);
     }
 
     // observers

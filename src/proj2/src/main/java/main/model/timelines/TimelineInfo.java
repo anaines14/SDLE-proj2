@@ -52,6 +52,8 @@ public class TimelineInfo {
 
         Collections.sort(posts);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+        System.out.println("============================");
+        System.out.println("\t\t\t" + this.me.toUpperCase());
         for (Post post : posts) {
             System.out.println("============================");
             System.out.printf("\t%s\t\t%s\n",post.getUsername(), post.getTimestamp().format(formatter));

@@ -110,4 +110,8 @@ public class MessageSender {
     }
 
     public String getUsername() { return username; }
+
+    public String getPort() {
+        return port;
+    }
 }
