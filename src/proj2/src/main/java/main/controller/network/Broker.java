@@ -155,7 +155,6 @@ public class Broker {
                 items.register(socket, ZMQ.Poller.POLLIN);
 
             if (worker_queues.size() > 0) {
-                System.out.println("WAITING FOR " + socketInfo.getFrontendPort());
                 items.register(socketInfo.getFrontend(), ZMQ.Poller.POLLIN);
             }
 
@@ -196,7 +195,9 @@ public class Broker {
 
                         // check if I should redirect this post to other peers
                         if (this.socketInfo.hasRedirect(username)) {
+
                             ZMQ.Socket redirectSocket = this.socketInfo.getRedirectSocket(username);
+                            System.out.println("SENDING REDIRECT ********************* " + username);
                             try { // send posts to the redirect PUB port
                                 redirectSocket.send(MessageBuilder.objectToByteArray(post));
                             } catch (IOException e) {

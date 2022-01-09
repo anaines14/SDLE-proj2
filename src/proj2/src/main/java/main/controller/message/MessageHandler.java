@@ -171,10 +171,13 @@ public class MessageHandler {
             }
             else if (this.peerInfo.hasSubscription(wantedUser)) {
                 // TODO: create socket and add to redirects
+                String redirectPubPort = this.socketInfo.addRedirect(wantedUser, this.peerInfo.getAddress());
+
+                System.out.println("BROKER ))))))))))))))) " + redirectPubPort);
 
                 // We are subbed to the requested sub, send query hit to initiator
                 MessageResponse queryHit = new SubHitMessage(message.getId(),
-                        this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
+                        redirectPubPort, this.peerInfo.getAddress());
                 this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
                 // add subscriber to this peer
                 peerInfo.addSubscriber(this.sender.getUsername());

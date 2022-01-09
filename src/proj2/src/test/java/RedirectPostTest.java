@@ -1,4 +1,5 @@
 import main.Peer;
+import main.controller.network.Broker;
 import main.model.neighbour.Neighbour;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ public class RedirectPostTest {
     private Peer peer1;
     private Peer peer2;
     private Peer peer3;
+    private Broker broker;
     private ScheduledThreadPoolExecutor scheduler;
 
     @BeforeEach
@@ -40,7 +42,12 @@ public class RedirectPostTest {
     }
 
     @Test
-    public void subToPeer() {
+    public void redirectBroker() {
+
+    }
+
+    @Test
+    public void redirectPeer() {
 
         peer2.join(new Neighbour(peer1.getPeerInfo().getHost()));
         peer3.join(new Neighbour(peer2.getPeerInfo().getHost()));
