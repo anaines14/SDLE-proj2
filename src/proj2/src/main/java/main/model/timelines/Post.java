@@ -14,12 +14,13 @@ public class Post implements Serializable {
     private final int Id;
     private final LocalTime timestamp;
     private String content;
-    private byte[] sign = null;
+    private final Cipher cipher;
 
     public Post(int Id, String content) {
         this.Id = Id;
         this.timestamp = LocalTime.now();
         this.content = content;
+        this.cipher = new Cipher();
     }
 
     public boolean update(String newContent) {
@@ -29,6 +30,18 @@ public class Post implements Serializable {
         }
         this.content = newContent;
         return true;
+    }
+
+    public void addSignature(PrivateKey privateKey) {
+        this.cipher.addSignature(this.toString(), privateKey);
+    }
+
+    public boolean verifySignature(PublicKey publicKey) {
+        return this.cipher.verifySignature(this.toString(), publicKey);
+    }
+
+    public boolean hasSignature(){
+        return cipher.hasSignature();
     }
 
     @Override
@@ -49,33 +62,5 @@ public class Post implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(Id, timestamp, content);
-    }
-
-    public void addSignature(PrivateKey privateKey) {
-        try {
-            Signature signature = Signature.getInstance("SHA256withDSA");
-            signature.initSign(privateKey);
-            signature.update(this.toString().getBytes());
-            sign = signature.sign();
-        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    public boolean verifySignature(PublicKey publicKey) {
-        try {
-            Signature signature = Signature.getInstance("SHA256withDSA");
-            signature.initVerify(publicKey);
-            signature.update(this.toString().getBytes());
-            return signature.verify(sign);
-        } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public boolean hasSignature(){
-        return sign != null;
     }
 }

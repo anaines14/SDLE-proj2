@@ -1,10 +1,12 @@
 import main.Peer;
 import main.controller.message.MessageSender;
+import main.model.timelines.Timeline;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.Time;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -42,7 +44,7 @@ public class TestTimelineCleanup {
     }
 
     @Test
-    public void queryPeer() throws InterruptedException {
+    public void cleanup() throws InterruptedException {
         MessageSender.addIgnoredMsg("PING");
         MessageSender.addIgnoredMsg("PONG");
         Thread.sleep(4000); // Wait for peers to add each other as neighbours

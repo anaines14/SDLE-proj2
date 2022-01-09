@@ -1,12 +1,10 @@
 package main.controller.message;
 
+import main.controller.network.AuthenticationServer;
 import main.controller.network.Authenticator;
 import main.model.PeerInfo;
+import main.model.SocketInfo;
 import main.model.message.*;
-import main.model.message.auth.GetPublicKeyMessage;
-import main.model.message.auth.PrivateKeyMessage;
-import main.model.message.auth.PublicKeyMessage;
-import main.model.message.auth.RegisterMessage;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
 import main.model.message.request.query.QueryMessageImpl;
@@ -17,12 +15,11 @@ import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
-import org.zeromq.ZMQ;
 
-import java.io.IOException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -34,11 +31,16 @@ import static main.Peer.MAX_RANDOM_NEIGH;
 public class MessageHandler {
     private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
     private PeerInfo peerInfo;
+    private final SocketInfo socketInfo;
+    private Authenticator authenticator;
     private MessageSender sender;
 
-    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises) {
+    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises,
+                          SocketInfo socketInfo, Authenticator authenticator) {
         this.peerInfo = null;
         this.sender = null;
+        this.socketInfo = socketInfo;
+        this.authenticator = authenticator;
         this.promises = promises;
     }
 
@@ -69,7 +71,7 @@ public class MessageHandler {
     private void handle(PingMessage message) {
         // Reply with a Pong message with our info
         peerInfo.addHost(message.getSender());
-        Neighbour ourInfo = new Neighbour(peerInfo.getHost());
+        Neighbour ourInfo = new Neighbour(this.peerInfo.getHost(), this.peerInfo.getTimelinesFilter());
         boolean isNeighbour = peerInfo.hasNeighbour(new Neighbour(message.getSender()));
 
         PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache(), message.getId(), isNeighbour);
@@ -87,18 +89,18 @@ public class MessageHandler {
         if (!message.canResend()) {
             return; // Message has reached TTL 0
         }
-
         // Add ourselves to the message
         message.decreaseTtl();
         message.addToPath(new Sender(this.peerInfo));
 
-        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().filter(
-                n -> !message.isInPath(new Sender(n.getAddress(), n.getPort()))
-        ).toList();
-        System.out.print(this.peerInfo.getUsername() + " SENDING TO: ");
-        for (Neighbour n: neighbours)
-            System.out.print(n.getUsername() + " ");
-        System.out.println();
+        Set<Neighbour> ngbrsToReceive = peerInfo.getNeighbours();
+        if (this.peerInfo.isSuperPeer()) // super peer => use bloom filter
+            ngbrsToReceive = this.peerInfo.getNeighboursWithTimeline(message.getWantedUsername());
+
+        List<Neighbour> neighbours = ngbrsToReceive.stream().filter(
+                n -> !message.isInPath(new Sender(n.getAddress(), n.getPort())))
+                .toList();
+
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
         int i=0;
@@ -120,11 +122,11 @@ public class MessageHandler {
             // We have timeline, send query hit to initiator
             Timeline requestedTimeline = ourTimelineInfo.getTimeline(wantedUser);
 
-            PrivateKey privateKey = this.peerInfo.getPrivateKey();
-            if(privateKey != null)
-                requestedTimeline.addSignature(privateKey);
+            if (peerInfo.isAuth())
+                requestedTimeline.addSignature(peerInfo.getPrivateKey());
 
             MessageResponse queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
+            System.out.println("TEST: " + requestedTimeline.hasSignature());
             this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
             return;
         }
@@ -134,24 +136,26 @@ public class MessageHandler {
 
     private void handle(QueryHitMessage message) {
         if (promises.containsKey(message.getId())) {
-            //VERIFY SIGN
-            if(message.getTimeline().hasSignature()){
-                String username = message.getTimeline().getUsername();
-                PublicKey publicKey = Authenticator.requestPublicKey(username,AUTH Socket);
-                if(message.getTimeline().verifySignature(publicKey)){
-                    promises.get(message.getId()).complete(message);
+            if (message.getTimeline().hasSignature()) { // Timeline is signed
+                if (peerInfo.isAuth()) {
+                    String username = message.getTimeline().getUsername();
+                    PublicKey publicKey = authenticator.requestPublicKey(username);
+                    assert(publicKey != null);
+                    if (message.getTimeline().verifySignature(publicKey)){
+                        promises.get(message.getId()).complete(message);
+                    }
                 }
-            }
+            } else // Timeline isn't signed => Just complete future (no need to verify signature)
+                promises.get(message.getId()).complete(message);
         }
     }
 
     private void handle(PassouBem message) {
         boolean neighboursFull = this.peerInfo.areNeighboursFull();
-
         boolean accepted = false;
         if (!neighboursFull) {
-            this.peerInfo.addNeighbour(new Neighbour(message.getSender()));
             accepted = true;
+            this.peerInfo.addNeighbour(new Neighbour(message.getSender()));
         } else {
             Neighbour toReplace = this.peerInfo.acceptNeighbour(message.getSender());
             boolean canReplace = toReplace != null;
@@ -177,16 +181,30 @@ public class MessageHandler {
         if (message.isInPath(this.peerInfo))
             return; // Already redirected this message
 
-        // TODO: Check if peer can accept another sub
-        if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
-            // We are the requested sub, send query hit to initiator
-            MessageResponse queryHit = new SubHitMessage(message.getId(),
-                    this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
-            this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
-            return;
-        }
+        if (peerInfo.canAcceptSub()) {
+            if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
+                // We are the requested sub, send query hit to initiator
+                MessageResponse queryHit = new SubHitMessage(message.getId(),
+                        this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
+                this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+                peerInfo.addSubscriber(this.sender.getUsername());
+                return;
+            }
+            else if (this.peerInfo.hasSubscription(wantedUser)) {
+                // TODO: create socket and add to redirects
+                String redirectPubPort = this.socketInfo.addRedirect(wantedUser, this.peerInfo.getAddress());
 
-        this.propagateQueryMessage(message);
+                // We are subbed to the requested sub, send query hit to initiator
+                MessageResponse queryHit = new SubHitMessage(message.getId(),
+                        redirectPubPort, this.peerInfo.getAddress());
+                this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+                // add subscriber to this peer
+                peerInfo.addSubscriber(this.sender.getUsername());
+            }
+        }
+        else {
+            this.propagateQueryMessage(message);
+        }
     }
 
     private void handle(SubHitMessage message) {

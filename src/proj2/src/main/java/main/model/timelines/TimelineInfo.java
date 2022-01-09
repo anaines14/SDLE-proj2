@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TimelineInfo {
@@ -29,8 +30,8 @@ public class TimelineInfo {
         NTP ntp = new NTP();
         this.clockOffset = ntp.getOffsetValue();
         // create own timeline file
-        this.timelines.put(username, new Timeline(username, clockOffset));
-
+        Timeline t = new Timeline(username, clockOffset);
+        this.timelines.put(username, t);
         this.maxKeepTime = 120; // in seconds
 
         // load timelines
@@ -40,6 +41,11 @@ public class TimelineInfo {
             e.printStackTrace();
             System.err.println("ERROR: Failed to load timelines");
         }
+    }
+
+    public void showFeed() {
+        // TODO: Ordenar posts todos
+        // TODO: Printar os posts
     }
 
     public void loadTimelines() throws IOException, ClassNotFoundException {
@@ -166,6 +172,10 @@ public class TimelineInfo {
 
     public Timeline getTimeline(String wantedUser) {
         return this.timelines.get(wantedUser);
+    }
+
+    public Set<String> getStoredTimelines() {
+        return this.timelines.keySet();
     }
 
     // for testing

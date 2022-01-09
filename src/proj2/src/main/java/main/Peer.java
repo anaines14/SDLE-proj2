@@ -1,14 +1,10 @@
 package main;
 
-import main.controller.message.MessageBuilder;
 import main.controller.network.Authenticator;
 import main.gui.Observer;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
-import main.model.message.Message;
-import main.model.message.auth.PrivateKeyMessage;
-import main.model.message.auth.RegisterMessage;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
 import main.model.message.request.query.SubMessage;
@@ -21,11 +17,8 @@ import main.model.neighbour.Neighbour;
 import main.model.timelines.Post;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
-import org.zeromq.SocketType;
 import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.security.PrivateKey;
@@ -36,11 +29,12 @@ import java.util.stream.IntStream;
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
-    public static final int MAX_NGBRS = 4;
     public static final int MIN_NGBRS = 1;
     public static final int MAX_RETRY = 3;
     public static final int RCV_TIMEOUT = 1000;
     public static final int MAX_RANDOM_NEIGH = 2;
+    // Minimun number of neighbours necessary to be considered a super peers
+    public static final int SP_MIN = 5;
     public static final int MAX_SUBS = 3;
 
     // Model/Data members
@@ -49,6 +43,7 @@ public class Peer implements Serializable {
 
     // Network members
     private final Broker broker;
+    private final Authenticator authenticator;
     private final MessageSender sender;
 
     // Hooks
@@ -57,11 +52,11 @@ public class Peer implements Serializable {
 
 
     // CALL PEER WITH PASSWORD != "" TO REGISTER
-    public Peer(String username, String password, InetAddress address, int capacity) {
+    public Peer(String username, InetAddress address, int capacity) {
         this.context = new ZContext();
-
-        this.broker = new Broker(context, address);
-        this.peerInfo = new PeerInfo(username, password, address, capacity, broker.getFrontendPort(), broker.getPublisherPort(),context);
+        this.authenticator = new Authenticator(context);
+        this.broker = new Broker(context, address, authenticator);
+        this.peerInfo = new PeerInfo(username, address, capacity, broker.getSocketInfo());
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker.setSender(sender);
         this.broker.setPeerInfo(peerInfo);
@@ -94,9 +89,8 @@ public class Peer implements Serializable {
     public void addPost(String newContent) {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
         Post addedPost = timelineInfo.addPost(peerInfo.getUsername(), newContent);
-        PrivateKey privateKey = this.peerInfo.getPrivateKey();
-        if(privateKey != null)
-            addedPost.addSignature(privateKey);
+        if (peerInfo.isAuth())
+            addedPost.addSignature(peerInfo.getPrivateKey());
         this.broker.publishPost(addedPost);
     }
 
@@ -105,27 +99,31 @@ public class Peer implements Serializable {
         timelineInfo.deletePost(peerInfo.getUsername(), postId);
     }
 
-    public void register(){
+    public boolean register(String password, InetAddress authAddress, String authPort) {
         String username = this.peerInfo.getUsername();
-        String password = this.peerInfo.getPassword();
-        boolean register = (password != "");
-        PrivateKey privateKey = null;
-        if(register) {
-            privateKey = Authenticator.requestRegister(username,password,AUTH SOCKET);
-            //REGISTERED SUCCESS
-            if(privateKey != null)
-                this.peerInfo.setPrivateKey(privateKey);
-            //ALREADY REGISTERED
-            else{
-                privateKey = Authenticator.requestLogin(username,password,AUTH SOCKET);
-                //GOOD LOGIN
-                if(privateKey != null){
-                    this.peerInfo.setPrivateKey(privateKey);
-                }
-                //FAILED LOGIN
-                else
-                    return;
-            }
+        authenticator.connectToAuth(authAddress, authPort);
+        PrivateKey privateKey = authenticator.requestRegister(username, password);
+
+        if (privateKey != null) { // We got registered
+            this.peerInfo.setPrivateKey(privateKey);
+            return true;
+        }
+        else // Already registered
+            return this.login(password, authAddress, authPort);
+    }
+
+    public boolean login(String password, InetAddress authAddress, String authPort) {
+        String username = this.peerInfo.getUsername();
+        authenticator.connectToAuth(authAddress, authPort);
+        PrivateKey privateKey = authenticator.requestLogin(username, password);
+
+        if(privateKey != null) { // Success
+            this.peerInfo.setPrivateKey(privateKey);
+            return true;
+        }
+        else { // Fail
+            this.peerInfo.logout();
+            return false;
         }
     }
 
@@ -150,9 +148,7 @@ public class Peer implements Serializable {
 
     public Timeline requestTimeline(String username) {
         // check if neighbours have the username's timeline
-        // TODO: BLOOM FILTERS
         // TODO Tamos a dar flooding atm, dps temos que usar searches
-        // System.out.println("got neighbours with timelines: " + neighbours.size());
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
         if (neighbours.size() == 0)
             return null;
@@ -160,7 +156,6 @@ public class Peer implements Serializable {
         MessageRequest request = new QueryMessage(username, this.peerInfo);
 
         QueryHitMessage response = (QueryHitMessage) this.sendQueryNeighbours(request, neighbours);
-
         if (response != null) {
             // save requested timeline
             this.addTimeline(response.getTimeline());
@@ -181,6 +176,7 @@ public class Peer implements Serializable {
         // add subscription
         if (response != null) {
             this.broker.subscribe(username, response.getAddress(), response.getPort());
+            this.peerInfo.addSubscription(username); // register subscription in peerInfo
             System.out.println(this.peerInfo.getUsername() + " SUBBED TO " + username);
         } else
             System.out.println(this.peerInfo.getUsername() + " COULDN'T SUB TO " + username);
@@ -221,6 +217,9 @@ public class Peer implements Serializable {
     }
 
     public void pingNeighbours() {
+        // reset bloom filter
+        this.peerInfo.resetFilter();
+
         List<Neighbour> neighbours = this.getPeerInfo().getNeighbours().stream().toList();
         for (Neighbour neighbour: neighbours) { // TODO multithread this, probably with scheduler
             PingMessage pingMessage = new PingMessage(peerInfo.getHost());
@@ -246,12 +245,12 @@ public class Peer implements Serializable {
                 peerInfo.removeNeighbour(neighbour);
                 continue;
             }
-
             if (peerInfo.hasNeighbour(response.sender)) {
                 Set<Host> hostCache = response.hostCache;
                 // System.out.println(peerInfo.getUsername() + " UPDATED " + neighbour.getUsername());
                 peerInfo.updateNeighbour(response.sender);
                 peerInfo.updateHostCache(hostCache);
+                this.peerInfo.mergeFilter(response.sender);
             }
         }
     }
@@ -287,6 +286,7 @@ public class Peer implements Serializable {
         broker.removePromise(passouBem.getId());
 
         if (response.isAccepted()) {
+            this.peerInfo.notifyNewNeighbour(candidate);
             if (!neighboursFull)
                 peerInfo.addNeighbour(new Neighbour(candidate));
             else  // Can replace
@@ -301,7 +301,7 @@ public class Peer implements Serializable {
         // limits
         if (num_neighbours < MIN_NGBRS )
             return 0;
-        if (num_neighbours >= MAX_NGBRS)
+        if (this.peerInfo.areNeighboursFull())
             return 1;
         System.out.println(neighbours.size());
         int total = 0;
@@ -310,6 +310,11 @@ public class Peer implements Serializable {
         }
         double satisfaction = ((double) total) / this.peerInfo.getCapacity();
         return satisfaction % 1;
+    }
+
+    // prints all timelines stored in order
+    public void showFeed() {
+        this.peerInfo.showFeed();
     }
 
     public void subscribe(Observer o) {
@@ -326,7 +331,7 @@ public class Peer implements Serializable {
     }
 
     public boolean isSubscribed(String username) {
-        return this.broker.isSubscribed(username);
+        return this.broker.getSocketInfo().isSubscribed(username);
     }
 
     @Override

@@ -17,7 +17,7 @@ public class Timeline implements Serializable {
     private final String username;
     private LocalTime lastUpdate;
     private final Long clockOffset;
-    private byte[] sign = null;
+    private final Cipher cipher;
 
     public Timeline(String username, Long clockOffset) {
         this.posts = new HashMap<>();
@@ -25,6 +25,7 @@ public class Timeline implements Serializable {
         this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
         this.lastPostId = 0;
         this.clockOffset = clockOffset;
+        this.cipher = new Cipher();
     }
 
     public Post addPost(String post_content) {
@@ -43,10 +44,6 @@ public class Timeline implements Serializable {
         }
         System.err.println("ERROR: Failed to delete post " + postId + " from " + username);
         return false;
-    }
-
-    public boolean hasSignature(){
-        return sign != null;
     }
 
     public LocalTime getLastUpdate() { return lastUpdate; }
@@ -73,31 +70,20 @@ public class Timeline implements Serializable {
         return Files.deleteIfExists(Paths.get(timelinesFolder + File.separator + username)); //toDelete = new File(timelinesFolder + File.separator + username);
     }
 
-    public String getUsername() { return this.username; }
+    public boolean hasSignature() {
+        return this.cipher.hasSignature();
+    }
 
     public void addSignature(PrivateKey privateKey) {
-        try {
-            Signature signature = Signature.getInstance("SHA256withDSA");
-            signature.initSign(privateKey);
-            signature.update(this.toString().getBytes());
-            sign = signature.sign();
-        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-            e.printStackTrace();
-        }
+        this.cipher.addSignature(this.toString(), privateKey);
     }
-
 
     public boolean verifySignature(PublicKey publicKey) {
-        try {
-            Signature signature = Signature.getInstance("SHA256withDSA");
-            signature.initVerify(publicKey);
-            signature.update(this.toString().getBytes());
-            return signature.verify(sign);
-        } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return false;
+        return this.cipher.verifySignature(this.toString(), publicKey);
     }
+
+    public String getUsername() { return this.username; }
+
 
     @Override
     public String toString() {

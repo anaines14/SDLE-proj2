@@ -45,17 +45,26 @@ public class GraphWrapper implements Observer{
         String edgeId1 = peer1 + peer2, edgeId2 = peer2 + peer1;
 
         // if edge not in graph => add it
-        if (graph.getEdge(edgeId1) == null && graph.getEdge(edgeId2) == null)
-            this.graph.addEdge(edgeId1, peer1, peer2);
+        if (graph.getEdge(edgeId1) == null && graph.getEdge(edgeId2) == null) {
+            synchronized (this.graph) {
+                this.graph.addEdge(edgeId1, peer1, peer2);
+            }
+        }
     }
 
     public void removeEdge(String peer1, String peer2) throws ElementNotFoundException {
         String edgeId1 = peer1 + peer2, edgeId2 = peer2 + peer1;
 
-        if (graph.getEdge(edgeId1) != null)
-            this.graph.removeEdge(edgeId1);
-        else if (graph.getEdge(edgeId2) != null)
-            this.graph.removeEdge(edgeId2);
+        if (graph.getEdge(edgeId1) != null) {
+            synchronized (this.graph) {
+                this.graph.removeEdge(edgeId1);
+            }
+        }
+        else if (graph.getEdge(edgeId2) != null) {
+            synchronized (this.graph) {
+                this.graph.removeEdge(edgeId2);
+            }
+        }
     }
 
     // updates

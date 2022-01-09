@@ -1,6 +1,8 @@
+import main.controller.network.Authenticator;
 import main.controller.network.Broker;
 import main.model.PeerInfo;
 import main.controller.message.MessageSender;
+import main.model.SocketInfo;
 import main.model.message.request.PingMessage;
 import main.model.neighbour.Host;
 import main.model.timelines.Post;
@@ -31,8 +33,9 @@ public class BrokerTest {
 
         context = new ZContext();
         MessageSender sender1 = new MessageSender("user1", "8083", 3, 500, context);
-        this.broker = new Broker(context, localhost);
-        peerInfo = new PeerInfo("user1", localhost, 3, broker.getFrontendPort(), broker.getPublisherPort());
+        Authenticator authenticator = new Authenticator(context);
+        this.broker = new Broker(context, localhost, authenticator);
+        this.peerInfo = new PeerInfo("user1", localhost, 3, this.broker.getSocketInfo());
         this.broker.setSender(sender1);
         this.broker.setPeerInfo(peerInfo);
 
@@ -42,7 +45,8 @@ public class BrokerTest {
 
     @Test
     public void testBroker() {
-        Host peer2 = new Host("user2", localhost, "8002", "8003", 10, 10);
+        SocketInfo socketInfo = new SocketInfo("8002", "8001");
+        Host peer2 = new Host("user2", localhost, 10, 10, 3, 3, socketInfo);
         assertTrue(sender.sendMessageNTimes(new PingMessage(peer2), peerInfo.getPort()));
         broker.stop();
     }
@@ -51,11 +55,10 @@ public class BrokerTest {
     public void publish() {
         // Create a new broker that subscribes to the original broker
         ZContext ctx = new ZContext();
-        Broker broker2 = new Broker(ctx, localhost);
-        PeerInfo peerInfo2 = new PeerInfo("user2", localhost, 3,
-                broker2.getFrontendPort(), broker2.getPublisherPort());
-        MessageSender sender2 = new MessageSender("user2", broker2.getFrontendPort(),
-                3, 500, ctx);
+        Authenticator authenticator = new Authenticator(ctx);
+        Broker broker2 = new Broker(ctx, localhost, authenticator);
+        PeerInfo peerInfo2 = new PeerInfo("user2", localhost, 3, broker2.getSocketInfo());
+        MessageSender sender2 = new MessageSender(peerInfo2, 3, 500, ctx);
         broker2.setSender(sender2);
         broker2.setPeerInfo(peerInfo2);
         broker2.execute();

@@ -48,6 +48,10 @@ public abstract class QueryMessageImpl extends MessageRequest {
         return path.getOriginalSender();
     }
 
+    public String getWantedUsername() {
+        return wantedUsername;
+    }
+
     @Override
     public String getType() {
         System.err.println("Query Message Implementation.");
