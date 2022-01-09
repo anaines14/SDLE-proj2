@@ -175,7 +175,6 @@ public class Peer implements Serializable {
                 peerInfo.removeNeighbour(neighbour);
                 continue;
             }
-            System.out.println(response.sender + " has ngbr: " + peerInfo.hasNeighbour(response.sender));
             if (peerInfo.hasNeighbour(response.sender)) {
                 Set<Host> hostCache = response.hostCache;
                 // System.out.println(peerInfo.getUsername() + " UPDATED " + neighbour.getUsername());

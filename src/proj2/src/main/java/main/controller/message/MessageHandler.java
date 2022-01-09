@@ -61,7 +61,7 @@ public class MessageHandler {
     private void handle(PingMessage message) {
         // Reply with a Pong message with our info
         peerInfo.addHost(message.getSender());
-        Neighbour ourInfo = new Neighbour(this.peerInfo.getHost(), this.peerInfo.getTimelineInfo().getStoredTimelines());
+        Neighbour ourInfo = new Neighbour(this.peerInfo.getHost(), this.peerInfo.getTimelinesFilter());
         boolean isNeighbour = peerInfo.hasNeighbour(new Neighbour(message.getSender()));
 
         PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache(), message.getId(), isNeighbour);

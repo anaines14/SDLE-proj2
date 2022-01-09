@@ -26,7 +26,7 @@ public class PeerInfo {
     private final int max_nbrs;
 
     public PeerInfo(String username, InetAddress address, int capacity, TimelineInfo timelineInfo) {
-        this.max_nbrs = (int) Math.floor(capacity * 0.3);
+        this.max_nbrs = (int) Math.ceil(capacity * 0.3);
         this.me = new Host(username, address, "-1", capacity, 0, max_nbrs);
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
@@ -158,10 +158,8 @@ public class PeerInfo {
 
     public void mergeFilter(Neighbour neighbour) {
         // merge filters only if neighbour isn't a super peer
-        System.out.println(neighbour.getUsername() + " tem " + neighbour.getMaxNbrs());
         if (!this.isSuperPeer(neighbour)) {
             this.timelinesFilter.putAll(neighbour.getTimelines());
-            System.out.println("PUt");
         }
     }
 
@@ -208,6 +206,8 @@ public class PeerInfo {
     public int getMaxNbrs() {
         return max_nbrs;
     }
+
+    public BloomFilter<String> getTimelinesFilter() { return timelinesFilter; }
 
     // Returns worst neighbour if we need to replace Neighbour
     // Returns null if we can't replace candidate

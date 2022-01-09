@@ -7,8 +7,6 @@ import com.google.common.hash.Funnels;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Set;
 
 
 public class Neighbour extends Host implements Serializable{
@@ -23,9 +21,9 @@ public class Neighbour extends Host implements Serializable{
         this.timelines = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
     }
 
-    public Neighbour(Host host, Set<String> timelines) {
+    public Neighbour(Host host, BloomFilter<String> timelines) {
         super(host);
-        this.addTimelines(timelines);
+        this.timelines = timelines;
     }
 
     public boolean hasTimeline(String username) {
@@ -34,14 +32,6 @@ public class Neighbour extends Host implements Serializable{
 
     public BloomFilter<String> getTimelines() {
         return timelines;
-    }
-
-    public void addTimelines(Set<String> timelines) {
-        this.timelines = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
-
-        for(String str: timelines) {
-            this.timelines.put(str);
-        }
     }
 
     public String toString() {
