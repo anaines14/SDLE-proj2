@@ -63,7 +63,7 @@ public class TimelineInfo {
         LocalTime timelineToAddTimeStamp = timeline.getLastUpdate();
         Timeline t = this.getTimeline(timeline.getUsername());
 
-        //Returns <= 0 if saved timeline is more recent
+        //Returns if saved timeline is more recent
         if(t != null) {
             LocalTime savedTimelineTimeStamp = t.getLastUpdate();
             if(timelineToAddTimeStamp.compareTo(savedTimelineTimeStamp) <= 0) {
@@ -82,10 +82,10 @@ public class TimelineInfo {
         this.cleanup();
     }
 
-    public void addPost(String username, String post_str) {
+    public Post addPost(String username, String post_str) {
         // add post
         Timeline timeline = this.timelines.get(username);
-        timeline.addPost(post_str);
+        Post res = timeline.addPost(post_str);
         // update timeline file
         try {
             timeline.save(this.timelines_folder);
@@ -93,6 +93,7 @@ public class TimelineInfo {
         } catch (IOException e) {
             System.err.println("ERROR: Failed to save timeline.");
         }
+        return res;
     }
 
     public void updatePost(String username, int postId, String newContent) {

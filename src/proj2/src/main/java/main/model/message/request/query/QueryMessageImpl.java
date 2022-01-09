@@ -1,17 +1,18 @@
-package main.model.message.request;
+package main.model.message.request.query;
 
 import main.model.PeerInfo;
+import main.model.message.request.MessageRequest;
+import main.model.message.request.Path;
+import main.model.message.request.Sender;
 
-// Message that will be redirected
-public class QueryMessage extends MessageRequest {
-    public static final String type = "QUERY";
+
+public abstract class QueryMessageImpl extends MessageRequest {
     private final static int TTL = 10;
     public Path path;
-    private final String wantedUsername;
-    private int timeToLive;
+    protected final String wantedUsername;
+    protected int timeToLive;
 
-    public QueryMessage(String username, PeerInfo peerInfo) {
-        super();
+    public QueryMessageImpl(String username, PeerInfo peerInfo) {
         this.path = new Path();
         this.path.addSender(new Sender(peerInfo));
         // We put username in the beginning of the id so that no identifier is the same
@@ -39,10 +40,6 @@ public class QueryMessage extends MessageRequest {
         if (canResend()) timeToLive--;
     }
 
-    public String getWantedTimeline() {
-        return wantedUsername;
-    }
-
     public Sender getLastSender() {
         return path.getLastSender();
     }
@@ -51,9 +48,14 @@ public class QueryMessage extends MessageRequest {
         return path.getOriginalSender();
     }
 
+    public String getWantedUsername() {
+        return wantedUsername;
+    }
+
     @Override
     public String getType() {
-        return type;
+        System.err.println("Query Message Implementation.");
+        return null;
     }
 
     @Override

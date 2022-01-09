@@ -1,6 +1,5 @@
 import main.Peer;
 import main.controller.message.MessageSender;
-import main.model.timelines.Timeline;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,7 +50,7 @@ public class TestTimelineCleanup {
         peer2.getPeerInfo().getTimelineInfo().setMaxKeepTime(MAX_KEEP_TIME);
 
         peer1.addPost("TestingPost u1");
-        peer2.queryNeighbours("u1");
+        peer2.requestTimeline("u1");
 
         // wait for the u1's timeline to "expire"
         try{
@@ -62,7 +61,7 @@ public class TestTimelineCleanup {
 
         // provoke change on u2's timelines so cleanup is executed
         peer3.addPost("TestingPost u3");
-        peer2.queryNeighbours("u3");
+        peer2.requestTimeline("u3");
 
         // wait for responses
         try{

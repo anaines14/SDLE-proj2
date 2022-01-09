@@ -19,7 +19,7 @@ public class NTP {
         try {
             client.open();
             hostAddr = InetAddress.getByName("pt.pool.ntp.org");
-            info = client.getTime(hostAddr);
+            info = client.getTime(hostAddr); // TODO Ter timeout e de X em X tempo tentar again
         } catch (IOException e) {
             e.printStackTrace();
         }

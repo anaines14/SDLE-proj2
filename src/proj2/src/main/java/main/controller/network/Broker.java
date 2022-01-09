@@ -1,21 +1,18 @@
 package main.controller.network;
 
-import main.gui.Observer;
+import main.controller.message.MessageSender;
 import main.model.PeerInfo;
 import main.model.message.Message;
 import main.controller.message.MessageBuilder;
 import main.model.message.response.MessageResponse;
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
-import org.zeromq.ZMQException;
+import main.model.timelines.Post;
+import org.zeromq.*;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.PortUnreachableException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 
 public class Broker {
@@ -29,39 +26,70 @@ public class Broker {
     // We could use interrupts here, but it would cause too many try catches (smelly code) and JeroMQ only started
     // supporting socket interruption on receive calls recently
     private ZMQ.Socket control;
+    private ZMQ.Socket publisher;
+    private Map<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
+    private final Map<String, List<Post>> subMessages; // New posts that are posted by our subs
     private List<Worker> workers;
 
     private Thread thread;
     private String frontendPort; // For testing
+    private String publisherPort; // For testing
     // Messages that we are expecting to receive, workers fill these when they receive the request
     private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
 
-    public Broker(ZContext context, PeerInfo peerInfo){
+    public Broker(ZContext context, InetAddress address){
         this.context = context;
-        frontend = context.createSocket(SocketType.REP);
-        backend = context.createSocket(SocketType.ROUTER);
-        control = context.createSocket(SocketType.PULL);
+        this.backend = context.createSocket(SocketType.ROUTER);
+        this.control = context.createSocket(SocketType.PULL);
+        this.frontend = context.createSocket(SocketType.REP);
+        this.publisher = context.createSocket(SocketType.PUB);
 
-        // Bind each socket, bind frontend to random port
-        String hostName = peerInfo.getAddress().getHostName();
-        int intP = frontend.bindToRandomPort("tcp://" + hostName);
-        String port = Integer.toString(intP);
-        peerInfo.setPort(port); // Set port to one that was bound to
-        this.frontendPort = port;
-        backend.bind("inproc://workers");
-        control.bind("inproc://control");
+        String hostName = address.getHostName();
+        this.frontendPort = String.valueOf(frontend.bindToRandomPort("tcp://" + hostName));
+        this.publisherPort = String.valueOf(publisher.bindToRandomPort("tcp://" + hostName));
 
-        promises = new ConcurrentHashMap<>();
-        workers = new ArrayList<>();
+        System.out.println("BOUND TO " + "tcp://" + hostName + ":" + publisherPort);
+        // Bind each socket, bind frontend and publisher to random port
+
+        this.backend.bind("inproc://workers");
+        this.control.bind("inproc://control");
+
+        this.promises = new ConcurrentHashMap<>();
+        this.workers = new ArrayList<>();
         this.thread = new Thread(this::run);
+        this.subscriptions = new ConcurrentHashMap<>();
+        this.subMessages = new ConcurrentHashMap<>();
         for(int id = 0; id < N_WORKERS; id++){
-            Worker worker = new Worker(peerInfo, id, promises, context);
+            Worker worker = new Worker(id, promises, context);
             workers.add(worker);
         }
     }
 
     public String getFrontendPort() {
         return frontendPort;
+    }
+
+    public String getPublisherPort() {
+        return publisherPort;
+    }
+
+    public Map<String, List<Post>> popSubMessages() {
+        Map<String, List<Post>> res;
+        synchronized (subMessages) {
+            res = new HashMap<>(subMessages);
+            subMessages.clear();
+        }
+        return res;
+    }
+
+    public void setSender(MessageSender sender) {
+        for (Worker w: workers)
+            w.setSender(sender);
+    }
+
+    public void setPeerInfo(PeerInfo peerInfo) {
+        for (Worker w: workers)
+            w.setPeerInfo(peerInfo);
     }
 
     public Future<MessageResponse> addPromise(UUID id) {
@@ -79,9 +107,42 @@ public class Broker {
         promises.remove(id);
     }
 
-    public void subscribe(Observer o) {
-        for (Worker worker: workers)
-            worker.subscribe(o);
+    public void subscribe(String username, InetAddress address, String port) {
+        ZMQ.Socket subscription = context.createSocket(SocketType.SUB);
+        String hostName = address.getHostName();
+        subscription.connect("tcp://" + hostName + ":" + port);
+        System.out.println("SUBBED TO " + "tcp://" + hostName + ":" + port);
+        subscription.subscribe("".getBytes());
+        subscriptions.put(username, subscription);
+
+        this.sendToControl("NEW_SUB");
+    }
+
+    private void sendToControl(String new_sub) {
+        ZMQ.Socket controlSend = context.createSocket(SocketType.PUSH);
+        controlSend.connect("inproc://control");
+        controlSend.send(new_sub);
+        controlSend.close();
+    }
+
+    public void unsubscribe(String username) {
+        ZMQ.Socket subscription = subscriptions.get(username);
+        subscription.setLinger(0);
+        subscription.close();
+        subscriptions.remove(username);
+        this.sendToControl("NEW_UNSUB");
+    }
+
+    public void publishPost(Post post) {
+        try {
+            this.publisher.send(MessageBuilder.objectToByteArray(post));
+        } catch (IOException e) { // Thrown when we don't receive a post
+            e.printStackTrace();
+        }
+    }
+
+    public boolean isSubscribed(String username) {
+        return this.subscriptions.containsKey(username);
     }
 
     public void execute() {
@@ -90,9 +151,8 @@ public class Broker {
 
     public void stop() {
         if (this.thread.isAlive()) {
-            ZMQ.Socket controlSend = context.createSocket(SocketType.PUSH);
-            controlSend.connect("inproc://control");
-            controlSend.send("STOP");
+            // CHECK controlSend.close() after try
+            this.sendToControl("STOP");
 
             try {
                 this.thread.join();
@@ -102,24 +162,26 @@ public class Broker {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            controlSend.close();
         }
 
         for(Worker worker: workers)
             worker.stop();
     }
 
-    public void run(){
+    public void run() {
         for (Worker worker: workers)
             worker.execute();
         Queue<String> worker_queues = new LinkedList<>();
 
         while (!Thread.currentThread().isInterrupted()) {
-            ZMQ.Poller items = context.createPoller(3);
+            ZMQ.Poller items = context.createPoller(4);
             items.register(backend, ZMQ.Poller.POLLIN);
             items.register(control, ZMQ.Poller.POLLIN);
 
-            if(worker_queues.size() > 0) {
+            for (ZMQ.Socket socket: subscriptions.values())
+                items.register(socket, ZMQ.Poller.POLLIN);
+
+            if (worker_queues.size() > 0) {
                 items.register(frontend, ZMQ.Poller.POLLIN);
             }
 
@@ -141,11 +203,30 @@ public class Broker {
                 }
             }
 
-            if (items.pollin(1)) { // Control, shutdown now
-                return;
+            if (items.pollin(1)) { // Control, shutdown now or add new sub
+                String cmd = control.recvStr();
+                if (cmd.equals("STOP"))
+                    return;
+                else if (cmd.equals("NEW_SUB") || cmd.equals("NEW_UNSUB")) {} // Do nothing
             }
 
-            if (items.pollin(2)) { // Frontend, client request
+            Set<String> subscribedUsers = this.subscriptions.keySet();
+            int i=0;
+            for (String username : subscribedUsers) {
+                if (items.pollin(2 + i)) { // Received post from subscription
+                    ZMQ.Socket subscription = items.getSocket(2 + i);
+                    try {
+                        Post post = MessageBuilder.postFromSocket(subscription);
+                        this.subMessages.putIfAbsent(username, new ArrayList<>());
+                        this.subMessages.get(username).add(post);
+                    } catch (IOException | ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+                ++i;
+            }
+
+            if (items.pollin(2 + subscriptions.size())) { // Frontend, client request
                 try {
                     //Remove empty msg between messages
                     Message request = null;
@@ -159,7 +240,7 @@ public class Broker {
                     backend.sendMore(workerAddr);
                     backend.sendMore("");
                     try {
-                        backend.send(MessageBuilder.messageToByteArray(request));
+                        backend.send(MessageBuilder.objectToByteArray(request));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

@@ -25,20 +25,17 @@ public class Timeline implements Serializable {
         this.clockOffset = clockOffset;
     }
 
-    public void addPost(String post_content) {
+    public Post addPost(String post_content) {
         this.lastPostId++;
-        this.posts.put(this.lastPostId, new Post(lastPostId, post_content));
-        System.out.println("ADDED post: \n" + "\tuser: " + username +
-                "\n\tID: " + lastPostId + "\n\tContent: " + post_content);
-
+        Post res = new Post(lastPostId, post_content);
+        this.posts.put(this.lastPostId, res);
         this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
+        return res;
     }
 
     public boolean deletePost(int postId) {
         Post deleted = this.posts.remove(postId);
         if (deleted != null) {
-            System.out.println("DELETED post: \n"  + "\tuser: " + username +
-                    "\n\tID: " + postId);
             this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
             return true;
         }
@@ -51,8 +48,6 @@ public class Timeline implements Serializable {
     public boolean updatePost(int postId, String post_content) {
         Post post = this.posts.get(postId);
         if (post != null && post.update(post_content)) {
-            System.out.println("UPDATED post: \n"  + "\tuser: " + username +
-                    "\n\tID: " + postId + "\n\tContent: " + post_content);
             this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
             return true;
         }

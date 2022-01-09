@@ -25,9 +25,9 @@ public class PeerInfo {
     private BloomFilter<String> timelinesFilter;
     private final int max_nbrs;
 
-    public PeerInfo(String username, InetAddress address, int capacity, TimelineInfo timelineInfo) {
+    public PeerInfo(String username, InetAddress address, int capacity, String port, String publishPort, TimelineInfo timelineInfo) {
         this.max_nbrs = (int) Math.ceil(capacity * 0.3);
-        this.me = new Host(username, address, "-1", capacity, 0, max_nbrs);
+        this.me = new Host(username, address, port, publishPort, capacity, 0, max_nbrs);
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = ConcurrentHashMap.newKeySet();
@@ -35,8 +35,8 @@ public class PeerInfo {
         this.timelinesFilter.put(username);
     }
 
-    public PeerInfo(InetAddress address, String username, int capacity) {
-        this(username, address, capacity, new TimelineInfo(username));
+    public PeerInfo(String username, InetAddress address, int capacity, String port, String publishPort) {
+        this(username, address, capacity, port, publishPort, new TimelineInfo(username));
     }
 
     // Neighbours
@@ -66,7 +66,6 @@ public class PeerInfo {
     public void addNeighbour(Neighbour neighbour) {
         if (neighbour.equals(this.me)) // We can't add ourselves as a neighbour
             return;
-        // System.out.println(this.getUsername() + " ADDED " + neighbour.getUsername());
 
         // System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
         neighbours.add(neighbour);
@@ -177,6 +176,10 @@ public class PeerInfo {
         return this.me.getPort();
     }
 
+    public String getPublishPort() {
+        return this.me.getPublishPort();
+    }
+
     public Host getHost() {
         return this.me;
     }
@@ -243,9 +246,4 @@ public class PeerInfo {
         PeerInfo peerInfo = (PeerInfo) o;
         return Objects.equals(me, peerInfo.me);
     }
-
-    public void setPort(String port) {
-        this.me.setPort(port);
-    }
-
 }

@@ -3,9 +3,8 @@ package main.controller.message;
 import main.gui.Observer;
 import main.model.PeerInfo;
 import main.model.message.Message;
-import main.model.message.request.MessageRequest;
-import main.model.message.response.QueryHitMessage;
-import main.model.message.request.QueryMessage;
+import main.model.message.response.query.QueryHitMessage;
+import main.model.message.request.query.QueryMessage;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -46,11 +45,15 @@ public class MessageSender {
     public void send(Message message, ZMQ.Socket socket) {
         byte[] bytes = new byte[0];
         try {
-            bytes = MessageBuilder.messageToByteArray(message);
+            bytes = MessageBuilder.objectToByteArray(message);
         } catch (IOException e) {
             e.printStackTrace();
         }
         socket.send(bytes);
+    }
+
+    public void setPort(String frontendPort) {
+        this.port = frontendPort;
     }
 
     private String sendMessage(Message message, String port) {

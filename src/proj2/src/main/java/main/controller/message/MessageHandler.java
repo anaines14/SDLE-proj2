@@ -3,10 +3,12 @@ package main.controller.message;
 import main.model.PeerInfo;
 import main.model.message.*;
 import main.model.message.request.*;
-import main.model.message.response.PassouBemResponse;
-import main.model.message.response.PongMessage;
-import main.model.message.response.MessageResponse;
-import main.model.message.response.QueryHitMessage;
+import main.model.message.request.query.QueryMessage;
+import main.model.message.request.query.QueryMessageImpl;
+import main.model.message.request.query.SubMessage;
+import main.model.message.response.*;
+import main.model.message.response.query.QueryHitMessage;
+import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
@@ -23,38 +25,36 @@ import static main.Peer.MAX_RANDOM_NEIGH;
 // Dá handle só a mensagens que iniciam requests (PING)
 public class MessageHandler {
     private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
-    private final PeerInfo peerInfo;
-    private final MessageSender sender;
+    private PeerInfo peerInfo;
+    private MessageSender sender;
 
-    public MessageHandler(PeerInfo peerInfo, MessageSender sender,
-                          ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises) {
-        this.peerInfo = peerInfo;
-        this.sender = sender;
+    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises) {
+        this.peerInfo = null;
+        this.sender = null;
         this.promises = promises;
+    }
+
+    public void setSender(MessageSender sender) {
+        this.sender = sender;
+    }
+
+    public void setPeerInfo(PeerInfo peerInfo) {
+        this.peerInfo = peerInfo;
     }
 
     public void handle(Message message) {
 //         System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: ");
         switch (message.getType()) {
-            case "PING":
-                handle((PingMessage) message);
-                return;
-            case "PONG":
-                handle((PongMessage) message);
-                return;
-            case "QUERY":
-                handle((QueryMessage) message);
-                return;
-            case "QUERY_HIT":
-                handle((QueryHitMessage) message);
-                return;
-            case "PASSOU_BEM":
-                handle((PassouBem) message);
-                return;
-            case "PASSOU_BEM_RESPONSE":
-                handle((PassouBemResponse) message);
-                return;
-            default:
+            case "PING" -> handle((PingMessage) message);
+            case "PONG" -> handle((PongMessage) message);
+            case "QUERY" -> handle((QueryMessage) message);
+            case "QUERY_HIT" -> handle((QueryHitMessage) message);
+            case "PASSOU_BEM" -> handle((PassouBem) message);
+            case "PASSOU_BEM_RESPONSE" -> handle((PassouBemResponse) message);
+            case "SUB" -> handle((SubMessage) message);
+            case "SUB_HIT" -> handle((SubHitMessage) message);
+            default -> {
+            }
         }
     }
 
@@ -75,6 +75,32 @@ public class MessageHandler {
         }
     }
 
+    private void propagateQueryMessage(QueryMessageImpl message) {
+        if (!message.canResend()) {
+            return; // Message has reached TTL 0
+        }
+        // Add ourselves to the message
+        message.decreaseTtl();
+        message.addToPath(new Sender(this.peerInfo));
+
+        Set<Neighbour> ngbrsToReceive = peerInfo.getNeighbours();
+        if (this.peerInfo.isSuperPeer()) // super peer => use bloom filter
+            ngbrsToReceive = this.peerInfo.getNeighboursWithTimeline(message.getWantedUsername());
+
+        List<Neighbour> neighbours = ngbrsToReceive.stream().filter(
+                n -> !message.isInPath(new Sender(n.getAddress(), n.getPort())))
+                .toList();
+
+        // Get random N neighbours to send
+        int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
+        int i=0;
+        while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
+            Neighbour n = neighbours.get(i);
+            this.sender.sendMessageNTimes(message, n.getPort());
+            ++i;
+        }
+    }
+
     private void handle(QueryMessage message) {
         TimelineInfo ourTimelineInfo = peerInfo.getTimelineInfo();
         String wantedUser = message.getWantedTimeline();
@@ -90,30 +116,7 @@ public class MessageHandler {
             return;
         }
 
-        if (!message.canResend()) {
-            return; // Message has reached TTL 0
-        }
-
-        // Add ourselves to the message
-        message.decreaseTtl();
-        message.addToPath(new Sender(this.peerInfo));
-
-        Set<Neighbour> ngbrsToReceive = peerInfo.getNeighbours();
-        if (this.peerInfo.isSuperPeer()) // super peer => use bloom filter
-            ngbrsToReceive = this.peerInfo.getNeighboursWithTimeline(wantedUser);
-
-        List<Neighbour> neighbours = ngbrsToReceive.stream().filter(
-                n -> !message.isInPath(new Sender(n.getAddress(), n.getPort())))
-                .toList();
-
-        // Get random N neighbours to send
-        int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
-        int i=0;
-        while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
-            Neighbour n = neighbours.get(i);
-            this.sender.sendMessageNTimes(message, n.getPort());
-            ++i;
-        }
+        this.propagateQueryMessage(message);
     }
 
     private void handle(QueryHitMessage message) {
@@ -145,5 +148,29 @@ public class MessageHandler {
             promises.get(message.getId()).complete(message);
         }
         this.peerInfo.updateHostCache(message.getHostCache());
+    }
+
+    private void handle(SubMessage message) {
+        String wantedUser = message.getWantedSub();
+
+        if (message.isInPath(this.peerInfo))
+            return; // Already redirected this message
+
+        // TODO: Check if peer can accept another sub
+        if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
+            // We are the requested sub, send query hit to initiator
+            MessageResponse queryHit = new SubHitMessage(message.getId(),
+                    this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
+            this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+            return;
+        }
+
+        this.propagateQueryMessage(message);
+    }
+
+    private void handle(SubHitMessage message) {
+        if (promises.containsKey(message.getId())) {
+            promises.get(message.getId()).complete(message);
+        }
     }
 }

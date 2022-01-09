@@ -5,15 +5,20 @@ import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
 import main.model.message.request.*;
-import main.model.message.response.MessageResponse;
-import main.model.message.response.PassouBemResponse;
-import main.model.message.response.PongMessage;
-import main.model.message.response.QueryHitMessage;
+import main.model.message.request.query.QueryMessage;
+import main.model.message.request.query.SubMessage;
+import main.model.message.response.*;
+import main.model.message.response.query.QueryHitMessage;
+import main.model.message.response.query.QueryResponseImpl;
+import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Post;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -31,6 +36,7 @@ public class Peer implements Serializable {
     public static final int MAX_RANDOM_NEIGH = 2;
     // Minimun number of neighbours necessary to be considered a super peers
     public static final int SP_MIN = 5;
+    public static final int MAX_SUBS = 3;
 
     // Model/Data members
     private final PeerInfo peerInfo;
@@ -46,9 +52,12 @@ public class Peer implements Serializable {
 
     public Peer(String username, InetAddress address, int capacity) {
         this.context = new ZContext();
-        this.peerInfo = new PeerInfo(address, username, capacity);
-        this.broker = new Broker(context, peerInfo);
+
+        this.broker = new Broker(context, address);
+        this.peerInfo = new PeerInfo(username, address, capacity, broker.getFrontendPort(), broker.getPublisherPort());
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
+        this.broker.setSender(sender);
+        this.broker.setPeerInfo(peerInfo);
     }
 
     public void join(Neighbour neighbour) {
@@ -76,7 +85,8 @@ public class Peer implements Serializable {
 
     public void addPost(String newContent) {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
-        timelineInfo.addPost(peerInfo.getUsername(), newContent);
+        Post addedPost = timelineInfo.addPost(peerInfo.getUsername(), newContent);
+        this.broker.publishPost(addedPost);
     }
 
     public void deletePost(int postId) {
@@ -103,19 +113,53 @@ public class Peer implements Serializable {
         this.context.close();
     }
 
-    public Timeline queryNeighbours(String username) {
+    public Timeline requestTimeline(String username) {
         // check if neighbours have the username's timeline
         // TODO Tamos a dar flooding atm, dps temos que usar searches
-        // System.out.println("got neighbours with timelines: " + neighbours.size());
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
         if (neighbours.size() == 0)
             return null;
 
+        MessageRequest request = new QueryMessage(username, this.peerInfo);
+
+        QueryHitMessage response = (QueryHitMessage) this.sendQueryNeighbours(request, neighbours);
+        if (response != null) {
+            // save requested timeline
+            this.addTimeline(response.getTimeline());
+
+            return response.getTimeline();
+        }
+        return null;
+    }
+
+    public void requestSub(String username) {
+        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
+        if (neighbours.size() == 0)
+            return;
+
+        MessageRequest request = new SubMessage(username, this.peerInfo);
+        SubHitMessage response = (SubHitMessage) this.sendQueryNeighbours(request, neighbours);
+
+        // add subscription
+        if (response != null) {
+            this.broker.subscribe(username, response.getAddress(), response.getPort());
+            System.out.println(this.peerInfo.getUsername() + " SUBBED TO " + username);
+        } else
+            System.out.println(this.peerInfo.getUsername() + " COULDN'T SUB TO " + username);
+    }
+
+    public void requestUnsub(String username) {
+        broker.unsubscribe(username);
+    }
+
+    public Map<String, List<Post>> getPostOfSubscriptions() {
+        return broker.popSubMessages();
+    }
+
+    private QueryResponseImpl sendQueryNeighbours(MessageRequest request, List<Neighbour> neighbours) {
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
-
         int i=0;
-        MessageRequest request = new QueryMessage(username, this.peerInfo);
         Future<MessageResponse> responseFuture = broker.addPromise(request.getId());
         while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);
@@ -124,11 +168,10 @@ public class Peer implements Serializable {
         }
 
         boolean timed_out = false;
-        QueryHitMessage response = null;
+        QueryResponseImpl response = null;
         while (!timed_out && response == null) {
             try {
-                // TODO Get more recent by timeframe
-                response = (QueryHitMessage) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
+                response = (QueryResponseImpl) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             } catch (TimeoutException e) {
@@ -136,14 +179,7 @@ public class Peer implements Serializable {
             }
         }
         broker.removePromise(request.getId());
-
-        if (response == null)
-            return null;
-
-        // save requested timeline
-        this.addTimeline(response.getTimeline());
-
-        return response.getTimeline();
+        return response;
     }
 
     public void pingNeighbours() {
@@ -244,7 +280,6 @@ public class Peer implements Serializable {
     public void subscribe(Observer o) {
         this.getPeerInfo().subscribe(o);
         this.sender.subscribe(o);
-        this.broker.subscribe(o);
     }
 
     public PeerInfo getPeerInfo() {
@@ -253,6 +288,10 @@ public class Peer implements Serializable {
 
     public Broker getBroker() {
         return broker;
+    }
+
+    public boolean isSubscribed(String username) {
+        return this.broker.isSubscribed(username);
     }
 
     @Override

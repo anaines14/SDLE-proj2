@@ -2,4 +2,5 @@ start nachos 10
 start bibo 5
 start ferno 6
 sleep 10
+sub nachos ferno
 stop_all

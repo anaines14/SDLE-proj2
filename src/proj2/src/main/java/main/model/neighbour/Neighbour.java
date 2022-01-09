@@ -12,8 +12,9 @@ import java.nio.charset.StandardCharsets;
 public class Neighbour extends Host implements Serializable{
     private BloomFilter<String> timelines;
 
-    public Neighbour(String username, InetAddress address, String port, int capacity, int degree, int maxNbrs) {
-        super(username, address, port, capacity, degree, maxNbrs);
+    public Neighbour(String username, InetAddress address, String port, String frontendPort, int capacity, int degree, int maxNbrs) {
+        super(username, address, port, frontendPort, capacity, degree, maxNbrs);
+        this.timelines = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
     }
 
     public Neighbour(Host host) {

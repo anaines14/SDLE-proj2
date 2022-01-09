@@ -18,27 +18,26 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 
-import static main.Peer.MAX_RETRY;
-import static main.Peer.RCV_TIMEOUT;
-
 public class Worker {
     private MessageHandler handler;
-    private MessageSender sender;
     private ZMQ.Socket worker;
     private Thread thread;
 
-    public Worker(PeerInfo peerInfo, int id,
-                  ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, ZContext context){
-        this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
-        this.handler = new MessageHandler(peerInfo, sender, promises);
+    public Worker(int id, ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, ZContext context){
+        this.handler = new MessageHandler(promises);
         this.worker = context.createSocket(SocketType.REQ);
         this.worker.setIdentity(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
         this.thread = new Thread(this::run);
     }
 
-    public void subscribe(Observer o) {
-        this.sender.subscribe(o);
+    public void setSender(MessageSender sender) {
+        this.handler.setSender(sender);
     }
+
+    public void setPeerInfo(PeerInfo peerInfo) {
+        this.handler.setPeerInfo(peerInfo);
+    }
+
 
     public void execute() {
         this.thread.start();
