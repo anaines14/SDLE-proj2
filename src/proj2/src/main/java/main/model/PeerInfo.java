@@ -39,6 +39,11 @@ public class PeerInfo {
         this(username, address, capacity, port, publishPort, new TimelineInfo(username));
     }
 
+    // prints all timelines stored in order
+    public void showFeed() {
+        this.timelineInfo.showFeed();
+    }
+
     // Neighbours
 
     public boolean hasNeighbour(Neighbour neighbour) {
@@ -67,7 +72,7 @@ public class PeerInfo {
         if (neighbour.equals(this.me)) // We can't add ourselves as a neighbour
             return;
 
-        System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
+        // System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
         neighbours.add(neighbour);
         this.me.setDegree(neighbours.size());
         hostCache.add(neighbour); // Everytime we add a neighbour, we also add to the hostcache
@@ -77,7 +82,7 @@ public class PeerInfo {
         if (!neighbours.contains(neighbour))
             return;
 
-        System.out.println(this.getUsername() + " REMOVED " + neighbour.getUsername());
+        // System.out.println(this.getUsername() + " REMOVED " + neighbour.getUsername());
         neighbours.remove(neighbour);
         this.me.setDegree(neighbours.size());
 
@@ -87,6 +92,33 @@ public class PeerInfo {
 
     public Set<Neighbour> getNeighboursWithTimeline(String username) {
         return neighbours.stream().filter(n -> n.hasTimeline(username)).collect(Collectors.toSet());
+    }
+
+    // Returns worst neighbour if we need to replace Neighbour
+    // Returns null if we can't replace candidate
+    public Neighbour acceptNeighbour(Host candidate) {
+        // from neighbours with less or equal capacity than host, get the one with max degree
+
+
+        // get neighbors with less capacity than val
+        List<Neighbour> worstNgbrs = neighbours.stream()
+                .filter(n -> n.getCapacity() <= candidate.getCapacity()).toList();
+        if (worstNgbrs.isEmpty()) return null;
+
+        Neighbour highestDegNeigh = worstNgbrs.stream().max(Host::compareTo).get();
+
+        // get highest capacity neihbour
+        Neighbour highestCapNgbr = neighbours.stream().max(Comparator.comparingInt(Host::getCapacity)).get();
+
+        // candidate has higher capacity than every neighbour
+        boolean candidateHigherCap = candidate.getCapacity() > highestCapNgbr.getCapacity();
+        // candidate has fewer neighbours
+        int hysteresis = 0;
+        boolean candidateFewerNeighs = candidate.getDegree() + hysteresis < highestDegNeigh.getDegree();
+
+        if (candidateHigherCap || candidateFewerNeighs)
+            return highestCapNgbr;
+        return null;
     }
 
     // HostCache
@@ -199,33 +231,6 @@ public class PeerInfo {
     }
 
     public BloomFilter<String> getTimelinesFilter() { return timelinesFilter; }
-
-    // Returns worst neighbour if we need to replace Neighbour
-    // Returns null if we can't replace candidate
-    public Neighbour acceptNeighbour(Host candidate) {
-        // from neighbours with less or equal capacity than host, get the one with max degree
-
-
-        // get neighbors with less capacity than val
-        List<Neighbour> worstNgbrs = neighbours.stream()
-                .filter(n -> n.getCapacity() <= candidate.getCapacity()).toList();
-        if (worstNgbrs.isEmpty()) return null;
-
-        Neighbour highestDegNeigh = worstNgbrs.stream().max(Host::compareTo).get();
-
-        // get highest capacity neihbour
-        Neighbour highestCapNgbr = neighbours.stream().max(Comparator.comparingInt(Host::getCapacity)).get();
-
-        // candidate has higher capacity than every neighbour
-        boolean candidateHigherCap = candidate.getCapacity() > highestCapNgbr.getCapacity();
-        // candidate has fewer neighbours
-        int hysteresis = 0;
-        boolean candidateFewerNeighs = candidate.getDegree() + hysteresis < highestDegNeigh.getDegree();
-
-        if (candidateHigherCap || candidateFewerNeighs)
-            return highestCapNgbr;
-        return null;
-    }
 
     @Override
     public boolean equals(Object o) {

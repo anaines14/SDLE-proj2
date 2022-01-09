@@ -43,6 +43,11 @@ public class TimelineInfo {
         }
     }
 
+    public void showFeed() {
+        // TODO: Ordenar posts todos
+        // TODO: Printar os posts
+    }
+
     public void loadTimelines() throws IOException, ClassNotFoundException {
         File[] files = timelines_folder.listFiles();
 

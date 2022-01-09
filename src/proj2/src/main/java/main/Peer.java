@@ -278,6 +278,11 @@ public class Peer implements Serializable {
         return satisfaction % 1;
     }
 
+    // prints all timelines stored in order
+    public void showFeed() {
+        this.peerInfo.showFeed();
+    }
+
     public void subscribe(Observer o) {
         this.getPeerInfo().subscribe(o);
         this.sender.subscribe(o);

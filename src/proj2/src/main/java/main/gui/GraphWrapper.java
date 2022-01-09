@@ -46,7 +46,6 @@ public class GraphWrapper implements Observer{
 
         // if edge not in graph => add it
         if (graph.getEdge(edgeId1) == null && graph.getEdge(edgeId2) == null) {
-            System.out.println(peer1 + " ADDED: " + peer2 + " --> " + edgeId1);
             synchronized (this.graph) {
                 this.graph.addEdge(edgeId1, peer1, peer2);
             }
@@ -60,13 +59,11 @@ public class GraphWrapper implements Observer{
             synchronized (this.graph) {
                 this.graph.removeEdge(edgeId1);
             }
-            System.out.println(peer1 + " REMOVED: " + peer2 + " --> " + edgeId1);
         }
         else if (graph.getEdge(edgeId2) != null) {
             synchronized (this.graph) {
                 this.graph.removeEdge(edgeId2);
             }
-            System.out.println(peer1 + " REMOVED: " + peer2 + " --> " + edgeId2);
         }
     }
 

@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-public class GraphTest {
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class ViewTest {
     private GraphWrapper graph;
     private InetAddress address;
     private ScheduledThreadPoolExecutor scheduler;
@@ -128,10 +130,10 @@ public class GraphTest {
     }
 
     @Test
-    public void testEdges() {
-        Peer peer1 = new Peer("user1", address, 50);
-        Peer peer2 = new Peer("user2", address, 20);
-        Peer peer3 = new Peer("user3", address, 3);
+    public void edgesView() {
+        Peer peer1 = new Peer("BIG", address, 50);
+        Peer peer2 = new Peer("Med", address, 20);
+        Peer peer3 = new Peer("small", address, 3);
 
         System.out.println(peer1.getPeerInfo().getPort());
         System.out.println(peer2.getPeerInfo().getPort());
@@ -163,5 +165,32 @@ public class GraphTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void testTimelineView() {
+        List<Peer> peers = this.nodeFactory(4);
+        Peer peer1 = peers.get(0);
+
+        for (Peer peer: peers) { // Make posts
+            peer.addPost("Hello! Im peer" + peer.getPeerInfo().getUsername());
+        }
+        peer1.addPost("Goodbye!");
+
+        // Get timelines
+        for (int i = 1; i < peers.size(); i++)
+            peer1.requestTimeline(peers.get(i).getPeerInfo().getUsername());
+
+        try {
+            Thread.sleep(6000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // make sure peer has timelines
+        for (int i = 1; i < peers.size(); i++)
+            assertTrue(peer1.getPeerInfo().getTimelineInfo().hasTimeline(peers.get(i).getPeerInfo().getUsername()));
+
+        peer1.showFeed();
     }
 }
