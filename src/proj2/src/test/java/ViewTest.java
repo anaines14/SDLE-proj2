@@ -227,6 +227,34 @@ public class ViewTest {
         peer1.requestSub("u2");
 
         try {
+            Thread.sleep(8000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void postView() {
+        List<Peer> peers = this.nodeFactory(2);
+        Peer peer1 = peers.get(0), peer2 = peers.get(1);
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        peer1.requestSub(peer2.getPeerInfo().getUsername());
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        peer2.addPost("Uma posta");
+
+        try {
             Thread.sleep(4000);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -243,6 +271,7 @@ public class ViewTest {
 
         peers.get(0).join(new Neighbour(peers.get(2).getPeerInfo().getHost()));
         peers.get(2).join(new Neighbour(peers.get(1).getPeerInfo().getHost()));
+        peers.get(1).getPeerInfo().getHost().setMaxSubCapacity(1);
 
         for (Peer peer: peers)
             peer.execute(scheduler);

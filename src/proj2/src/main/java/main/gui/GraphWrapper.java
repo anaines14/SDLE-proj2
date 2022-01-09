@@ -101,7 +101,7 @@ public class GraphWrapper implements Observer{
 
     // new subscription
     public void newSubUpdate(String source, String destination) {
-        String edgeId = source + destination;
+        String edgeId = source + destination + "sub";
         // if edge not in graph => add it
         if (graph.getEdge(edgeId) == null) {
             Edge edge = null;
@@ -115,7 +115,7 @@ public class GraphWrapper implements Observer{
     // new post
     public void newPostUpdate(String source, Set<String> destinations) {
         for (String destination: destinations) {
-            String edgeId = source + destination;
+            String edgeId = source + destination + "sub";
             // if edge exists => send post
             Edge edge = graph.getEdge(edgeId);
             if (edge != null) {

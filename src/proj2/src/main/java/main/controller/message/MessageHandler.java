@@ -165,7 +165,7 @@ public class MessageHandler {
                 MessageResponse queryHit = new SubHitMessage(message.getId(),
                         this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
                 this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
-                peerInfo.addSubscriber(this.sender.getUsername());
+                peerInfo.addSubscriber(this.sender.getPort());
                 this.peerInfo.notifyNewSub(message.getOriginalSender().getPort());
                 return;
             }
@@ -179,6 +179,7 @@ public class MessageHandler {
                 this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
                 // add subscriber to this peer
                 peerInfo.addSubscriber(this.sender.getUsername());
+                this.peerInfo.notifyNewSub(message.getOriginalSender().getPort());
             }
         }
         else {
