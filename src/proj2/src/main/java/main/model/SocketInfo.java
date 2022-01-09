@@ -108,7 +108,6 @@ public class SocketInfo {
         String port = Integer.toString(p);
         this.redirects.put(username, pub);
         this.redirectPorts.put(username, port);
-        System.out.println("ADDING REDIRECT =========================== " + port + " " + username);
         return port;
     }
 
