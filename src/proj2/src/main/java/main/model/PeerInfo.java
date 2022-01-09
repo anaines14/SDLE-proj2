@@ -11,21 +11,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static main.Peer.MAX_NGBRS;
+import static main.Peer.MAX_SUBS;
 
 // Data class that serves like a Model in an MVC
 public class PeerInfo {
     private Host me;
     private TimelineInfo timelineInfo;
     private Set<Neighbour> neighbours;
+    private Set<String> subscribedPeers;
     private Set<Host> hostCache;
     private Observer observer;
 
     public PeerInfo(String username, InetAddress address, int capacity,
                     String port, String publishPort, TimelineInfo timelineInfo) {
-        this.me = new Host(username, address, port, publishPort, capacity, 0);
+        this.me = new Host(username, address, port, publishPort, capacity, 0, MAX_SUBS);
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = ConcurrentHashMap.newKeySet();
+        this.subscribedPeers = ConcurrentHashMap.newKeySet();
     }
 
     public PeerInfo(String username, InetAddress address, int capacity, String port, String publishPort) {
@@ -86,6 +89,14 @@ public class PeerInfo {
         for (Neighbour n: neighbours)
             System.out.println(n.getUsername());
         return neighbours.stream().filter(n -> n.hasTimeline(username)).collect(Collectors.toSet());
+    }
+
+    public void addSubscribed(String username) {
+        this.subscribedPeers.add(username);
+    }
+
+    public boolean isSubscribedTo(String username) {
+        return this.subscribedPeers.contains(username);
     }
 
     // HostCache

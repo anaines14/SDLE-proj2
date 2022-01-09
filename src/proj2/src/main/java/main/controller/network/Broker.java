@@ -28,6 +28,7 @@ public class Broker {
     private ZMQ.Socket control;
     private ZMQ.Socket publisher;
     private Map<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
+    private Map<String, ZMQ.Socket> redirects; // Nodes to which we have to send post from subscribers
     private final Map<String, List<Post>> subMessages; // New posts that are posted by our subs
     private List<Worker> workers;
 

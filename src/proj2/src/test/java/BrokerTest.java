@@ -11,6 +11,7 @@ import org.zeromq.ZContext;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import static main.Peer.MAX_SUBS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -42,7 +43,7 @@ public class BrokerTest {
 
     @Test
     public void testBroker() {
-        Host peer2 = new Host("user2", localhost, "8002", "8003", 10, 10);
+        Host peer2 = new Host("user2", localhost, "8002", "8003", 10, 10, MAX_SUBS);
         assertTrue(sender.sendMessageNTimes(new PingMessage(peer2), peerInfo.getPort()));
         broker.stop();
     }

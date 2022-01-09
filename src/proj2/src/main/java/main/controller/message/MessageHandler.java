@@ -9,6 +9,7 @@ import main.model.message.request.query.SubMessage;
 import main.model.message.response.*;
 import main.model.message.response.query.QueryHitMessage;
 import main.model.message.response.query.SubHitMessage;
+import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
@@ -156,19 +157,31 @@ public class MessageHandler {
         if (message.isInPath(this.peerInfo))
             return; // Already redirected this message
 
-        // TODO: Check if peer can accept another sub
-        if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
-            // We are the requested sub, send query hit to initiator
-            MessageResponse queryHit = new SubHitMessage(message.getId(),
-                    this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
-            this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
-            return;
+        Host myHost = peerInfo.getHost();
+        if (myHost.canAcceptSub()) {
+            if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
+                // We are the requested sub, send query hit to initiator
+                MessageResponse queryHit = new SubHitMessage(message.getId(),
+                        this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
+                this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+                // decrement subCapacity
+                myHost.addSubscriber();
+                return;
+            }
+            else if (this.peerInfo.isSubscribedTo(wantedUser)) { // TODO: redirects if am subscribed to target
+                // We are subbed to the requested sub, send query hit to initiator
+                MessageResponse queryHit = new SubHitMessage(message.getId(),
+                        this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
+                this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+                // decrement subCapacity
+                myHost.addSubscriber();
+            }
         }
 
-        if (tenhoSubscription(message.getWantedSub())) { // Redirect para o gajo
-            String port = peerInfo.getNewPort(message.getWantedSub());
-
-        }
+//        if (tenhoSubscription(message.getWantedSub())) { // Redirect para o gajo
+//            String port = peerInfo.getNewPort(message.getWantedSub());
+//
+//        }
         this.propagateQueryMessage(message);
     }
 
