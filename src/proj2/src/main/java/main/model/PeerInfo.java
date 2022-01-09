@@ -50,7 +50,6 @@ public class PeerInfo {
         String hostName = address.getHostName();
         this.authSocketPort = String.valueOf(authSocket.bindToRandomPort("tcp://" + hostName));
         System.out.println("BOUND TO " + "tcp://" + hostName + ":" + authSocketPort);
-
     }
 
     public PeerInfo(String username,String password, InetAddress address, int capacity, String port, String publishPort,ZContext context) {

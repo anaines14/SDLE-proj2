@@ -45,14 +45,17 @@ public class AuthMessageHandler {
     }
     public Message handle(Message message) {
         switch (message.getType()) {
-            case "LOGIN" -> handle((LoginMessage) message);
-            case "REGISTER" -> handle((RegisterMessage) message);
-            case "GETPRIVATEKEY" -> handle((GetPrivateKeyMessage) message);
-            case "GETPUBLICKEY" -> handle((GetPublicKeyMessage) message);
-            default -> {
-            }
+            case "LOGIN":
+                return handle((LoginMessage) message);
+            case "REGISTER":
+                return handle((RegisterMessage) message);
+            case "GETPRIVATEKEY":
+                return handle((GetPrivateKeyMessage) message);
+            case "GETPUBLICKEY":
+                return handle((GetPublicKeyMessage) message);
+            default:
+                return new OperationFailedMessage(UUID.randomUUID());
         }
-        return new OperationFailedMessage(UUID.randomUUID());
     }
 
 
