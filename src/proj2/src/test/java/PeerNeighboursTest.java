@@ -57,7 +57,8 @@ public class PeerNeighboursTest {
 
     @Test
     public void peerJoining() {
-        peer1.join(new Neighbour(peer3.getPeerInfo().getHost()));
+        Neighbour n1 = new Neighbour(peer3.getPeerInfo().getHost());
+        peer1.join(n1);
         peer3.join(new Neighbour(peer2.getPeerInfo().getHost()));
 
         try {
@@ -108,7 +109,7 @@ public class PeerNeighboursTest {
         assertEquals(0, peer.calculateSatisfaction());
 
         // test 1 neighbours
-        Neighbour n1 = new Neighbour("peer2", localhost, "8000", "8000", 4, 1, 3);
+        Neighbour n1 = new Neighbour("peer2", localhost, 4, 1, 3, "8000", "8000");
         peer.join(n1);
         assertEquals(0.4, peer.calculateSatisfaction());
 
@@ -116,13 +117,13 @@ public class PeerNeighboursTest {
         int port = 8080;
         for (int i = 1; i < peer.getPeerInfo().getMaxNbrs(); i++) {
             port++;
-            Neighbour n2 = new Neighbour("user" + i, localhost, Integer.toString(port), Integer.toString(port), 4, 1, 3);
+            Neighbour n2 = new Neighbour("user" + i, localhost, 4, 1, 3, Integer.toString(port), Integer.toString(port));
             peer.join(n2);
         }
         assertEquals(1, peer.calculateSatisfaction());
 
         // test more than max neighbours
-        Neighbour n3 = new Neighbour("peer4", localhost, "8001", Integer.toString(port),4, 1, 3);
+        Neighbour n3 = new Neighbour("peer4", localhost, 4, 1, 3, "8001", "8001");
         peer.join(n3);
         assertEquals(1, peer.calculateSatisfaction());
     }

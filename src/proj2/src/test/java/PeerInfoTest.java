@@ -1,4 +1,5 @@
 import main.model.PeerInfo;
+import main.model.SocketInfo;
 import main.model.neighbour.Neighbour;
 import org.junit.jupiter.api.Test;
 
@@ -25,10 +26,11 @@ public class PeerInfoTest {
             localhost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ignored) {}
 
-        peer1 = new PeerInfo("user1", localhost,30, "8080", "8081");
-        Neighbour n1 = new Neighbour("u1", localhost, "8000", "8100", 50, 1, 3);
-        Neighbour n2 = new Neighbour("u2", localhost, "8001", "8101", 50, 3, 3);
-        Neighbour n3 = new Neighbour("u1", localhost, "8000", "8102", 60, 4, 3);
+        SocketInfo socketInfo = new SocketInfo("8000", "8101");
+        peer1 = new PeerInfo("user1", localhost,30, socketInfo);
+        Neighbour n1 = new Neighbour("u1", localhost, 50, 1, 3, "8000", "8100");
+        Neighbour n2 = new Neighbour("u2", localhost, 50, 3, 3, "8001", "8101");
+        Neighbour n3 = new Neighbour("u1", localhost, 60, 4, 3, "8000", "8100");
 
         List<Neighbour> neighbours = new ArrayList<>(peer1.getNeighbours());
         assertEquals(0, neighbours.size());

@@ -1,32 +1,43 @@
 package main.model.neighbour;
 
+import main.model.SocketInfo;
+
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;
 
 // Data class
 public class Host implements Serializable, Comparable<Host> {
-    private final InetAddress address;
-    private final String port;
-    private final String publisherPort;
-    private final int capacity; // Quantity of messages that we can handle, arbitrary for us
-    // needed to add as neighbor
     private final String username;
-    private int degree;
+    private final InetAddress address;
+    private final int capacity; // Quantity of messages that we can handle, arbitrary for us
+    private int degree; // needed to add as neighbor
     private int maxNbrs;
+    private int maxSubCapacity; // capacity at a given time (starts at a given number and decreases with new subs)
+    private String port;
+    private String publisherPort;
 
-    public Host(String username, InetAddress address, String port, String publishPort, int capacity, int degree, int maxNbrs) {
-        this.address = address;
-        this.port = port;
-        this.publisherPort = publishPort;
-        this.capacity = capacity;
+    public Host(String username, InetAddress address, int capacity, int degree,
+                int maxNbrs, int maxSubCapacity, String port, String publisherPort) {
         this.username = username;
+        this.address = address;
+        this.capacity = capacity;
         this.degree = degree;
         this.maxNbrs = maxNbrs;
+        this.maxSubCapacity = maxSubCapacity;
+        this.port = port;
+        this.publisherPort = publisherPort;
     }
 
     public Host(Host host) {
-        this(host.username, host.address, host.port,  host.publisherPort, host.capacity, host.degree, host.maxNbrs);
+        this(host.username, host.address, host.capacity, host.degree,
+                host.maxNbrs, host.maxSubCapacity, host.port, host.publisherPort);
+    }
+
+    public Host(String username, InetAddress address, int capacity, int degree,
+                int maxNbrs, int maxSubCapacity, SocketInfo socketInfo) {
+        this(username, address, capacity, degree, maxNbrs, maxSubCapacity,
+                socketInfo.getFrontendPort(), socketInfo.getPublisherPort());
     }
 
     public InetAddress getAddress() {
@@ -37,8 +48,15 @@ public class Host implements Serializable, Comparable<Host> {
         return port;
     }
 
+    public void setPort(String frontendPort) {
+        this.port = frontendPort;
+    }
+
     public String getPublishPort() {
         return publisherPort;
+    }
+    public void setPublishPort(String publisherPort) {
+        this.publisherPort = publisherPort;
     }
 
     public int getCapacity() {
@@ -56,6 +74,11 @@ public class Host implements Serializable, Comparable<Host> {
     public void setDegree(int size) {
         this.degree = size;
     }
+
+    public int getMaxSubCapacity() { return maxSubCapacity; }
+
+    // for testing
+    public void setMaxSubCapacity(int newCap) { this.maxSubCapacity = newCap; }
 
     @Override
     public String toString() {

@@ -1,6 +1,7 @@
 package main.controller.message;
 
 import main.model.PeerInfo;
+import main.model.SocketInfo;
 import main.model.message.*;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
@@ -26,11 +27,13 @@ import static main.Peer.MAX_RANDOM_NEIGH;
 public class MessageHandler {
     private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
     private PeerInfo peerInfo;
+    private SocketInfo socketInfo;
     private MessageSender sender;
 
-    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises) {
+    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, SocketInfo socketInfo) {
         this.peerInfo = null;
         this.sender = null;
+        this.socketInfo = socketInfo;
         this.promises = promises;
     }
 
@@ -156,16 +159,30 @@ public class MessageHandler {
         if (message.isInPath(this.peerInfo))
             return; // Already redirected this message
 
-        // TODO: Check if peer can accept another sub
-        if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
-            // We are the requested sub, send query hit to initiator
-            MessageResponse queryHit = new SubHitMessage(message.getId(),
-                    this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
-            this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
-            return;
-        }
+        if (peerInfo.canAcceptSub()) {
+            if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
+                // We are the requested sub, send query hit to initiator
+                MessageResponse queryHit = new SubHitMessage(message.getId(),
+                        this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
+                this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+                peerInfo.addSubscriber(this.sender.getUsername());
+                return;
+            }
+            else if (this.peerInfo.hasSubscription(wantedUser)) {
+                // TODO: create socket and add to redirects
+                String redirectPubPort = this.socketInfo.addRedirect(wantedUser, this.peerInfo.getAddress());
 
-        this.propagateQueryMessage(message);
+                // We are subbed to the requested sub, send query hit to initiator
+                MessageResponse queryHit = new SubHitMessage(message.getId(),
+                        redirectPubPort, this.peerInfo.getAddress());
+                this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+                // add subscriber to this peer
+                peerInfo.addSubscriber(this.sender.getUsername());
+            }
+        }
+        else {
+            this.propagateQueryMessage(message);
+        }
     }
 
     private void handle(SubHitMessage message) {
