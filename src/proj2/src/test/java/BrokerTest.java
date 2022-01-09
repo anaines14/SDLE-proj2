@@ -69,7 +69,7 @@ public class BrokerTest {
         }
 
         // If broker publishes a post, broker must be able to see it
-        Post carlos = new Post(0, "Carlos");
+        Post carlos = new Post(0, "Carlos", "Carlos");
         broker.publishPost(carlos);
         try {
             Thread.sleep(500);
