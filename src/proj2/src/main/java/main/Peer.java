@@ -16,9 +16,7 @@ import main.model.neighbour.Neighbour;
 import main.model.timelines.Post;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
-import org.zeromq.SocketType;
 import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -52,7 +50,8 @@ public class Peer implements Serializable {
         this.context = new ZContext();
 
         this.broker = new Broker(context, address);
-        this.peerInfo = new PeerInfo(username, address, capacity, broker.getFrontendPort(), broker.getPublisherPort());
+        this.peerInfo = new PeerInfo(username, address, capacity);
+        this.peerInfo.setPorts(broker.getSocketInfo());
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker.setSender(sender);
         this.broker.setPeerInfo(peerInfo);
@@ -289,7 +288,7 @@ public class Peer implements Serializable {
     }
 
     public boolean isSubscribed(String username) {
-        return this.broker.isSubscribed(username);
+        return this.broker.getSocketInfo().isSubscribed(username);
     }
 
     @Override

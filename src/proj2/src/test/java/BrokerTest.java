@@ -33,7 +33,7 @@ public class BrokerTest {
         context = new ZContext();
         MessageSender sender1 = new MessageSender("user1", "8083", 3, 500, context);
         this.broker = new Broker(context, localhost);
-        peerInfo = new PeerInfo("user1", localhost, 3, broker.getFrontendPort(), broker.getPublisherPort());
+        peerInfo = new PeerInfo("user1", localhost, 3);
         this.broker.setSender(sender1);
         this.broker.setPeerInfo(peerInfo);
 
@@ -43,7 +43,7 @@ public class BrokerTest {
 
     @Test
     public void testBroker() {
-        Host peer2 = new Host("user2", localhost, "8002", "8003", 10, 10, MAX_SUBS);
+        Host peer2 = new Host("user2", localhost, 10, 10, MAX_SUBS);
         assertTrue(sender.sendMessageNTimes(new PingMessage(peer2), peerInfo.getPort()));
         broker.stop();
     }
@@ -53,10 +53,8 @@ public class BrokerTest {
         // Create a new broker that subscribes to the original broker
         ZContext ctx = new ZContext();
         Broker broker2 = new Broker(ctx, localhost);
-        PeerInfo peerInfo2 = new PeerInfo("user2", localhost, 3,
-                broker2.getFrontendPort(), broker2.getPublisherPort());
-        MessageSender sender2 = new MessageSender("user2", broker2.getFrontendPort(),
-                3, 500, ctx);
+        PeerInfo peerInfo2 = new PeerInfo("user2", localhost, 3);
+        MessageSender sender2 = new MessageSender(peerInfo2, 3, 500, ctx);
         broker2.setSender(sender2);
         broker2.setPeerInfo(peerInfo2);
         broker2.execute();

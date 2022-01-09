@@ -59,6 +59,7 @@ public class MessageSender {
     private String sendMessage(Message message, String port) {
         ZMQ.Socket socket = context.createSocket(SocketType.REQ);
         socket.setReceiveTimeOut(receiveTimeout);
+        System.out.println(username + " PINGS " + port);
         socket.connect("tcp://localhost:" + port); // TODO convert to address
 
         this.send(message, socket);

@@ -57,7 +57,8 @@ public class PeerNeighboursTest {
 
     @Test
     public void peerJoining() {
-        peer1.join(new Neighbour(peer3.getPeerInfo().getHost()));
+        Neighbour n1 = new Neighbour(peer3.getPeerInfo().getHost());
+        peer1.join(n1);
         peer3.join(new Neighbour(peer2.getPeerInfo().getHost()));
 
         try {

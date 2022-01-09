@@ -12,22 +12,24 @@ public class NTP {
     private Long delayValue;
 
     public NTP() {
-        NTPUDPClient client = new NTPUDPClient();
-
-        InetAddress hostAddr;
-        TimeInfo info = null;
-        try {
-            client.open();
-            hostAddr = InetAddress.getByName("pt.pool.ntp.org");
-            info = client.getTime(hostAddr); // TODO Ter timeout e de X em X tempo tentar again
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        assert info != null;
-        info.computeDetails(); // compute offset/delay if not already done
-        offsetValue = info.getOffset() * 1000000L;
-        delayValue = info.getDelay() * 1000000L;
-        client.close();
+        this.delayValue = Long.valueOf(0);
+        this.offsetValue = Long.valueOf(0);
+//        NTPUDPClient client = new NTPUDPClient();
+//
+//        InetAddress hostAddr;
+//        TimeInfo info = null;
+//        try {
+//            client.open();
+//            hostAddr = InetAddress.getByName("pt.pool.ntp.org");
+//            info = client.getTime(hostAddr); // TODO Ter timeout e de X em X tempo tentar again
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        assert info != null;
+//        info.computeDetails(); // compute offset/delay if not already done
+//        offsetValue = info.getOffset() * 1000000L;
+//        delayValue = info.getDelay() * 1000000L;
+//        client.close();
     }
 
     public Long getDelayValue() {

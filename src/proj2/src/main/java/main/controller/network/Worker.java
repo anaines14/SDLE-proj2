@@ -2,6 +2,7 @@ package main.controller.network;
 
 import main.gui.Observer;
 import main.model.PeerInfo;
+import main.model.SocketInfo;
 import main.model.message.Message;
 import main.controller.message.MessageBuilder;
 import main.controller.message.MessageHandler;
@@ -23,8 +24,9 @@ public class Worker {
     private ZMQ.Socket worker;
     private Thread thread;
 
-    public Worker(int id, ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, ZContext context){
-        this.handler = new MessageHandler(promises);
+    public Worker(ZContext context, int id,
+                  ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, SocketInfo socketInfo) {
+        this.handler = new MessageHandler(promises, socketInfo);
         this.worker = context.createSocket(SocketType.REQ);
         this.worker.setIdentity(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
         this.thread = new Thread(this::run);
