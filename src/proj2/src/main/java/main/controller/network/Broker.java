@@ -113,6 +113,7 @@ public class Broker {
     public void publishPost(Post post) {
         try {
             ZMQ.Socket publisher = this.socketInfo.getPublisher();
+            System.out.println("SENDING " + socketInfo.getPublisherPort());
             publisher.send(MessageBuilder.objectToByteArray(post));
         } catch (IOException e) { // Thrown when we don't receive a post
             e.printStackTrace();
@@ -156,7 +157,6 @@ public class Broker {
                 items.register(socket, ZMQ.Poller.POLLIN);
 
             if (worker_queues.size() > 0) {
-                System.out.println("WAITING FOR " + socketInfo.getFrontendPort());
                 items.register(socketInfo.getFrontend(), ZMQ.Poller.POLLIN);
             }
 

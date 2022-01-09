@@ -33,7 +33,7 @@ public class BrokerTest {
         context = new ZContext();
         MessageSender sender1 = new MessageSender("user1", "8083", 3, 500, context);
         this.broker = new Broker(context, localhost);
-        peerInfo = new PeerInfo("user1", localhost, 3, this.broker.getSocketInfo());
+        this.peerInfo = new PeerInfo("user1", localhost, 3, this.broker.getSocketInfo());
         this.broker.setSender(sender1);
         this.broker.setPeerInfo(peerInfo);
 
@@ -43,8 +43,8 @@ public class BrokerTest {
 
     @Test
     public void testBroker() {
-        Host peer2 = new Host("user2", localhost, 10, 10, MAX_SUBS);
-        assertTrue(sender.sendMessageNTimes(new PingMessage(peer2), peerInfo.getPort()));
+        Host peer2 = new Host("user2", localhost, 10, 10, MAX_SUBS, "8101", "8002");
+        assertTrue(sender.sendMessageNTimes(new PingMessage(peer2), this.peerInfo.getPort()));
         broker.stop();
     }
 

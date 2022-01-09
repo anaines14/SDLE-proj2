@@ -37,10 +37,6 @@ public class Host implements Serializable, Comparable<Host> {
         this(username, address, capacity, degree, MAX_SUBS, port, publishPort);
     }
 
-    public Host(String username, InetAddress address, int capacity, int degree, int subCapacity) {
-        this(username, address, capacity, degree, subCapacity, "-1", "-1");
-    }
-
     public Host(String username, InetAddress address, int capacity, int degree, String port, String publisherPort) {
         this(username, address, capacity, degree, MAX_SUBS, port, publisherPort);
     }
