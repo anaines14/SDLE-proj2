@@ -1,5 +1,6 @@
 package main.controller.message;
 
+import main.controller.network.Authenticator;
 import main.model.PeerInfo;
 import main.model.message.*;
 import main.model.message.auth.GetPublicKeyMessage;
@@ -136,21 +137,7 @@ public class MessageHandler {
             //VERIFY SIGN
             if(message.getTimeline().hasSignature()){
                 String username = message.getTimeline().getUsername();
-                PublicKey publicKey = null;
-                    try {
-                        ZMQ.Socket authSocket= this.peerInfo.getAuthSocket();
-                        authSocket.send(MessageBuilder.objectToByteArray(new GetPublicKeyMessage(UUID.randomUUID(),username)));
-                        Message reply = MessageBuilder.messageFromSocket(authSocket);
-                        if(reply instanceof PublicKeyMessage){
-                            publicKey = ((PublicKeyMessage) reply).getPublicKey();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
-
-                    //TRUE IF SIGNATURE MATCHES
+                PublicKey publicKey = Authenticator.requestPublicKey(username,AUTH Socket);
                 if(message.getTimeline().verifySignature(publicKey)){
                     promises.get(message.getId()).complete(message);
                 }

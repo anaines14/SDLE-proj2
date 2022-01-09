@@ -46,7 +46,7 @@ public class PeerInfo {
         this.hostCache = ConcurrentHashMap.newKeySet();
 
         //AUTH
-        this.authSocket = context.createSocket(SocketType.REP);
+        this.authSocket = context.createSocket(SocketType.REQ);
         String hostName = address.getHostName();
         this.authSocketPort = String.valueOf(authSocket.bindToRandomPort("tcp://" + hostName));
         System.out.println("BOUND TO " + "tcp://" + hostName + ":" + authSocketPort);

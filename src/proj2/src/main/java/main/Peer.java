@@ -1,6 +1,7 @@
 package main;
 
 import main.controller.message.MessageBuilder;
+import main.controller.network.Authenticator;
 import main.gui.Observer;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
@@ -108,22 +109,22 @@ public class Peer implements Serializable {
         String username = this.peerInfo.getUsername();
         String password = this.peerInfo.getPassword();
         boolean register = (password != "");
+        PrivateKey privateKey = null;
         if(register) {
-            try {
-                ZMQ.Socket authSocket= this.peerInfo.getAuthSocket();
-                authSocket.send(MessageBuilder.objectToByteArray(new RegisterMessage(UUID.randomUUID(),username,password)));
-                Message message = MessageBuilder.messageFromSocket(authSocket);
-                if(message instanceof PrivateKeyMessage){
-                    PrivateKey privateKey = ((PrivateKeyMessage) message).getPrivateKey();
+            privateKey = Authenticator.requestRegister(username,password,AUTH SOCKET);
+            //REGISTERED SUCCESS
+            if(privateKey != null)
+                this.peerInfo.setPrivateKey(privateKey);
+            //ALREADY REGISTERED
+            else{
+                privateKey = Authenticator.requestLogin(username,password,AUTH SOCKET);
+                //GOOD LOGIN
+                if(privateKey != null){
                     this.peerInfo.setPrivateKey(privateKey);
                 }
-                else{
-                    this.peerInfo.setPrivateKey(null);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                //FAILED LOGIN
+                else
+                    return;
             }
         }
     }

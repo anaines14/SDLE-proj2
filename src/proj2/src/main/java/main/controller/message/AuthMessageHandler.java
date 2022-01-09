@@ -69,10 +69,10 @@ public class AuthMessageHandler {
     private Message handle(RegisterMessage message) {
         String username = message.getUsername();
         UUID uuid = UUID.randomUUID();
-        if(register(username, message.getPassword()))
-            return new PrivateKeyMessage(uuid,getPrivateKey(username));
-        else
-            return new OperationFailedMessage(uuid);
+        if(register(username, message.getPassword())){
+            return new PrivateKeyMessage(uuid, getPrivateKey(username));
+        }
+        return new OperationFailedMessage(uuid);
     }
 
     private Message handle(GetPrivateKeyMessage message) {
