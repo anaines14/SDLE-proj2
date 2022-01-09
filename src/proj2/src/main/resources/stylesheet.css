@@ -16,16 +16,22 @@ node {
 }
 
 edge {
-    text-color:black;
     size:2;
     fill-color:black;
-    text-alignment:center;
-    arrow-shape: arrow;
 }
 
 edge.message {
     fill-mode: plain;
     fill-color: rgba(255,0,0,0);
+}
+
+edge.sub {
+    size:6;
+    fill-mode: plain;
+    fill-color: rgb(0,0,255);
+    arrow-shape: arrow;
+    arrow-size: 15;
+
 }
 
 node:clicked {
@@ -44,4 +50,11 @@ sprite.hit {
     size:30;
     fill-mode: image-scaled;
     fill-image: url('https://amazesussex.org.uk/wp-content/uploads/2018/07/exclamation_mark_PNG52.png');
+}
+
+sprite.post {
+    shape: rounded-box;
+    size:30;
+    fill-mode: image-scaled;
+    fill-image: url('https://cdn4.iconfinder.com/data/icons/bloggers-1-to-7-vol-PNG/512/post_it.png');
 }

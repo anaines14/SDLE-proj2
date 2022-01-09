@@ -98,6 +98,19 @@ public class GraphWrapper implements Observer{
         }
     }
 
+    // new subscription
+    public void newSubUpdate(String source, String destination) {
+        String edgeId = source + destination;
+        // if edge not in graph => add it
+        if (graph.getEdge(edgeId) == null) {
+            Edge edge = null;
+            synchronized (this.graph) {
+                edge = this.graph.addEdge(edgeId, source, destination, true);
+            }
+            edge.setAttribute("ui.class", "sub");
+        }
+    }
+
     // new query message
     public void newQueryUpdate(String source, String destination) {
         this.sendMsgView(source, destination, "query");
@@ -132,7 +145,7 @@ public class GraphWrapper implements Observer{
             synchronized (sprites) {
                 sprites.removeSprite(id);
             }
-            ;
+
             this.graph.removeEdge(id);
         } catch(IdAlreadyInUseException | EdgeRejectedException | ElementNotFoundException | InterruptedException | IndexOutOfBoundsException e ) {
             e.printStackTrace();

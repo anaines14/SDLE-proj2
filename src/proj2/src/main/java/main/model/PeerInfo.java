@@ -105,7 +105,9 @@ public class PeerInfo {
     public void removeSubscription(String username) { this.subscriptions.remove(username); }
     public boolean hasSubscription(String username) { return this.subscriptions.contains(username); }
 
-    public void addSubscriber(String username) { this.subscribers.add(username); }
+    public void addSubscriber(String username) {
+        this.subscribers.add(username);
+    }
     public void removeSubscriber(String username) { this.subscribers.remove(username); }
     public boolean canAcceptSub() { return this.subscribers.size() < this.me.getMaxSubCapacity(); }
     public boolean hasSubscriber(String username) {
@@ -121,6 +123,11 @@ public class PeerInfo {
     public void notifyNewNeighbour(Host host) {
         if (this.observer != null)
             this.observer.newEdgeUpdate(this.getPort(), host.getPort());
+    }
+
+    public void notifyNewSub(String port) {
+        if (this.observer != null)
+            this.observer.newSubUpdate(this.getPort(), port);
     }
 
     // HostCache

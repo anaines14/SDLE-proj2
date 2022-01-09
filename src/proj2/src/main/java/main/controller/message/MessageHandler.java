@@ -166,6 +166,7 @@ public class MessageHandler {
                         this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
                 this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
                 peerInfo.addSubscriber(this.sender.getUsername());
+                this.peerInfo.notifyNewSub(message.getOriginalSender().getPort());
                 return;
             }
             else if (this.peerInfo.hasSubscription(wantedUser)) {

@@ -1,11 +1,14 @@
 import main.Peer;
 import main.controller.network.Broker;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Post;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -81,10 +84,11 @@ public class RedirectPostTest {
             e.printStackTrace();
         }
 
-        System.out.println(peer1.getPostOfSubscriptions());
-//        assertTrue(peer1.getPostOfSubscriptions().get("u2").size() == 2);
-//        assertEquals(peer1.getPostOfSubscriptions().get("u2").get(0), "Uma posta");
-//        assertEquals(peer1.getPostOfSubscriptions().get("u2").get(2), "Duas postas");
+        Map<String, List<Post>> posts = peer1.getPostOfSubscriptions();
+
+        assertTrue(posts.get("u2").size() == 2);
+        assertEquals(posts.get("u2").get(0), "Uma posta");
+        assertEquals(posts.get("u2").get(2), "Duas postas");
         this.close();
     }
 }

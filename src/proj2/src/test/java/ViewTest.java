@@ -1,6 +1,8 @@
 import main.Peer;
 import main.controller.message.MessageSender;
 import main.gui.GraphWrapper;
+import main.model.neighbour.Neighbour;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -192,5 +194,46 @@ public class ViewTest {
             assertTrue(peer1.getPeerInfo().getTimelineInfo().hasTimeline(peers.get(i).getPeerInfo().getUsername()));
 
         peer1.showFeed();
+    }
+
+    @Test
+    public void subscriptionView() {
+        List<Peer> peers = setUpSubscriptions();
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Peer peer1 = peers.get(0);
+        peer1.requestSub("u2");
+        peer1.requestSub("u3");
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void redirectView() {
+    }
+
+    private List<Peer> setUpSubscriptions() {
+        List<Peer> peers = new ArrayList<>();
+        for (int i = 1; i <= 3; i++) {
+            Peer peer = new Peer("u" + i, address,  10 * i);
+            peers.add(peer);
+            peer.subscribe(this.graph);
+        }
+
+        peers.get(0).join(new Neighbour(peers.get(2).getPeerInfo().getHost()));
+        peers.get(2).join(new Neighbour(peers.get(1).getPeerInfo().getHost()));
+
+        for (Peer peer: peers)
+            peer.execute(scheduler);
+
+        return peers;
     }
 }
