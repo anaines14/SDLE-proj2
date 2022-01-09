@@ -1,9 +1,13 @@
 package main;
 
+import main.controller.message.MessageBuilder;
 import main.gui.Observer;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
+import main.model.message.Message;
+import main.model.message.auth.PrivateKeyMessage;
+import main.model.message.auth.RegisterMessage;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
 import main.model.message.request.query.SubMessage;
@@ -20,8 +24,10 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.security.PrivateKey;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
@@ -43,26 +49,23 @@ public class Peer implements Serializable {
     // Network members
     private final Broker broker;
     private final MessageSender sender;
-    private String password = "";
 
     // Hooks
     private ScheduledFuture<?> pingNeighFuture;
     private ScheduledFuture<?> addNeighFuture;
 
-    public Peer(String username, InetAddress address, int capacity) {
+
+    // CALL PEER WITH PASSWORD != "" TO REGISTER
+    public Peer(String username, String password, InetAddress address, int capacity) {
         this.context = new ZContext();
 
         this.broker = new Broker(context, address);
-        this.peerInfo = new PeerInfo(username, address, capacity, broker.getFrontendPort(), broker.getPublisherPort());
+        this.peerInfo = new PeerInfo(username, password, address, capacity, broker.getFrontendPort(), broker.getPublisherPort(),context);
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker.setSender(sender);
         this.broker.setPeerInfo(peerInfo);
     }
 
-    public Peer(String username, String password, InetAddress address, int capacity) {
-        this(username,address,capacity);
-        this.password = password;
-    }
 
     public void join(Neighbour neighbour) {
         peerInfo.addNeighbour(neighbour);
@@ -90,12 +93,39 @@ public class Peer implements Serializable {
     public void addPost(String newContent) {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
         Post addedPost = timelineInfo.addPost(peerInfo.getUsername(), newContent);
+        PrivateKey privateKey = this.peerInfo.getPrivateKey();
+        if(privateKey != null)
+            addedPost.addSignature(privateKey);
         this.broker.publishPost(addedPost);
     }
 
     public void deletePost(int postId) {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
         timelineInfo.deletePost(peerInfo.getUsername(), postId);
+    }
+
+    public void register(){
+        String username = this.peerInfo.getUsername();
+        String password = this.peerInfo.getPassword();
+        boolean register = (password != "");
+        if(register) {
+            try {
+                ZMQ.Socket authSocket= this.peerInfo.getAuthSocket();
+                authSocket.send(MessageBuilder.objectToByteArray(new RegisterMessage(UUID.randomUUID(),username,password)));
+                Message message = MessageBuilder.messageFromSocket(authSocket);
+                if(message instanceof PrivateKeyMessage){
+                    PrivateKey privateKey = ((PrivateKeyMessage) message).getPrivateKey();
+                    this.peerInfo.setPrivateKey(privateKey);
+                }
+                else{
+                    this.peerInfo.setPrivateKey(null);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void execute(ScheduledThreadPoolExecutor scheduler) {

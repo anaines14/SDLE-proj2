@@ -2,6 +2,8 @@ package main.model.timelines;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.security.*;
 import java.time.LocalTime;
 import java.util.Objects;
 
@@ -12,6 +14,7 @@ public class Post implements Serializable {
     private final int Id;
     private final LocalTime timestamp;
     private String content;
+    private byte[] sign = null;
 
     public Post(int Id, String content) {
         this.Id = Id;
@@ -46,5 +49,33 @@ public class Post implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(Id, timestamp, content);
+    }
+
+    public void addSignature(PrivateKey privateKey) {
+        try {
+            Signature signature = Signature.getInstance("SHA256withDSA");
+            signature.initSign(privateKey);
+            signature.update(this.toString().getBytes());
+            sign = signature.sign();
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public boolean verifySignature(PublicKey publicKey) {
+        try {
+            Signature signature = Signature.getInstance("SHA256withDSA");
+            signature.initVerify(publicKey);
+            signature.update(this.toString().getBytes());
+            return signature.verify(sign);
+        } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean hasSignature(){
+        return sign != null;
     }
 }

@@ -69,8 +69,10 @@ public class AuthMessageHandler {
     private Message handle(RegisterMessage message) {
         String username = message.getUsername();
         UUID uuid = UUID.randomUUID();
-        register(username, message.getPassword());
-        return new PrivateKeyMessage(uuid,getPrivateKey(username));
+        if(register(username, message.getPassword()))
+            return new PrivateKeyMessage(uuid,getPrivateKey(username));
+        else
+            return new OperationFailedMessage(uuid);
     }
 
     private Message handle(GetPrivateKeyMessage message) {
@@ -115,7 +117,7 @@ public class AuthMessageHandler {
         return false;
     }
 
-    public void register(String username, String password){
+    public boolean register(String username, String password){
 
         MessageDigest md = null;
         try {
@@ -136,9 +138,11 @@ public class AuthMessageHandler {
             usernamePassword.put(username,generatedPassword);
             KeyPair keyPair = keyPairGenerator.generateKeyPair();
             usernameToKeys.put(username,keyPair);
+            return true;
         }
         else{
             System.out.println("Already registered");
+            return false;
         }
 
     }

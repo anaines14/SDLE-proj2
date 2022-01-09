@@ -1,11 +1,21 @@
 package main.model;
 
+import main.controller.message.AuthMessageHandler;
+import main.controller.message.MessageBuilder;
 import main.gui.Observer;
+import main.model.message.Message;
+import main.model.message.auth.PrivateKeyMessage;
+import main.model.message.auth.RegisterMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.TimelineInfo;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 
+import java.io.IOException;
 import java.net.InetAddress;
+import java.security.PrivateKey;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -20,16 +30,31 @@ public class PeerInfo {
     private Set<Host> hostCache;
     private Observer observer;
 
-    public PeerInfo(String username, InetAddress address, int capacity,
-                    String port, String publishPort, TimelineInfo timelineInfo) {
+
+    //TO MOVE
+    private ZMQ.Socket authSocket;
+    private String authSocketPort;
+    private PrivateKey privateKey;
+    private String password = "";
+
+    public PeerInfo(String username, String password, InetAddress address, int capacity,
+                    String port, String publishPort, TimelineInfo timelineInfo, ZContext context) {
         this.me = new Host(username, address, port, publishPort, capacity, 0);
+        this.password = password;
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = ConcurrentHashMap.newKeySet();
+
+        //AUTH
+        this.authSocket = context.createSocket(SocketType.REP);
+        String hostName = address.getHostName();
+        this.authSocketPort = String.valueOf(authSocket.bindToRandomPort("tcp://" + hostName));
+        System.out.println("BOUND TO " + "tcp://" + hostName + ":" + authSocketPort);
+
     }
 
-    public PeerInfo(String username, InetAddress address, int capacity, String port, String publishPort) {
-        this(username, address, capacity, port, publishPort, new TimelineInfo(username));
+    public PeerInfo(String username,String password, InetAddress address, int capacity, String port, String publishPort,ZContext context) {
+        this(username, password, address, capacity, port, publishPort, new TimelineInfo(username),context);
     }
 
     // Neighbours
@@ -69,6 +94,27 @@ public class PeerInfo {
         if (this.observer != null)
             this.observer.newEdgeUpdate(this.getPort(), neighbour.getPort());
     }
+
+    public void setPrivateKey(PrivateKey privateKey) {
+        this.privateKey = privateKey;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public ZMQ.Socket getAuthSocket() {
+        return authSocket;
+    }
+
+    public String getAuthSocketPort() {
+        return authSocketPort;
+    }
+
+    public PrivateKey getPrivateKey() {
+        return privateKey;
+    }
+
 
     public void removeNeighbour(Neighbour neighbour) {
         if (!neighbours.contains(neighbour))

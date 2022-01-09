@@ -3,6 +3,7 @@ package main.model.timelines;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.*;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +17,7 @@ public class Timeline implements Serializable {
     private final String username;
     private LocalTime lastUpdate;
     private final Long clockOffset;
+    private byte[] sign = null;
 
     public Timeline(String username, Long clockOffset) {
         this.posts = new HashMap<>();
@@ -43,6 +45,10 @@ public class Timeline implements Serializable {
         return false;
     }
 
+    public boolean hasSignature(){
+        return sign != null;
+    }
+
     public LocalTime getLastUpdate() { return lastUpdate; }
 
     public boolean updatePost(int postId, String post_content) {
@@ -68,6 +74,30 @@ public class Timeline implements Serializable {
     }
 
     public String getUsername() { return this.username; }
+
+    public void addSignature(PrivateKey privateKey) {
+        try {
+            Signature signature = Signature.getInstance("SHA256withDSA");
+            signature.initSign(privateKey);
+            signature.update(this.toString().getBytes());
+            sign = signature.sign();
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public boolean verifySignature(PublicKey publicKey) {
+        try {
+            Signature signature = Signature.getInstance("SHA256withDSA");
+            signature.initVerify(publicKey);
+            signature.update(this.toString().getBytes());
+            return signature.verify(sign);
+        } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
     @Override
     public String toString() {

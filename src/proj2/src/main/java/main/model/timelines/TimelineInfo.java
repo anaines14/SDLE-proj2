@@ -92,6 +92,7 @@ public class TimelineInfo {
         } catch (IOException e) {
             System.err.println("ERROR: Failed to save timeline.");
         }
+
         return res;
     }
 

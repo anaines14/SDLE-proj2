@@ -2,6 +2,10 @@ package main.controller.message;
 
 import main.model.PeerInfo;
 import main.model.message.*;
+import main.model.message.auth.GetPublicKeyMessage;
+import main.model.message.auth.PrivateKeyMessage;
+import main.model.message.auth.PublicKeyMessage;
+import main.model.message.auth.RegisterMessage;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
 import main.model.message.request.query.QueryMessageImpl;
@@ -12,7 +16,11 @@ import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
+import org.zeromq.ZMQ;
 
+import java.io.IOException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -110,6 +118,11 @@ public class MessageHandler {
         if (ourTimelineInfo.hasTimeline(wantedUser)) { // TODO Add this to cache so that we don't resend a response
             // We have timeline, send query hit to initiator
             Timeline requestedTimeline = ourTimelineInfo.getTimeline(wantedUser);
+
+            PrivateKey privateKey = this.peerInfo.getPrivateKey();
+            if(privateKey != null)
+                requestedTimeline.addSignature(privateKey);
+
             MessageResponse queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
             this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
             return;
@@ -120,7 +133,28 @@ public class MessageHandler {
 
     private void handle(QueryHitMessage message) {
         if (promises.containsKey(message.getId())) {
-            promises.get(message.getId()).complete(message);
+            //VERIFY SIGN
+            if(message.getTimeline().hasSignature()){
+                String username = message.getTimeline().getUsername();
+                PublicKey publicKey = null;
+                    try {
+                        ZMQ.Socket authSocket= this.peerInfo.getAuthSocket();
+                        authSocket.send(MessageBuilder.objectToByteArray(new GetPublicKeyMessage(UUID.randomUUID(),username)));
+                        Message reply = MessageBuilder.messageFromSocket(authSocket);
+                        if(reply instanceof PublicKeyMessage){
+                            publicKey = ((PublicKeyMessage) reply).getPublicKey();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+
+                    //TRUE IF SIGNATURE MATCHES
+                if(message.getTimeline().verifySignature(publicKey)){
+                    promises.get(message.getId()).complete(message);
+                }
+            }
         }
     }
 
