@@ -170,21 +170,24 @@ public class MessageHandler {
                 return;
             }
             else if (this.peerInfo.hasSubscription(wantedUser)) {
-                // TODO: create socket and add to redirects
-                String redirectPubPort = this.socketInfo.addRedirect(wantedUser, this.peerInfo.getAddress());
-
-                System.out.println("BROKER ))))))))))))))) " + redirectPubPort);
+                String redirectPubPort;
+                synchronized (this.socketInfo) {
+                    if (!this.socketInfo.hasRedirect(wantedUser)) // create socket if not already redirecting posts for wanted user
+                        redirectPubPort = this.socketInfo.addRedirect(wantedUser, this.peerInfo.getAddress());
+                    else
+                        redirectPubPort = this.socketInfo.getRedirectPort(wantedUser); // fetch already crated port for wanted user
+                }
 
                 // We are subbed to the requested sub, send query hit to initiator
-                MessageResponse queryHit = new SubHitMessage(message.getId(),
+                MessageResponse subHit = new SubHitMessage(message.getId(),
                         redirectPubPort, this.peerInfo.getAddress());
-                this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+                this.sender.sendMessageNTimes(subHit, message.getOriginalSender().getPort());
                 // add subscriber to this peer
                 peerInfo.addSubscriber(this.sender.getUsername());
             }
         }
         else {
-            System.out.println("NOT ENOUGH CAPACITY");
+            System.out.println("Not enough capacity for subs. Redirecting request.");
             this.propagateQueryMessage(message);
         }
     }

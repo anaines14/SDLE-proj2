@@ -1,11 +1,17 @@
 import main.Peer;
 import main.controller.network.Broker;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Post;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import utils.TestUtils;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,9 +47,9 @@ public class RedirectPostTest {
         peer3.stop();
     }
 
-    @Test
-    public void redirectBroker() {
-
+    @AfterAll
+    static void cleanup() {
+        TestUtils.deleteDirectory(new File("stored_timelines"));
     }
 
     @Test
@@ -86,10 +92,13 @@ public class RedirectPostTest {
             e.printStackTrace();
         }
 
-        System.out.println(peer1.getPostOfSubscriptions());
-//        assertTrue(peer1.getPostOfSubscriptions().get("u2").size() == 2);
-//        assertEquals(peer1.getPostOfSubscriptions().get("u2").get(0), "Uma posta");
-//        assertEquals(peer1.getPostOfSubscriptions().get("u2").get(2), "Duas postas");
+        Map<String, List<Post>> peer1SubPosts = peer1.getPostOfSubscriptions();
+        assertTrue(peer1SubPosts.containsKey("u2"));
+
+        List<Post> posts = peer1SubPosts.get("u2");
+        assertEquals(2, posts.size());
+        assertEquals(posts.get(0).getContent(), "Uma posta");
+        assertEquals(posts.get(1).getContent(), "Duas postas");
         this.close();
     }
 }

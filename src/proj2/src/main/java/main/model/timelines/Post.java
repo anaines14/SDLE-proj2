@@ -28,6 +28,10 @@ public class Post implements Serializable {
         return true;
     }
 
+    public String getContent() {
+        return content;
+    }
+
     @Override
     public String toString() {
         return  "\t\tID: " + Id + ": " +

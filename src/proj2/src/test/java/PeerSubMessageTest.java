@@ -1,8 +1,11 @@
 import main.Peer;
 import main.model.neighbour.Neighbour;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import utils.TestUtils;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -35,6 +38,11 @@ public class PeerSubMessageTest {
         peer1.stop();
         peer2.stop();
         peer3.stop();
+    }
+
+    @AfterAll
+    static void cleanup() {
+        TestUtils.deleteDirectory(new File("stored_timelines"));
     }
 
     @Test

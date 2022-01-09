@@ -1,9 +1,12 @@
 import main.Peer;
 import main.controller.message.MessageSender;
 import main.gui.GraphWrapper;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import utils.TestUtils;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -35,6 +38,11 @@ public class GraphTest {
         } catch (UnknownHostException ignored) {}
 
         this.graph.display();
+    }
+
+    @AfterAll
+    static void cleanup() {
+        TestUtils.deleteDirectory(new File("stored_timelines"));
     }
 
     public List<Peer> nodeFactory(int numNodes) {

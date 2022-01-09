@@ -1,8 +1,11 @@
 import main.model.PeerInfo;
 import main.model.SocketInfo;
 import main.model.neighbour.Neighbour;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import utils.TestUtils;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -18,6 +21,11 @@ public class PeerInfoTest {
         assertEquals(capacity, neighbour.getCapacity());
         assertEquals(degree, neighbour.getDegree());
         //assertEquals(timelineSize, neighbour.getTimelines().size()); TODO fix
+    }
+
+    @AfterAll
+    static void cleanup() {
+        TestUtils.deleteDirectory(new File("stored_timelines"));
     }
 
     @Test

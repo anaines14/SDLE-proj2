@@ -5,6 +5,7 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import org.zeromq.ZSocket;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Map;
@@ -76,6 +77,8 @@ public class SocketInfo {
 
     public ZMQ.Socket getRedirectSocket(String username) { return this.redirects.get(username); }
 
+    public String getRedirectPort(String username) { return this.redirectPorts.get(username); }
+
     public Set<String> getSubsribedUsers() {
         return subscriptions.keySet();
     }
@@ -101,14 +104,12 @@ public class SocketInfo {
     }
 
     public String addRedirect(String username, InetAddress address) {
-
         ZMQ.Socket pub = context.createSocket(SocketType.PUB);
         String hostName = address.getHostName();
         int p = pub.bindToRandomPort("tcp://" + hostName);
         String port = Integer.toString(p);
         this.redirects.put(username, pub);
         this.redirectPorts.put(username, port);
-        System.out.println("ADDING REDIRECT =========================== " + port + " " + username);
         return port;
     }
 
