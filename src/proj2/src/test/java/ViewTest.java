@@ -3,9 +3,12 @@ import main.controller.message.MessageSender;
 import main.gui.GraphWrapper;
 import main.model.neighbour.Neighbour;
 import org.checkerframework.checker.units.qual.A;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import utils.TestUtils;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -39,6 +42,11 @@ public class ViewTest {
         } catch (UnknownHostException ignored) {}
 
         this.graph.display();
+    }
+
+    @AfterAll
+    static void cleanup() {
+        TestUtils.deleteDirectory(new File("stored_timelines"));
     }
 
     public List<Peer> nodeFactory(int numNodes) {

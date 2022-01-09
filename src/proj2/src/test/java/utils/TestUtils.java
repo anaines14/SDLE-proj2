@@ -2,7 +2,7 @@ package utils;
 
 import java.io.File;
 
-public class Utils {
+public class TestUtils {
     // https://www.baeldung.com/java-delete-directory
     public static boolean deleteDirectory(File directoryToBeDeleted) {
         File[] allContents = directoryToBeDeleted.listFiles();

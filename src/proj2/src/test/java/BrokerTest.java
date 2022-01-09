@@ -5,10 +5,13 @@ import main.model.SocketInfo;
 import main.model.message.request.PingMessage;
 import main.model.neighbour.Host;
 import main.model.timelines.Post;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.zeromq.ZContext;
+import utils.TestUtils;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -40,6 +43,11 @@ public class BrokerTest {
 
         broker.execute();
         this.sender = new MessageSender("user2", peerInfo.getPort(), 3, 500, context);
+    }
+
+    @AfterAll
+    static void cleanup() {
+        TestUtils.deleteDirectory(new File("stored_timelines"));
     }
 
     @Test

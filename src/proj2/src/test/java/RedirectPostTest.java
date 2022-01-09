@@ -2,10 +2,13 @@ import main.Peer;
 import main.controller.network.Broker;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Post;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import utils.TestUtils;
 
 import javax.sound.sampled.Port;
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -43,6 +46,11 @@ public class RedirectPostTest {
         peer1.stop();
         peer2.stop();
         peer3.stop();
+    }
+
+    @AfterAll
+    static void cleanup() {
+        TestUtils.deleteDirectory(new File("stored_timelines"));
     }
 
     @Test
