@@ -67,25 +67,22 @@ public class PeerInfo {
         if (neighbour.equals(this.me)) // We can't add ourselves as a neighbour
             return;
 
-        // System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
+        System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
         neighbours.add(neighbour);
         this.me.setDegree(neighbours.size());
         hostCache.add(neighbour); // Everytime we add a neighbour, we also add to the hostcache
-
-        if (this.observer != null)
-            this.observer.newEdgeUpdate(this.getPort(), neighbour.getPort());
     }
 
     public void removeNeighbour(Neighbour neighbour) {
         if (!neighbours.contains(neighbour))
             return;
 
-        // System.out.println(this.getUsername() + " REMOVED " + neighbour.getUsername());
+        System.out.println(this.getUsername() + " REMOVED " + neighbour.getUsername());
         neighbours.remove(neighbour);
         this.me.setDegree(neighbours.size());
 
         if (this.observer != null)
-            this.observer.removeEdgeUpdate(this.getUsername(), neighbour.getUsername());
+            this.observer.removeEdgeUpdate(this.getPort(), neighbour.getPort());
     }
 
     public Set<Neighbour> getNeighboursWithTimeline(String username) {
@@ -124,6 +121,11 @@ public class PeerInfo {
     public void subscribe(Observer o) {
         this.observer = o;
         this.observer.newNodeUpdate(this.getUsername(), this.getPort(), this.getCapacity());
+    }
+
+    public void notifyNewNeighbour(Host host) {
+        if (this.observer != null)
+            this.observer.newEdgeUpdate(this.getPort(), host.getPort());
     }
 
     // bloom filters

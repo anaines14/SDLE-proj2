@@ -133,6 +133,10 @@ public class GraphTest {
         Peer peer2 = new Peer("user2", address, 20);
         Peer peer3 = new Peer("user3", address, 3);
 
+        System.out.println(peer1.getPeerInfo().getPort());
+        System.out.println(peer2.getPeerInfo().getPort());
+        System.out.println(peer3.getPeerInfo().getPort());
+
         peer1.subscribe(this.graph);
         peer2.subscribe(this.graph);
         peer3.subscribe(this.graph);
@@ -143,6 +147,16 @@ public class GraphTest {
         peer1.execute(scheduler);
         peer2.execute(scheduler);
         peer3.execute(scheduler);
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(peer1.getPeerInfo().getNeighbours());
+        System.out.println(peer2.getPeerInfo().getNeighbours());
+        System.out.println(peer3.getPeerInfo().getNeighbours());
 
         try {
             Thread.sleep(120000);

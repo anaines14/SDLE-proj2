@@ -252,6 +252,7 @@ public class Peer implements Serializable {
         broker.removePromise(passouBem.getId());
 
         if (response.isAccepted()) {
+            this.peerInfo.notifyNewNeighbour(candidate);
             if (!neighboursFull)
                 peerInfo.addNeighbour(new Neighbour(candidate));
             else  // Can replace
