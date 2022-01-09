@@ -115,20 +115,6 @@ public class PeerInfo {
                 .filter(f -> !neighbours.contains(f))
                 .collect(Collectors.toSet());
 
-        // if we arent a super peer
-        if (!this.isSuperPeer()) {
-            for (Neighbour n: neighbours) {
-                // if we already are connected to a super peer
-                if (this.isSuperPeer(n)) {
-                    // remove super peers from set => Clusters
-                    notNeighbors = notNeighbors.stream()
-                            .filter(f -> !this.isSuperPeer(f))
-                            .collect(Collectors.toSet());
-                    break;
-                }
-            }
-        }
-
         Optional<Host> best_host = notNeighbors.stream().min(Host::compareTo);
         if(best_host.isEmpty()) return null;
         return best_host.get();
@@ -143,7 +129,7 @@ public class PeerInfo {
     // bloom filters
 
     public boolean isSuperPeer() {
-        return this.getMaxNbrs() >= SP_MIN;
+        return this.isSuperPeer(me);
     }
 
     public boolean isSuperPeer(Host host) {
