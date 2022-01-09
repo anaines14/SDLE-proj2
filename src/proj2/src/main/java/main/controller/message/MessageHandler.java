@@ -124,9 +124,9 @@ public class MessageHandler {
 
     private void handle(PassouBem message) {
         boolean neighboursFull = this.peerInfo.areNeighboursFull();
-
         boolean accepted = false;
         if (!neighboursFull) {
+            accepted = true;
             this.peerInfo.addNeighbour(new Neighbour(message.getSender()));
         } else {
             Neighbour toReplace = this.peerInfo.acceptNeighbour(message.getSender());
