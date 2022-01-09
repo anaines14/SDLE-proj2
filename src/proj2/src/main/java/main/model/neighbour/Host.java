@@ -13,18 +13,20 @@ public class Host implements Serializable, Comparable<Host> {
     // needed to add as neighbor
     private final String username;
     private int degree;
+    private int maxNbrs;
 
-    public Host(String username, InetAddress address, String port, String publishPort, int capacity, int degree) {
+    public Host(String username, InetAddress address, String port, String publishPort, int capacity, int degree, int maxNbrs) {
         this.address = address;
         this.port = port;
         this.publisherPort = publishPort;
         this.capacity = capacity;
         this.username = username;
         this.degree = degree;
+        this.maxNbrs = maxNbrs;
     }
 
     public Host(Host host) {
-        this(host.username, host.address, host.port, host.publisherPort, host.capacity, host.degree);
+        this(host.username, host.address, host.port,  host.publisherPort, host.capacity, host.degree, host.maxNbrs);
     }
 
     public InetAddress getAddress() {
@@ -49,6 +51,8 @@ public class Host implements Serializable, Comparable<Host> {
 
     public String getUsername() { return username; }
 
+    public int getMaxNbrs() { return maxNbrs; }
+
     public void setDegree(int size) {
         this.degree = size;
     }
@@ -63,7 +67,7 @@ public class Host implements Serializable, Comparable<Host> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Host host)) return false;
-        return Objects.equals(address, host.address) && Objects.equals(port, host.port);
+        return address.equals(host.address) && port.equals(host.port);
     }
 
     @Override
@@ -75,5 +79,4 @@ public class Host implements Serializable, Comparable<Host> {
     public int compareTo(Host host) {
         return Integer.compare(degree, host.degree);
     }
-
 }

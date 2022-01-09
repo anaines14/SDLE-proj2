@@ -7,24 +7,24 @@ import com.google.common.hash.Funnels;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 
 public class Neighbour extends Host implements Serializable{
-    private final BloomFilter<String> timelines;
+    private BloomFilter<String> timelines;
 
-    public Neighbour(String username, InetAddress address, String port, String frontendPort, int capacity, int degree, List<String> timelines) {
-        super(username, address, port, frontendPort, capacity, degree);
+    public Neighbour(String username, InetAddress address, String port, String frontendPort, int capacity, int degree, int maxNbrs) {
+        super(username, address, port, frontendPort, capacity, degree, maxNbrs);
         this.timelines = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
-
-        for(String str: timelines) {
-            this.timelines.put(str);
-        }
     }
 
     public Neighbour(Host host) {
         super(host);
         this.timelines = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
+    }
+
+    public Neighbour(Host host, BloomFilter<String> timelines) {
+        super(host);
+        this.timelines = timelines;
     }
 
     public boolean hasTimeline(String username) {

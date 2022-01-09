@@ -1,16 +1,19 @@
 package main.model;
 
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import main.gui.Observer;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.TimelineInfo;
 
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static main.Peer.MAX_NGBRS;
+import static main.Peer.SP_MIN;
 
 // Data class that serves like a Model in an MVC
 public class PeerInfo {
@@ -19,13 +22,17 @@ public class PeerInfo {
     private Set<Neighbour> neighbours;
     private Set<Host> hostCache;
     private Observer observer;
+    private BloomFilter<String> timelinesFilter;
+    private final int max_nbrs;
 
-    public PeerInfo(String username, InetAddress address, int capacity,
-                    String port, String publishPort, TimelineInfo timelineInfo) {
-        this.me = new Host(username, address, port, publishPort, capacity, 0);
+    public PeerInfo(String username, InetAddress address, int capacity, String port, String publishPort, TimelineInfo timelineInfo) {
+        this.max_nbrs = (int) Math.ceil(capacity * 0.3);
+        this.me = new Host(username, address, port, publishPort, capacity, 0, max_nbrs);
         this.timelineInfo = timelineInfo;
         this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = ConcurrentHashMap.newKeySet();
+        this.timelinesFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
+        this.timelinesFilter.put(username);
     }
 
     public PeerInfo(String username, InetAddress address, int capacity, String port, String publishPort) {
@@ -59,7 +66,6 @@ public class PeerInfo {
     public void addNeighbour(Neighbour neighbour) {
         if (neighbour.equals(this.me)) // We can't add ourselves as a neighbour
             return;
-        // System.out.println(this.getUsername() + " ADDED " + neighbour.getUsername());
 
         // System.out.println(this.me.getUsername() + " ADDED " + neighbour.getUsername());
         neighbours.add(neighbour);
@@ -83,8 +89,6 @@ public class PeerInfo {
     }
 
     public Set<Neighbour> getNeighboursWithTimeline(String username) {
-        for (Neighbour n: neighbours)
-            System.out.println(n.getUsername());
         return neighbours.stream().filter(n -> n.hasTimeline(username)).collect(Collectors.toSet());
     }
 
@@ -111,7 +115,6 @@ public class PeerInfo {
                 .filter(f -> !neighbours.contains(f))
                 .collect(Collectors.toSet());
 
-
         Optional<Host> best_host = notNeighbors.stream().min(Host::compareTo);
         if(best_host.isEmpty()) return null;
         return best_host.get();
@@ -121,6 +124,28 @@ public class PeerInfo {
     public void subscribe(Observer o) {
         this.observer = o;
         this.observer.newNodeUpdate(this.getUsername(), this.getPort(), this.getCapacity());
+    }
+
+    // bloom filters
+
+    public boolean isSuperPeer() {
+        return this.isSuperPeer(me);
+    }
+
+    public boolean isSuperPeer(Host host) {
+        return host.getMaxNbrs() >= SP_MIN;
+    }
+
+    public void resetFilter() {
+        this.timelinesFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
+        this.timelinesFilter.put(this.getUsername());
+    }
+
+    public void mergeFilter(Neighbour neighbour) {
+        // merge filters only if neighbour isn't a super peer
+        if (!this.isSuperPeer(neighbour)) {
+            this.timelinesFilter.putAll(neighbour.getTimelines());
+        }
     }
 
     // getters
@@ -150,7 +175,7 @@ public class PeerInfo {
     }
 
     public boolean areNeighboursFull() {
-        return this.neighbours.size() >= MAX_NGBRS;
+        return this.neighbours.size() >= max_nbrs;
     }
 
     public Set<Neighbour> getNeighbours() { return neighbours; }
@@ -166,6 +191,12 @@ public class PeerInfo {
     public TimelineInfo getTimelineInfo() {
         return timelineInfo;
     }
+
+    public int getMaxNbrs() {
+        return max_nbrs;
+    }
+
+    public BloomFilter<String> getTimelinesFilter() { return timelinesFilter; }
 
     // Returns worst neighbour if we need to replace Neighbour
     // Returns null if we can't replace candidate

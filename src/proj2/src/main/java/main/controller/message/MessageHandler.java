@@ -14,6 +14,7 @@ import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -60,7 +61,7 @@ public class MessageHandler {
     private void handle(PingMessage message) {
         // Reply with a Pong message with our info
         peerInfo.addHost(message.getSender());
-        Neighbour ourInfo = new Neighbour(peerInfo.getHost());
+        Neighbour ourInfo = new Neighbour(this.peerInfo.getHost(), this.peerInfo.getTimelinesFilter());
         boolean isNeighbour = peerInfo.hasNeighbour(new Neighbour(message.getSender()));
 
         PongMessage replyMsg = new PongMessage(ourInfo, peerInfo.getHostCache(), message.getId(), isNeighbour);
@@ -78,18 +79,18 @@ public class MessageHandler {
         if (!message.canResend()) {
             return; // Message has reached TTL 0
         }
-
         // Add ourselves to the message
         message.decreaseTtl();
         message.addToPath(new Sender(this.peerInfo));
 
-        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().filter(
-                n -> !message.isInPath(new Sender(n.getAddress(), n.getPort()))
-        ).toList();
-        System.out.print(this.peerInfo.getUsername() + " SENDING TO: ");
-        for (Neighbour n: neighbours)
-            System.out.print(n.getUsername() + " ");
-        System.out.println();
+        Set<Neighbour> ngbrsToReceive = peerInfo.getNeighbours();
+        if (this.peerInfo.isSuperPeer()) // super peer => use bloom filter
+            ngbrsToReceive = this.peerInfo.getNeighboursWithTimeline(message.getWantedUsername());
+
+        List<Neighbour> neighbours = ngbrsToReceive.stream().filter(
+                n -> !message.isInPath(new Sender(n.getAddress(), n.getPort())))
+                .toList();
+
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
         int i=0;
@@ -126,11 +127,10 @@ public class MessageHandler {
 
     private void handle(PassouBem message) {
         boolean neighboursFull = this.peerInfo.areNeighboursFull();
-
         boolean accepted = false;
         if (!neighboursFull) {
-            this.peerInfo.addNeighbour(new Neighbour(message.getSender()));
             accepted = true;
+            this.peerInfo.addNeighbour(new Neighbour(message.getSender()));
         } else {
             Neighbour toReplace = this.peerInfo.acceptNeighbour(message.getSender());
             boolean canReplace = toReplace != null;
@@ -165,10 +165,6 @@ public class MessageHandler {
             return;
         }
 
-        if (tenhoSubscription(message.getWantedSub())) { // Redirect para o gajo
-            String port = peerInfo.getNewPort(message.getWantedSub());
-
-        }
         this.propagateQueryMessage(message);
     }
 

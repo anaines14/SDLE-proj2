@@ -42,7 +42,7 @@ public class TestTimelineCleanup {
     }
 
     @Test
-    public void queryPeer() throws InterruptedException {
+    public void cleanup() throws InterruptedException {
         MessageSender.addIgnoredMsg("PING");
         MessageSender.addIgnoredMsg("PONG");
         Thread.sleep(4000); // Wait for peers to add each other as neighbours

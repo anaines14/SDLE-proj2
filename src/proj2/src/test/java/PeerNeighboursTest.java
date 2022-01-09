@@ -108,17 +108,21 @@ public class PeerNeighboursTest {
         assertEquals(0, peer.calculateSatisfaction());
 
         // test 1 neighbours
-        Neighbour n1 = new Neighbour("peer2", localhost, "8000", "8100", 4, 1, new ArrayList<>());
+        Neighbour n1 = new Neighbour("peer2", localhost, "8000", "8000", 4, 1, 3);
         peer.join(n1);
         assertEquals(0.4, peer.calculateSatisfaction());
 
         // test max neighbours
-        Neighbour n2 = new Neighbour("peer3", localhost, "8001", "8101", 4, 1, new ArrayList<>());
-        peer.join(n2);
+        int port = 8080;
+        for (int i = 1; i < peer.getPeerInfo().getMaxNbrs(); i++) {
+            port++;
+            Neighbour n2 = new Neighbour("user" + i, localhost, Integer.toString(port), Integer.toString(port), 4, 1, 3);
+            peer.join(n2);
+        }
         assertEquals(1, peer.calculateSatisfaction());
 
         // test more than max neighbours
-        Neighbour n3 = new Neighbour("peer4", localhost, "8001", "8102", 4, 1, new ArrayList<>());
+        Neighbour n3 = new Neighbour("peer4", localhost, "8001", Integer.toString(port),4, 1, 3);
         peer.join(n3);
         assertEquals(1, peer.calculateSatisfaction());
     }

@@ -42,7 +42,7 @@ public class BrokerTest {
 
     @Test
     public void testBroker() {
-        Host peer2 = new Host("user2", localhost, "8002", "8003", 10, 10);
+        Host peer2 = new Host("user2", localhost, "8002", "8002",10, 10, 3);
         assertTrue(sender.sendMessageNTimes(new PingMessage(peer2), peerInfo.getPort()));
         broker.stop();
     }

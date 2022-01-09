@@ -5,10 +5,8 @@ import org.junit.jupiter.api.Test;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PeerInfoTest {
@@ -27,13 +25,10 @@ public class PeerInfoTest {
             localhost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ignored) {}
 
-        peer1 = new PeerInfo("user1", localhost, 30, "8001", "8101");
-        List<String> timelines1 = new ArrayList<>(Arrays.asList("u1", "u2", "u3"));
-        List<String> timelines2 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4"));
-        List<String> timelines3 = new ArrayList<>(Arrays.asList("u1", "u2", "u3", "u4", "u5"));
-        Neighbour n1 = new Neighbour("u1", localhost, "8000", "8100", 50, 1, timelines1);
-        Neighbour n2 = new Neighbour("u2", localhost, "8001", "8101", 50, 3, timelines2);
-        Neighbour n3 = new Neighbour("u1", localhost, "8000", "8102",60, 4, timelines3);
+        peer1 = new PeerInfo("user1", localhost,30, "8080", "8081");
+        Neighbour n1 = new Neighbour("u1", localhost, "8000", "8100", 50, 1, 3);
+        Neighbour n2 = new Neighbour("u2", localhost, "8001", "8101", 50, 3, 3);
+        Neighbour n3 = new Neighbour("u1", localhost, "8000", "8102", 60, 4, 3);
 
         List<Neighbour> neighbours = new ArrayList<>(peer1.getNeighbours());
         assertEquals(0, neighbours.size());
