@@ -12,6 +12,7 @@ import org.zeromq.*;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.PortUnreachableException;
+import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -191,8 +192,18 @@ public class Broker {
                     ZMQ.Socket subscription = items.getSocket(2 + i);
                     try {
                         Post post = MessageBuilder.postFromSocket(subscription);
-                        this.subMessages.putIfAbsent(username, new ArrayList<>());
+                        this.subMessages.putIfAbsent(username, new CopyOnWriteArrayList<>());
                         this.subMessages.get(username).add(post);
+
+                        // check if I should redirect this post to other peers
+                        if (this.socketInfo.hasRedirect(username)) {
+                            ZMQ.Socket redirectSocket = this.socketInfo.getRedirectSocket(username);
+                            try { // send posts to the redirect PUB port
+                                redirectSocket.send(MessageBuilder.objectToByteArray(post));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     } catch (IOException | ClassNotFoundException e) {
                         e.printStackTrace();
                     }

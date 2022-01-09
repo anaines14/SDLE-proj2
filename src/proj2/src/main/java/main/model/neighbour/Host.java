@@ -5,6 +5,10 @@ import main.model.SocketInfo;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static main.Peer.MAX_SUBS;
 
 import static main.Peer.MAX_SUBS;
 
@@ -14,18 +18,23 @@ public class Host implements Serializable, Comparable<Host> {
     private final InetAddress address;
     private final int capacity; // Quantity of messages that we can handle, arbitrary for us
     private int degree; // needed to add as neighbor
-    private int subCapacity; // capacity at a given time (starts at a given number and decreases with new subs)
+    private int maxSubCapacity; // capacity at a given time (starts at a given number and decreases with new subs)
     private String port;
     private String publisherPort;
 
-    public Host(String username, InetAddress address, int capacity, int degree, int subCapacity, String port, String publisherPort) {
+    public Host(String username, InetAddress address, int capacity, int degree, int maxSubCapacity, String port, String publisherPort) {
         this.username = username;
         this.address = address;
         this.capacity = capacity;
         this.degree = degree;
-        this.subCapacity = subCapacity;
+        this.maxSubCapacity = maxSubCapacity;
         this.port = port;
         this.publisherPort = publisherPort;
+    }
+
+    public Host(String username, InetAddress address, String port, String publishPort,
+                int capacity, int degree) {
+        this(username, address, capacity, degree, MAX_SUBS, port, publishPort);
     }
 
     public Host(String username, InetAddress address, int capacity, int degree, int subCapacity) {
@@ -37,7 +46,7 @@ public class Host implements Serializable, Comparable<Host> {
     }
 
     public Host(Host host) {
-        this(host.username, host.address, host.capacity, host.degree, host.subCapacity, host.port, host.publisherPort);
+        this(host.username, host.address, host.capacity, host.degree, host.maxSubCapacity, host.port, host.publisherPort);
     }
 
     public Host(String username, InetAddress address, int capacity, int degree, int subCapacity, SocketInfo socketInfo) {
@@ -77,11 +86,10 @@ public class Host implements Serializable, Comparable<Host> {
         this.degree = size;
     }
 
-    public boolean canAcceptSub() { return this.subCapacity > 0; }
+    public int getMaxSubCapacity() { return maxSubCapacity; }
 
-    public void addSubscriber() { this.subCapacity--; }
-
-    public void removeSubscriber() { this.subCapacity++; }
+    // for testing
+    public void setMaxSubCapacity(int newCap) { this.maxSubCapacity = newCap; }
 
     @Override
     public String toString() {

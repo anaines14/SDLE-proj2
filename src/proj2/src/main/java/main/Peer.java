@@ -142,6 +142,7 @@ public class Peer implements Serializable {
         // add subscription
         if (response != null) {
             this.broker.subscribe(username, response.getAddress(), response.getPort());
+            this.peerInfo.addSubscription(username); // register subscription in peerInfo
             System.out.println(this.peerInfo.getUsername() + " SUBBED TO " + username);
         } else
             System.out.println(this.peerInfo.getUsername() + " COULDN'T SUB TO " + username);

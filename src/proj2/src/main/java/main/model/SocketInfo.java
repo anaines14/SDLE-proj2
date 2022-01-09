@@ -68,6 +68,12 @@ public class SocketInfo {
         return subscriptions.values();
     }
 
+    public Map<String, ZMQ.Socket> getRedirects() { return redirects; }
+
+    public boolean hasRedirect(String username) { return this.redirects.containsKey(username); }
+
+    public ZMQ.Socket getRedirectSocket(String username) { return this.redirects.get(username); }
+
     public Set<String> getSubsribedUsers() {
         return subscriptions.keySet();
     }
@@ -89,6 +95,10 @@ public class SocketInfo {
         subscription.setLinger(0);
         subscription.close();
         subscriptions.remove(username);
+    }
+
+    public void addRedirect(String username, InetAddress address, String port) {
+
     }
 
     public void close() {
