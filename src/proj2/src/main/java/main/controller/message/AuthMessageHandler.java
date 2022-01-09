@@ -2,10 +2,7 @@ package main.controller.message;
 
 import main.model.PeerInfo;
 import main.model.message.*;
-import main.model.message.auth.GetPrivateKeyMessage;
-import main.model.message.auth.GetPublicKeyMessage;
-import main.model.message.auth.LoginMessage;
-import main.model.message.auth.RegisterMessage;
+import main.model.message.auth.*;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
 import main.model.message.request.query.QueryMessageImpl;
@@ -16,7 +13,9 @@ import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
+import org.zeromq.ZMQ;
 
+import java.io.IOException;
 import java.security.*;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +43,7 @@ public class AuthMessageHandler {
         }
         keyPairGenerator.initialize(2048);
     }
-    public void handle(Message message) {
+    public Message handle(Message message) {
         switch (message.getType()) {
             case "LOGIN" -> handle((LoginMessage) message);
             case "REGISTER" -> handle((RegisterMessage) message);
@@ -53,26 +52,47 @@ public class AuthMessageHandler {
             default -> {
             }
         }
-    }
-
-    private void handle(LoginMessage message) {
-    }
-
-    private void handle(RegisterMessage message) {
-
-    }
-
-    private void handle(GetPrivateKeyMessage message) {
-
-    }
-
-    private void handle(GetPublicKeyMessage message) {
-
+        return new OperationFailedMessage(UUID.randomUUID());
     }
 
 
-    public boolean login(String username, String password) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("MD5");
+    private Message handle(LoginMessage message) {
+        String username = message.getUsername();
+        UUID uuid = UUID.randomUUID();
+        if(login(username,message.getPassword())){
+            return new PrivateKeyMessage(uuid,getPrivateKey(username));
+        }
+        return new OperationFailedMessage(uuid);
+
+    }
+
+    private Message handle(RegisterMessage message) {
+        String username = message.getUsername();
+        UUID uuid = UUID.randomUUID();
+        register(username, message.getPassword());
+        return new PrivateKeyMessage(uuid,getPrivateKey(username));
+    }
+
+    private Message handle(GetPrivateKeyMessage message) {
+        String username = message.getUsername();
+        UUID uuid = UUID.randomUUID();
+        return new PrivateKeyMessage(uuid,getPrivateKey(username));
+    }
+
+    private Message handle(GetPublicKeyMessage message) {
+        String username = message.getUsername();
+        UUID uuid = UUID.randomUUID();
+        return new PublicKeyMessage(uuid,getPublicKey(username));
+    }
+
+
+    public boolean login(String username, String password){
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
         md.update(password.getBytes());
         byte[] bytes = md.digest();
         StringBuilder sb = new StringBuilder();
@@ -95,9 +115,14 @@ public class AuthMessageHandler {
         return false;
     }
 
-    public void register(String username, String password) throws NoSuchAlgorithmException {
+    public void register(String username, String password){
 
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
         //Not registered
         if(!usernamePassword.containsKey(username)){
             md.update(password.getBytes());
@@ -111,7 +136,6 @@ public class AuthMessageHandler {
             usernamePassword.put(username,generatedPassword);
             KeyPair keyPair = keyPairGenerator.generateKeyPair();
             usernameToKeys.put(username,keyPair);
-
         }
         else{
             System.out.println("Already registered");

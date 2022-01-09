@@ -19,4 +19,13 @@ public class RegisterMessage extends Message {
     public String getType() {
         return "REGISTER";
     }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
 }

@@ -43,6 +43,7 @@ public class Peer implements Serializable {
     // Network members
     private final Broker broker;
     private final MessageSender sender;
+    private String password = "";
 
     // Hooks
     private ScheduledFuture<?> pingNeighFuture;
@@ -56,6 +57,11 @@ public class Peer implements Serializable {
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker.setSender(sender);
         this.broker.setPeerInfo(peerInfo);
+    }
+
+    public Peer(String username, String password, InetAddress address, int capacity) {
+        this(username,address,capacity);
+        this.password = password;
     }
 
     public void join(Neighbour neighbour) {

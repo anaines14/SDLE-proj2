@@ -18,4 +18,14 @@ public class LoginMessage extends Message {
     public String getType() {
         return "LOGIN";
     }
+
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
 }

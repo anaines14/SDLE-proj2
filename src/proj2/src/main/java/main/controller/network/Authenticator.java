@@ -38,7 +38,8 @@ public class Authenticator {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 Message message =  MessageBuilder.messageFromSocket(socket);
-                this.authHandler.handle(message);
+                Message response = this.authHandler.handle(message);
+                socket.send(MessageBuilder.objectToByteArray(response));
             } catch (ZMQException e) {
                 if (e.getErrorCode() == ZMQ.Error.ETERM.getCode() || // Context terminated
                         e.getErrorCode() == ZMQ.Error.EINTR.getCode()) // Interrupted

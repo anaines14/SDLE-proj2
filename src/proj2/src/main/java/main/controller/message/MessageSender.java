@@ -42,7 +42,7 @@ public class MessageSender {
         this(peerInfo.getUsername(), peerInfo.getPort(), maxRetries, receiveTimeout, context);
     }
 
-    public void send(Message message, ZMQ.Socket socket) {
+    public static void send(Message message, ZMQ.Socket socket) {
         byte[] bytes = new byte[0];
         try {
             bytes = MessageBuilder.objectToByteArray(message);
@@ -61,7 +61,7 @@ public class MessageSender {
         socket.setReceiveTimeOut(receiveTimeout);
         socket.connect("tcp://localhost:" + port); // TODO convert to address
 
-        this.send(message, socket);
+        send(message, socket);
 
         // notify observer
         this.notify(message, port);

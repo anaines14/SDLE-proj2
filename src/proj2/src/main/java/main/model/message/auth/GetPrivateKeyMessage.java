@@ -5,6 +5,7 @@ import main.model.message.Message;
 import java.util.UUID;
 
 public class GetPrivateKeyMessage extends Message {
+
     private String username;
 
     public GetPrivateKeyMessage(UUID id, String username) {
@@ -15,5 +16,9 @@ public class GetPrivateKeyMessage extends Message {
     @Override
     public String getType() {
         return "GETPRIVATEKEY";
+    }
+
+    public String getUsername() {
+        return username;
     }
 }
