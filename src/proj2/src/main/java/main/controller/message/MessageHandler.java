@@ -1,6 +1,5 @@
 package main.controller.message;
 
-import main.controller.network.AuthenticationServer;
 import main.controller.network.Authenticator;
 import main.model.PeerInfo;
 import main.model.SocketInfo;
@@ -16,7 +15,6 @@ import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.List;
 import java.util.Set;
@@ -136,17 +134,16 @@ public class MessageHandler {
 
     private void handle(QueryHitMessage message) {
         if (promises.containsKey(message.getId())) {
-            if (message.getTimeline().hasSignature()) { // Timeline is signed
-                if (peerInfo.isAuth()) {
-                    String username = message.getTimeline().getUsername();
-                    PublicKey publicKey = authenticator.requestPublicKey(username);
-                    assert(publicKey != null);
-                    if (message.getTimeline().verifySignature(publicKey)){
-                        promises.get(message.getId()).complete(message);
-                    }
-                }
-            } else // Timeline isn't signed => Just complete future (no need to verify signature)
-                promises.get(message.getId()).complete(message);
+            if (message.getTimeline().hasSignature() && peerInfo.isAuth()) {
+                // Timeline is signed and we can verify it
+                String username = message.getTimeline().getUsername();
+                PublicKey publicKey = authenticator.requestPublicKey(username);
+                assert(publicKey != null);
+                if (!message.getTimeline().verifySignature(publicKey))
+                    return; // Don't accept message
+            }
+
+            promises.get(message.getId()).complete(message);
         }
     }
 
