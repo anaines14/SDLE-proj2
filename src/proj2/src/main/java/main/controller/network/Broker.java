@@ -194,14 +194,16 @@ public class Broker {
                     ZMQ.Socket subscription = items.getSocket(2 + i);
                     try {
                         Post post = MessageBuilder.postFromSocket(subscription);
-                        this.subMessages.putIfAbsent(username, new CopyOnWriteArrayList<>());
 
                         if (post.hasSignature() && peerInfo.isAuth())
                             // Verify message signature
                             if (!post.verifySignature(authenticator.requestPublicKey(username)))
                                 continue; // Ignore message, invalid authentication
 
-                        this.subMessages.get(username).add(post);
+                        if(this.subMessages.containsKey(username))
+                            this.subMessages.get(username).add(post);
+                        else
+                            this.subMessages.put(username,new CopyOnWriteArrayList<>(Arrays.asList(post)));
 
                         // check if I should redirect this post to other peers
                         if (this.socketInfo.hasRedirect(username)) {

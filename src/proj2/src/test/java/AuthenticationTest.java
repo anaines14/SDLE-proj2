@@ -10,10 +10,11 @@ import java.net.UnknownHostException;
 import java.security.PrivateKey;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AuthenticationTest {
     private Peer peer1;
@@ -77,6 +78,43 @@ public class AuthenticationTest {
 
         t = peer2.requestTimeline("u1");
         assertNull(t);
+    }
 
+    @Test
+    public void signPost(){
+        peer1.register("Carlos", authenticationServer.getAddress(), authenticationServer.getSocketPort());
+        peer2.register("Outra password mega fixe", authenticationServer.getAddress(), authenticationServer.getSocketPort());
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        peer1.requestSub("u2");
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        peer2.addPost("Uma posta");
+        peer2.addPost("Duas postas");
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(2,peer1.getPostOfSubscriptions().get("u2").size());
+
+        peer2.addPost("Terceira Posta");
+        //replace private key so it doesnt match
+        //peer2.getPeerInfo().setPrivateKey(peer1.getPeerInfo().getPrivateKey());
+        peer2.addPost("Posta mal assinada");
+
+        assertNotEquals(2,peer1.getPostOfSubscriptions().get("u2").size());
     }
 }
