@@ -17,25 +17,30 @@ public class AuthenticationServer {
     private ZMQ.Socket socket;
 
     private String socketPort;
+    private Thread thread;
     private AuthMessageHandler authHandler;
 
-    public AuthenticationServer(InetAddress address) throws NoSuchAlgorithmException {
+    public AuthenticationServer(InetAddress address){
         this.context = new ZContext();
         this.socket = context.createSocket(SocketType.REP);
         this.authHandler = new AuthMessageHandler();
 
 
         String hostName = address.getHostName();
+
+        this.thread = new Thread(this::run);
         this.address = address;
         this.socketPort = String.valueOf(socket.bindToRandomPort("tcp://" + hostName));
 
         System.out.println("BOUND TO " + "tcp://" + hostName + ":" + socketPort);
 
-        run();
     }
 
+    public void execute() {
+        this.thread.start();
+    }
 
-    private void run() {
+    public void run() {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 Message message =  MessageBuilder.messageFromSocket(socket);
@@ -54,8 +59,8 @@ public class AuthenticationServer {
         }
     }
 
-    public ZMQ.Socket getSocket() {
-        return socket;
+    public InetAddress getAddress() {
+        return address;
     }
 
     public String getSocketPort() {

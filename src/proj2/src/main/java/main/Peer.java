@@ -123,9 +123,13 @@ public class Peer implements Serializable {
             return true;
         }
         else { // Fail
-            this.peerInfo.logout();
+            this.logout();
             return false;
         }
+    }
+
+    public void logout(){
+        this.peerInfo.logout();
     }
 
     public void execute(ScheduledThreadPoolExecutor scheduler) {
@@ -143,6 +147,7 @@ public class Peer implements Serializable {
 
     public void stop() {
         this.broker.stop();
+        this.authenticator.close();
         this.cancelHooks();
         this.context.close();
     }

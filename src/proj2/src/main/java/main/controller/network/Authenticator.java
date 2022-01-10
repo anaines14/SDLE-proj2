@@ -55,6 +55,10 @@ public class Authenticator {
         return null;
     }
 
+    public void close(){
+        this.authSocket.close();
+    }
+
     public PrivateKey requestPrivateKey(String username) {
         Message request = new GetPrivateKeyMessage(UUID.randomUUID(), username);
         Message reply = this.send(request);
