@@ -1,9 +1,11 @@
 import main.Peer;
 import main.controller.message.MessageSender;
-import main.model.timelines.Timeline;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import utils.TestUtils;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Time;
@@ -41,6 +43,11 @@ public class TestTimelineCleanup {
         peer1.join(peer2);
         peer2.join(peer3);
         peer3.join(peer1);
+    }
+
+    @AfterAll
+    static void runCleanup() {
+        TestUtils.deleteDirectory(new File("stored_timelines"));
     }
 
     @Test
