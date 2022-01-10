@@ -26,14 +26,16 @@ public class Broker {
     // We could use interrupts here, but it would cause too many try catches (smelly code) and JeroMQ only started
     // supporting socket interruption on receive calls recently
     private ZMQ.Socket control;
+    // Messages that we are expecting to receive, workers fill these when they receive the request
+    private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
     private final Map<String, List<Post>> subMessages; // New posts that are posted by our subs
+    private final Authenticator authenticator;
+    private PeerInfo peerInfo;
     private List<Worker> workers;
 
     private Thread thread;
-    // Messages that we are expecting to receive, workers fill these when they receive the request
-    private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
 
-    public Broker(ZContext context, InetAddress address, Authenticator authenticator){
+    public Broker(ZContext context, InetAddress address, Authenticator authenticator) {
         this.context = context;
         this.backend = context.createSocket(SocketType.ROUTER);
         this.control = context.createSocket(SocketType.PULL);
@@ -46,6 +48,7 @@ public class Broker {
         this.workers = new ArrayList<>();
         this.thread = new Thread(this::run);
         this.subMessages = new ConcurrentHashMap<>();
+        this.authenticator = authenticator;
         for(int id = 0; id < N_WORKERS; id++){
             Worker worker = new Worker(context, id, promises, socketInfo, authenticator);
             workers.add(worker);
@@ -71,6 +74,7 @@ public class Broker {
     }
 
     public void setPeerInfo(PeerInfo peerInfo) {
+        this.peerInfo = peerInfo;
         for (Worker w: workers)
             w.setPeerInfo(peerInfo);
     }
@@ -191,11 +195,16 @@ public class Broker {
                     try {
                         Post post = MessageBuilder.postFromSocket(subscription);
                         this.subMessages.putIfAbsent(username, new CopyOnWriteArrayList<>());
+
+                        if (post.hasSignature() && peerInfo.isAuth())
+                            // Verify message signature
+                            if (!post.verifySignature(authenticator.requestPublicKey(username)))
+                                continue; // Ignore message, invalid authentication
+
                         this.subMessages.get(username).add(post);
 
                         // check if I should redirect this post to other peers
                         if (this.socketInfo.hasRedirect(username)) {
-
                             ZMQ.Socket redirectSocket = this.socketInfo.getRedirectSocket(username);
                             try { // send posts to the redirect PUB port
                                 redirectSocket.send(MessageBuilder.objectToByteArray(post));
