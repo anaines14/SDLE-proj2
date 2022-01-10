@@ -1,3 +1,4 @@
+import main.controller.network.Authenticator;
 import main.controller.network.Broker;
 import main.model.PeerInfo;
 import main.controller.message.MessageSender;
@@ -15,7 +16,6 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static main.Peer.MAX_SUBS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -36,7 +36,8 @@ public class BrokerTest {
 
         context = new ZContext();
         MessageSender sender1 = new MessageSender("user1", "8083", 3, 500, context);
-        this.broker = new Broker(context, localhost);
+        Authenticator authenticator = new Authenticator(context);
+        this.broker = new Broker(context, localhost, authenticator);
         this.peerInfo = new PeerInfo("user1", localhost, 3, this.broker.getSocketInfo());
         this.broker.setSender(sender1);
         this.broker.setPeerInfo(peerInfo);
@@ -62,7 +63,8 @@ public class BrokerTest {
     public void publish() {
         // Create a new broker that subscribes to the original broker
         ZContext ctx = new ZContext();
-        Broker broker2 = new Broker(ctx, localhost);
+        Authenticator authenticator = new Authenticator(ctx);
+        Broker broker2 = new Broker(ctx, localhost, authenticator);
         PeerInfo peerInfo2 = new PeerInfo("user2", localhost, 3, broker2.getSocketInfo());
         MessageSender sender2 = new MessageSender(peerInfo2, 3, 500, ctx);
         broker2.setSender(sender2);

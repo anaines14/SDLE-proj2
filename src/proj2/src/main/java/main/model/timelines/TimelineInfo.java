@@ -30,8 +30,8 @@ public class TimelineInfo {
         NTP ntp = new NTP();
         this.clockOffset = ntp.getOffsetValue();
         // create own timeline file
-        this.timelines.put(username, new Timeline(username, clockOffset));
-
+        Timeline t = new Timeline(username, clockOffset);
+        this.timelines.put(username, t);
         this.maxKeepTime = 120; // in seconds
 
         // load timelines
@@ -112,6 +112,7 @@ public class TimelineInfo {
         } catch (IOException e) {
             System.err.println("ERROR: Failed to save timeline.");
         }
+
         return res;
     }
 

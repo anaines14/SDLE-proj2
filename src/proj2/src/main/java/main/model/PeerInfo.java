@@ -6,8 +6,12 @@ import main.gui.Observer;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
 import main.model.timelines.TimelineInfo;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 
 import java.net.InetAddress;
+import java.security.PrivateKey;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,8 +31,10 @@ public class PeerInfo {
     private Observer observer;
     private BloomFilter<String> timelinesFilter;
     private final int max_nbrs;
+    private PrivateKey privateKey;
 
-    public PeerInfo(String username, InetAddress address, int capacity, TimelineInfo timelineInfo, SocketInfo socketInfo) {
+    public PeerInfo(String username, InetAddress address, int capacity,
+                    TimelineInfo timelineInfo, SocketInfo socketInfo) {
         this.max_nbrs = (int) Math.ceil(capacity * 0.3);
         this.me = new Host(username, address, capacity, 0, max_nbrs, MAX_SUBS, socketInfo);
         this.timelineInfo = timelineInfo;
@@ -257,6 +263,22 @@ public class PeerInfo {
 
     public int getMaxNbrs() {
         return max_nbrs;
+    }
+
+    public void setPrivateKey(PrivateKey privateKey) {
+        this.privateKey = privateKey;
+    }
+
+    public PrivateKey getPrivateKey() {
+        return privateKey;
+    }
+
+    public void logout() {
+        privateKey = null;
+    }
+
+    public boolean isAuth() {
+        return privateKey != null;
     }
 
     public BloomFilter<String> getTimelinesFilter() { return timelinesFilter; }

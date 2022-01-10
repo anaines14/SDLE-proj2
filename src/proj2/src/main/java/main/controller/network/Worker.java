@@ -1,6 +1,5 @@
 package main.controller.network;
 
-import main.gui.Observer;
 import main.model.PeerInfo;
 import main.model.SocketInfo;
 import main.model.message.Message;
@@ -20,13 +19,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 
 public class Worker {
-    private MessageHandler handler;
-    private ZMQ.Socket worker;
-    private Thread thread;
+    private final MessageHandler handler;
+    private final ZMQ.Socket worker;
+    private final Thread thread;
 
-    public Worker(ZContext context, int id,
-                  ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, SocketInfo socketInfo) {
-        this.handler = new MessageHandler(promises, socketInfo);
+    public Worker(ZContext context, int id, ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises,
+                  SocketInfo socketInfo, Authenticator authenticator) {
+        this.handler = new MessageHandler(promises, socketInfo, authenticator);
         this.worker = context.createSocket(SocketType.REQ);
         this.worker.setIdentity(String.valueOf(id).getBytes(StandardCharsets.UTF_8));
         this.thread = new Thread(this::run);

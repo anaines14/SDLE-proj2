@@ -1,5 +1,6 @@
 package main.controller.message;
 
+import main.controller.network.Authenticator;
 import main.model.PeerInfo;
 import main.model.SocketInfo;
 import main.model.message.*;
@@ -14,6 +15,7 @@ import main.model.neighbour.Neighbour;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 
+import java.security.PublicKey;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -27,13 +29,16 @@ import static main.Peer.MAX_RANDOM_NEIGH;
 public class MessageHandler {
     private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
     private PeerInfo peerInfo;
-    private SocketInfo socketInfo;
+    private final SocketInfo socketInfo;
+    private Authenticator authenticator;
     private MessageSender sender;
 
-    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises, SocketInfo socketInfo) {
+    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises,
+                          SocketInfo socketInfo, Authenticator authenticator) {
         this.peerInfo = null;
         this.sender = null;
         this.socketInfo = socketInfo;
+        this.authenticator = authenticator;
         this.promises = promises;
     }
 
@@ -114,7 +119,12 @@ public class MessageHandler {
         if (ourTimelineInfo.hasTimeline(wantedUser)) { // TODO Add this to cache so that we don't resend a response
             // We have timeline, send query hit to initiator
             Timeline requestedTimeline = ourTimelineInfo.getTimeline(wantedUser);
+
+            if (peerInfo.isAuth())
+                requestedTimeline.addSignature(peerInfo.getPrivateKey());
+
             MessageResponse queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
+            System.out.println("TEST: " + requestedTimeline.hasSignature());
             this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
             return;
         }
@@ -124,6 +134,15 @@ public class MessageHandler {
 
     private void handle(QueryHitMessage message) {
         if (promises.containsKey(message.getId())) {
+            if (message.getTimeline().hasSignature() && peerInfo.isAuth()) {
+                // Timeline is signed and we can verify it
+                String username = message.getTimeline().getUsername();
+                PublicKey publicKey = authenticator.requestPublicKey(username);
+                assert(publicKey != null);
+                if (!message.getTimeline().verifySignature(publicKey))
+                    return; // Don't accept message
+            }
+
             promises.get(message.getId()).complete(message);
         }
     }

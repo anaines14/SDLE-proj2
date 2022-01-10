@@ -1,5 +1,6 @@
 package main;
 
+import main.controller.network.Authenticator;
 import main.gui.Observer;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
@@ -20,7 +21,7 @@ import org.zeromq.ZContext;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
+import java.security.PrivateKey;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
@@ -42,21 +43,25 @@ public class Peer implements Serializable {
 
     // Network members
     private final Broker broker;
+    private final Authenticator authenticator;
     private final MessageSender sender;
 
     // Hooks
     private ScheduledFuture<?> pingNeighFuture;
     private ScheduledFuture<?> addNeighFuture;
 
+
+    // CALL PEER WITH PASSWORD != "" TO REGISTER
     public Peer(String username, InetAddress address, int capacity) {
         this.context = new ZContext();
-
-        this.broker = new Broker(context, address);
+        this.authenticator = new Authenticator(context);
+        this.broker = new Broker(context, address, authenticator);
         this.peerInfo = new PeerInfo(username, address, capacity, broker.getSocketInfo());
         this.sender = new MessageSender(peerInfo, MAX_RETRY, RCV_TIMEOUT, context);
         this.broker.setSender(sender);
         this.broker.setPeerInfo(peerInfo);
     }
+
 
     public void join(Neighbour neighbour) {
         peerInfo.addNeighbour(neighbour);
@@ -84,6 +89,8 @@ public class Peer implements Serializable {
     public void addPost(String newContent) {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
         Post addedPost = timelineInfo.addPost(peerInfo.getUsername(), newContent);
+        if (peerInfo.isAuth())
+            addedPost.addSignature(peerInfo.getPrivateKey());
         this.broker.publishPost(addedPost);
         this.peerInfo.notifyNewPost();
     }
@@ -91,6 +98,38 @@ public class Peer implements Serializable {
     public void deletePost(int postId) {
         TimelineInfo timelineInfo = peerInfo.getTimelineInfo();
         timelineInfo.deletePost(peerInfo.getUsername(), postId);
+    }
+
+    public boolean register(String password, InetAddress authAddress, String authPort) {
+        String username = this.peerInfo.getUsername();
+        authenticator.connectToAuth(authAddress, authPort);
+        PrivateKey privateKey = authenticator.requestRegister(username, password);
+
+        if (privateKey != null) { // We got registered
+            this.peerInfo.setPrivateKey(privateKey);
+            return true;
+        }
+        else // Already registered
+            return this.login(password, authAddress, authPort);
+    }
+
+    public boolean login(String password, InetAddress authAddress, String authPort) {
+        String username = this.peerInfo.getUsername();
+        authenticator.connectToAuth(authAddress, authPort);
+        PrivateKey privateKey = authenticator.requestLogin(username, password);
+
+        if(privateKey != null) { // Success
+            this.peerInfo.setPrivateKey(privateKey);
+            return true;
+        }
+        else { // Fail
+            this.logout();
+            return false;
+        }
+    }
+
+    public void logout(){
+        this.peerInfo.logout();
     }
 
     public void execute(ScheduledThreadPoolExecutor scheduler) {
@@ -108,6 +147,7 @@ public class Peer implements Serializable {
 
     public void stop() {
         this.broker.stop();
+        this.authenticator.close();
         this.cancelHooks();
         this.context.close();
     }

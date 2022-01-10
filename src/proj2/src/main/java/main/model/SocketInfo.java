@@ -30,7 +30,8 @@ public class SocketInfo {
         this.frontendPort = frontendPort;
     }
 
-    public SocketInfo(ZContext context, InetAddress address, SocketType frontendType, SocketType publisherType) {
+    public SocketInfo(ZContext context, InetAddress address, SocketType frontendType,
+                      SocketType publisherType, SocketType authType) {
         this.context = context;
         this.address = address;
         String hostName = address.getHostName();
@@ -41,6 +42,7 @@ public class SocketInfo {
         this.frontendPort = String.valueOf(frontend.bindToRandomPort("tcp://" + hostName));
         this.publisherPort = String.valueOf(publisher.bindToRandomPort("tcp://" + hostName));
 
+        //AUTH
         this.subscriptions = new ConcurrentHashMap<>();
         this.redirects = new ConcurrentHashMap<>();
         this.redirectPorts = new ConcurrentHashMap<>();
