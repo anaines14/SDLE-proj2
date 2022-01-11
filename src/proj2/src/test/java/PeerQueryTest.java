@@ -63,9 +63,11 @@ public class PeerQueryTest {
         Timeline peer5Timeline = peer1.requestTimeline("u5");
         assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
         // check if peer1 saved timeline
-        assertEquals(peer1.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
+        peer5.stop();
+        Thread.sleep(2000);
+        Timeline peer5Timeline2 = peer3.requestTimeline("u5");
+        assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline2);
 
-        peer1.stop();
         peer2.stop();
         peer3.stop();
         peer4.stop();
