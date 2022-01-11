@@ -84,6 +84,7 @@ public class TestApp {
                 \t TIMELINE <username> <req_timeline>
                 \t SUB <username> <target_username>
                 \t IGNORE <message>
+                \t MSG_DELAY <value>
                 \t PRINT <username>
                 \t PRINT_PEERS
                 \t STOP <username>

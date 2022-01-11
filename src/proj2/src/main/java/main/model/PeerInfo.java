@@ -27,6 +27,7 @@ public class PeerInfo {
     private Set<Neighbour> neighbours;
     private Set<String> subscriptions; // peers subscribed by me
     private final Set<String> subscribers;
+    private final Map<String, Set<String>> redirections; // peers that are relaying on me to redirect info from a username
     private Set<Host> hostCache;
     private Observer observer;
     private BloomFilter<String> timelinesFilter;
@@ -41,6 +42,7 @@ public class PeerInfo {
         this.neighbours = ConcurrentHashMap.newKeySet();
         this.hostCache = ConcurrentHashMap.newKeySet();
         this.subscriptions = ConcurrentHashMap.newKeySet();
+        this.redirections = new ConcurrentHashMap<>();
         this.subscribers = ConcurrentHashMap.newKeySet();
         this.timelinesFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100);
         this.timelinesFilter.put(username);
@@ -113,9 +115,13 @@ public class PeerInfo {
 
     public void addSubscriber(String port) { this.subscribers.add(port); }
     public void removeSubscriber(String username) { this.subscribers.remove(username); }
-    public boolean canAcceptSub() { return this.subscribers.size() < this.me.getMaxSubCapacity(); }
+    public boolean canAcceptSub() { return this.subscribers.size() + this.redirections.size() < this.me.getMaxSubCapacity(); }
     public boolean hasSubscriber(String port) {
         return this.subscribers.contains(port);
+    }
+    public void addRedirect(String username, String port) {
+        this.redirections.putIfAbsent(username, new HashSet<>());
+        this.redirections.get(username).add(port);
     }
 
     // observers
@@ -137,6 +143,13 @@ public class PeerInfo {
     public void notifyNewPost() {
         if (this.observer != null)
             this.observer.newPostUpdate(this.getPort(), this.subscribers);
+    }
+
+    public void notifyNewPost(String usernameRedirect) {
+        if (this.observer != null) {
+            System.out.println(this.getUsername() + " NOTIFYING THE ALL " + this.redirections.size());
+            this.observer.newPostUpdate(this.getPort(), this.redirections.get(usernameRedirect));
+        }
     }
 
     // HostCache

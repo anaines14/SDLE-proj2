@@ -205,7 +205,6 @@ public class Broker {
 
                     this.subMessages.putIfAbsent(username, new CopyOnWriteArrayList<>());
                     this.subMessages.get(username).add(post);
-
                     // check if I should redirect this post to other peers
                     if (this.socketInfo.hasRedirect(username)) {
                         // TODO Add Here graph representation of redirects to subscribed redirects
@@ -215,6 +214,7 @@ public class Broker {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                        this.peerInfo.notifyNewPost(username);
                     }
                 }
                 ++i;

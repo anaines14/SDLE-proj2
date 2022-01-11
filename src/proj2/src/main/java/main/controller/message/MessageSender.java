@@ -23,6 +23,7 @@ public class MessageSender {
 
     // Used for testng
     private static List<String> ignoredMessages = new ArrayList<>();
+    private static Integer timeout=0;
     public static void removeIgnoredMsg(String msgType) {
         ignoredMessages.remove(msgType);
     }
@@ -50,6 +51,15 @@ public class MessageSender {
             e.printStackTrace();
         }
         socket.send(bytes);
+        if (timeout != 0) {
+            try {
+                Thread.sleep(timeout);
+            } catch (InterruptedException ignored) {}
+        }
+    }
+
+    public static void addDelay(Integer value) {
+        timeout = value;
     }
 
     public void setPort(String frontendPort) {

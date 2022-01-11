@@ -185,8 +185,7 @@ public class MessageHandler {
                 this.sender.sendMessageNTimes(subHit, message.getOriginalSender().getPort());
                 peerInfo.addSubscriber(message.getOriginalSender().getPort());
                 return;
-            }
-            else if (this.peerInfo.hasSubscription(wantedUser)) {
+            } else if (this.peerInfo.hasSubscription(wantedUser)) {
                 // TODO: create socket and add to redirects
                 String redirectPubPort = this.socketInfo.addRedirect(wantedUser, this.peerInfo.getAddress());
 
@@ -195,7 +194,7 @@ public class MessageHandler {
                         redirectPubPort, this.peerInfo.getAddress());
                 this.sender.sendMessageNTimes(subHit, message.getOriginalSender().getPort());
                 // add subscriber to this peer
-                peerInfo.addSubscriber(message.getOriginalSender().getPort());
+                peerInfo.addRedirect(wantedUser, message.getOriginalSender().getPort());
                 return;
             }
         }

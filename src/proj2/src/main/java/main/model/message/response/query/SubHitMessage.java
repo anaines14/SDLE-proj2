@@ -20,6 +20,10 @@ public class SubHitMessage extends QueryResponseImpl {
         return port;
     }
 
+    public String getPublishPort() {
+        return publishPort;
+    }
+
     public InetAddress getAddress() {
         return address;
     }

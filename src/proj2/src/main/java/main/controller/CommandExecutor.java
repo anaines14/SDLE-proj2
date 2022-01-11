@@ -49,6 +49,8 @@ public class CommandExecutor {
                 return this.execSub(opts);
             case "IGNORE":
                 return this.execIgnore(opts);
+            case "MSG_TIMEOUT":
+                return this.execDelay(opts);
             case "PRINT":
                 return this.execPrint(opts);
             case "PRINT_PEERS":
@@ -270,6 +272,12 @@ public class CommandExecutor {
         return 0;
     }
 
+    private int execDelay(String[] opts) {
+        Integer value = Integer.parseInt(opts[1]);
+
+        MessageSender.addDelay(value);
+        return 0;
+    }
 
     private int execPrint(String[] opts) {
         if (opts.length < 2) return -1;

@@ -2,6 +2,7 @@ ignore PING
 ignore PONG
 ignore PASSOU_BEM
 ignore PASSOU_BEM_RESPONSE
+add_timeout 1000
 start S1 30
 start N1 3
 start N2 3
