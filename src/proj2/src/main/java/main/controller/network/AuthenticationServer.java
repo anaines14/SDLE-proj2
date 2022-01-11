@@ -3,13 +3,10 @@ package main.controller.network;
 import main.controller.message.AuthMessageHandler;
 import main.controller.message.MessageBuilder;
 import main.model.message.Message;
-import main.model.message.auth.*;
 import org.zeromq.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.security.*;
-import java.util.UUID;
 
 public class AuthenticationServer {
     private final InetAddress address;
