@@ -124,7 +124,6 @@ public class MessageHandler {
                 requestedTimeline.addSignature(peerInfo.getPrivateKey());
 
             MessageResponse queryHit = new QueryHitMessage(message.getId(), requestedTimeline);
-            System.out.println("TEST: " + requestedTimeline.hasSignature());
             this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
             return;
         }
