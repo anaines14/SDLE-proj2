@@ -92,20 +92,6 @@ public class AuthMessageHandler {
 
 
     public boolean login(String username, String password){
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        md.update(password.getBytes());
-        byte[] bytes = md.digest();
-        StringBuilder sb = new StringBuilder();
-        for (byte aByte : bytes) {
-            sb.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
-        }
-        String generatedPassword = sb.toString();
-        System.out.println("generated pwd " + generatedPassword);
 
         // username not registered
         if(usernamePassword.get(username) == null){
@@ -113,7 +99,7 @@ public class AuthMessageHandler {
             return false;
         }
         //passwords match logging in
-        if(usernamePassword.get(username).equals(generatedPassword)){
+        if(usernamePassword.get(username).equals(password)){
             System.out.println("Passwords match, easy clap");
             return true;
         }
@@ -121,24 +107,8 @@ public class AuthMessageHandler {
     }
 
     public boolean register(String username, String password){
-
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        //Not registered
         if(!usernamePassword.containsKey(username)){
-            md.update(password.getBytes());
-            byte[] bytes = md.digest();
-            StringBuilder sb = new StringBuilder();
-            for(int i = 0;i< bytes.length; i++){
-                sb.append(Integer.toString((bytes[i] & 0xff) + 0x100,16).substring(1));
-            }
-            String generatedPassword = sb.toString();
-            System.out.println("generated pwd " + generatedPassword);
-            usernamePassword.put(username,generatedPassword);
+            usernamePassword.put(username,password);
             KeyPair keyPair = keyPairGenerator.generateKeyPair();
             usernameToKeys.put(username,keyPair);
             return true;

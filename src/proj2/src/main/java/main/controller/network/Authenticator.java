@@ -10,6 +10,8 @@ import org.zeromq.ZMQ;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.UUID;
@@ -70,7 +72,8 @@ public class Authenticator {
     }
 
     public PrivateKey requestRegister(String username, String password) {
-        Message request = new RegisterMessage(UUID.randomUUID(),username,password);
+        String hashedPassword = this.hashPassword(password);
+        Message request = new RegisterMessage(UUID.randomUUID(),username,hashedPassword);
         Message reply = this.send(request);
 
         if(reply instanceof PrivateKeyMessage){
@@ -80,7 +83,8 @@ public class Authenticator {
     }
 
     public PrivateKey requestLogin(String username, String password) {
-        Message request = new LoginMessage(UUID.randomUUID(),username,password);
+        String hashedPassword = this.hashPassword(password);
+        Message request = new LoginMessage(UUID.randomUUID(),username,hashedPassword);
         Message reply = this.send(request);
 
         if(reply instanceof PrivateKeyMessage) {
@@ -88,4 +92,27 @@ public class Authenticator {
         }
         return null;
     }
+
+    private String hashPassword(String password) {
+
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        md.update(password.getBytes());
+        byte[] bytes = md.digest();
+        StringBuilder sb = new StringBuilder();
+        for (byte aByte : bytes) {
+            sb.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
+        }
+        String generatedPassword = sb.toString();
+        System.out.println("generated pwd " + generatedPassword);
+        return generatedPassword;
+
+
+    }
 }
+
+
