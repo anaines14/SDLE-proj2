@@ -187,7 +187,7 @@ public class PeerInfo {
         // candidate has higher capacity than every neighbour
         boolean candidateHigherCap = candidate.getCapacity() > highestCapNgbr.getCapacity();
         // candidate has fewer neighbours
-        int hysteresis = 0;
+        int hysteresis = 3;
         boolean candidateFewerNeighs = candidate.getDegree() + hysteresis < highestDegNeigh.getDegree();
 
         if (candidateHigherCap || candidateFewerNeighs)

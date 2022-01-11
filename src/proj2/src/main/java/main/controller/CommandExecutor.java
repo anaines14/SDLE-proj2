@@ -1,6 +1,7 @@
 package main.controller;
 
 import main.Peer;
+import main.controller.message.MessageSender;
 import main.gui.GraphWrapper;
 import main.model.neighbour.Neighbour;
 
@@ -46,6 +47,8 @@ public class CommandExecutor {
                 return this.execTimeline(opts);
             case "SUB":
                 return this.execSub(opts);
+            case "IGNORE":
+                return this.execIgnore(opts);
             case "PRINT":
                 return this.execPrint(opts);
             case "PRINT_PEERS":
@@ -59,7 +62,6 @@ public class CommandExecutor {
 
         }
     }
-
 
     private int execStart(String[] opts) throws UnknownHostException {
         if (opts.length < 3) return -1;
@@ -259,6 +261,14 @@ public class CommandExecutor {
         peer.requestSub(target_user);
         return 0;
     }
+
+    private int execIgnore(String[] opts) {
+        String message = opts[1];
+
+        MessageSender.addIgnoredMsg(message);
+        return 0;
+    }
+
 
     private int execPrint(String[] opts) {
         if (opts.length < 2) return -1;

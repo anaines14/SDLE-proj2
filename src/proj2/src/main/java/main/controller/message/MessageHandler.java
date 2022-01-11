@@ -199,11 +199,11 @@ public class MessageHandler {
                 // add subscriber to this peer
                 peerInfo.addSubscriber(message.getOriginalSender().getPort());
                 this.peerInfo.notifyNewSub(message.getOriginalSender().getPort());
+                return;
             }
         }
-        else {
-            this.propagateQueryMessage(message);
-        }
+
+        this.propagateQueryMessage(message);
     }
 
     private void handle(SubHitMessage message) {

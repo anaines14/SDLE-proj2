@@ -1,0 +1,23 @@
+ignore PING
+ignore PONG
+ignore PASSOU_BEM
+ignore PASSOU_BEM_RESPONSE
+start A 10
+start B 10
+start C 10
+start D 10
+start E 10
+start F 10
+start G 10
+start H 10
+start I 10
+start J 10
+sleep 4
+sub A B
+sub C B
+sub I B
+sleep 1
+POST B "content"
+sleep 100
+print cucs
+stop_all

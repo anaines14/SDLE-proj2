@@ -115,7 +115,6 @@ public class Broker {
     public void publishPost(Post post) {
         try {
             ZMQ.Socket publisher = this.socketInfo.getPublisher();
-            System.out.println("SENDING " + socketInfo.getPublisherPort());
             publisher.send(MessageBuilder.objectToByteArray(post));
         } catch (IOException e) { // Thrown when we don't receive a post
             e.printStackTrace();
@@ -210,6 +209,7 @@ public class Broker {
 
                     // check if I should redirect this post to other peers
                     if (this.socketInfo.hasRedirect(username)) {
+                        // TODO Add Here graph representation of redirects to subscribed redirects
                         ZMQ.Socket redirectSocket = this.socketInfo.getRedirectSocket(username);
                         try { // send posts to the redirect PUB port
                             redirectSocket.send(MessageBuilder.objectToByteArray(post));

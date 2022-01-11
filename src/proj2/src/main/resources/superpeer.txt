@@ -1,0 +1,22 @@
+ignore PING
+ignore PONG
+ignore PASSOU_BEM
+ignore PASSOU_BEM_RESPONSE
+start S1 30
+start N1 3
+start N2 3
+start N3 3
+start S2 30
+start N4 3
+start N5 3
+start N6 3
+start S3 30
+start N7 3
+start N8 3
+start N9 3
+sleep 1
+post N1 "uma posta"
+TIMELINE N9 N1
+sleep 100
+print cucs
+stop_all
