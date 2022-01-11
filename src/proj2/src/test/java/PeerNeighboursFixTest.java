@@ -1,5 +1,3 @@
-package utils;
-
 import main.Peer;
 import main.gui.GraphWrapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,10 +26,10 @@ public class PeerNeighboursFixTest {
             address = InetAddress.getByName("127.0.0.1");
         } catch (UnknownHostException ignored) {}
 
-        this.peer1 = new Peer("u1", address, 9);
-        this.peer2 = new Peer("u2", address, 6);
-        this.peer3 = new Peer("u3", address, 6);
-        this.peer4 = new Peer("u4", address, 6);
+        this.peer1 = new Peer("u1", address, 12);
+        this.peer2 = new Peer("u2", address, 3);
+        this.peer3 = new Peer("u3", address, 3);
+        this.peer4 = new Peer("u4", address, 3);
         loadPeer(peer1);
         loadPeer(peer2);
         loadPeer(peer3);

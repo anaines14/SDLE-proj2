@@ -72,6 +72,7 @@ public class CommandExecutor {
 
         InetAddress address = InetAddress.getByName("localhost");
         Peer peer = new Peer(username, address, capacity);
+        System.out.println("INIT " + username + " " + peer.getPeerInfo().getPort() + " " + peer.getPeerInfo().getPublishPort());
 
         startPeer(username, peer);
 

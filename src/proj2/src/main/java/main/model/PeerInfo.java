@@ -131,7 +131,7 @@ public class PeerInfo {
 
     public void notifyNewSub(String port) {
         if (this.observer != null)
-            this.observer.newSubUpdate(this.getPort(), port);
+            this.observer.newSubUpdate(port, this.getPort());
     }
 
     public void notifyNewPost() {

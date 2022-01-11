@@ -5,12 +5,14 @@ import java.util.UUID;
 
 public class SubHitMessage extends QueryResponseImpl {
     public static final String type = "SUB_HIT";
+    private final String publishPort;
     private final String port;
     private final InetAddress address;
 
-    public SubHitMessage(UUID id, String port, InetAddress address) {
+    public SubHitMessage(UUID id, String port, String publishPort, InetAddress address) {
         super(id);
         this.port = port;
+        this.publishPort = publishPort;
         this.address = address;
     }
 

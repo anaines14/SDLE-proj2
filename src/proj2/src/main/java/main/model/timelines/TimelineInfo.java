@@ -28,6 +28,7 @@ public class TimelineInfo {
         this.me = username;
 
         NTP ntp = new NTP();
+        ntp.updateOffsets();
         this.clockOffset = ntp.getOffsetValue();
         // create own timeline file
         Timeline t = new Timeline(username, clockOffset);

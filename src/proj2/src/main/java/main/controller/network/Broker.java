@@ -102,7 +102,6 @@ public class Broker {
     }
 
     public void subscribe(String username, InetAddress address, String port) {
-        System.out.println("SUBBED TO " + port);
         socketInfo.addSubscription(username, address, port);
         this.sendToControl("NEW_SUB");
     }

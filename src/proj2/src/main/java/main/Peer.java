@@ -183,7 +183,8 @@ public class Peer implements Serializable {
         if (response != null) {
             this.broker.subscribe(username, response.getAddress(), response.getPort());
             this.peerInfo.addSubscription(username); // register subscription in peerInfo
-            System.out.println(this.peerInfo.getUsername() + " SUBBED TO " + username);
+            this.peerInfo.notifyNewSub(response.getPort());
+            System.out.println(this.peerInfo.getUsername() + " SUBBED TO " + username + " ON " + response.getPort());
         } else
             System.out.println(this.peerInfo.getUsername() + " COULDN'T SUB TO " + username);
     }
@@ -309,7 +310,6 @@ public class Peer implements Serializable {
             return 0;
         if (this.peerInfo.areNeighboursFull())
             return 1;
-        System.out.println(neighbours.size());
         int total = 0;
         for (Neighbour n: neighbours) {
             total += n.getCapacity()/num_neighbours;

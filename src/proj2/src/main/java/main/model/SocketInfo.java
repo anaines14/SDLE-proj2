@@ -90,7 +90,6 @@ public class SocketInfo {
         ZMQ.Socket subscription = context.createSocket(SocketType.SUB);
         String hostName = address.getHostName();
         subscription.connect("tcp://" + hostName + ":" + port);
-        System.out.println("SUBBED TO " + "tcp://" + hostName + ":" + port);
         subscription.subscribe("".getBytes());
         this.subscriptions.put(username, subscription);
     }
@@ -103,7 +102,6 @@ public class SocketInfo {
     }
 
     public String addRedirect(String username, InetAddress address) {
-
         ZMQ.Socket pub = context.createSocket(SocketType.PUB);
         String hostName = address.getHostName();
         int p = pub.bindToRandomPort("tcp://" + hostName);

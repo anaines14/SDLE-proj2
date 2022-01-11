@@ -180,11 +180,10 @@ public class MessageHandler {
         if (peerInfo.canAcceptSub()) {
             if (wantedUser.equals(this.peerInfo.getUsername())) { // TODO Add this to cache so that we don't resend a response
                 // We are the requested sub, send query hit to initiator
-                MessageResponse queryHit = new SubHitMessage(message.getId(),
+                MessageResponse subHit = new SubHitMessage(message.getId(), this.peerInfo.getPort(),
                         this.peerInfo.getPublishPort(), this.peerInfo.getAddress());
-                this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+                this.sender.sendMessageNTimes(subHit, message.getOriginalSender().getPort());
                 peerInfo.addSubscriber(message.getOriginalSender().getPort());
-                this.peerInfo.notifyNewSub(message.getOriginalSender().getPort());
                 return;
             }
             else if (this.peerInfo.hasSubscription(wantedUser)) {
@@ -192,12 +191,11 @@ public class MessageHandler {
                 String redirectPubPort = this.socketInfo.addRedirect(wantedUser, this.peerInfo.getAddress());
 
                 // We are subbed to the requested sub, send query hit to initiator
-                MessageResponse queryHit = new SubHitMessage(message.getId(),
+                MessageResponse subHit = new SubHitMessage(message.getId(), this.peerInfo.getPort(),
                         redirectPubPort, this.peerInfo.getAddress());
-                this.sender.sendMessageNTimes(queryHit, message.getOriginalSender().getPort());
+                this.sender.sendMessageNTimes(subHit, message.getOriginalSender().getPort());
                 // add subscriber to this peer
                 peerInfo.addSubscriber(message.getOriginalSender().getPort());
-                this.peerInfo.notifyNewSub(message.getOriginalSender().getPort());
                 return;
             }
         }

@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 
 
-public class GraphWrapper implements Observer{
+public class GraphWrapper implements Observer {
     private final Graph graph;
     private final SpriteManager sprites;
 
@@ -102,7 +102,7 @@ public class GraphWrapper implements Observer{
     // new subscription
     public void newSubUpdate(String source, String destination) {
         String edgeId = source + destination + "sub";
-        System.out.println("IDSUB: " + edgeId);
+        // System.out.println("IDSUB: " + edgeId);
         // if edge not in graph => add it
         if (graph.getEdge(edgeId) == null) {
             Edge edge = null;
