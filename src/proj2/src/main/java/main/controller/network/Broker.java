@@ -192,30 +192,30 @@ public class Broker {
             for (String username : subscribedUsers) {
                 if (items.pollin(2 + i)) { // Received post from subscription
                     ZMQ.Socket subscription = items.getSocket(2 + i);
+                    Post post = null;
                     try {
-                        Post post = MessageBuilder.postFromSocket(subscription);
-
-                        if (post.hasSignature() && peerInfo.isAuth())
-                            // Verify message signature
-                            if (!post.verifySignature(authenticator.requestPublicKey(username)))
-                                continue; // Ignore message, invalid authentication
-
-                        if(this.subMessages.containsKey(username))
-                            this.subMessages.get(username).add(post);
-                        else
-                            this.subMessages.put(username,new CopyOnWriteArrayList<>(Arrays.asList(post)));
-
-                        // check if I should redirect this post to other peers
-                        if (this.socketInfo.hasRedirect(username)) {
-                            ZMQ.Socket redirectSocket = this.socketInfo.getRedirectSocket(username);
-                            try { // send posts to the redirect PUB port
-                                redirectSocket.send(MessageBuilder.objectToByteArray(post));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
+                        post = MessageBuilder.postFromSocket(subscription);
                     } catch (IOException | ClassNotFoundException e) {
                         e.printStackTrace();
+                        continue;
+                    }
+
+                    if (post.hasSignature() && peerInfo.isAuth())
+                        // Verify message signature
+                        if (!post.verifySignature(authenticator.requestPublicKey(username)))
+                            continue; // Ignore message, invalid authentication
+
+                    this.subMessages.putIfAbsent(username, new CopyOnWriteArrayList<>());
+                    this.subMessages.get(username).add(post);
+
+                    // check if I should redirect this post to other peers
+                    if (this.socketInfo.hasRedirect(username)) {
+                        ZMQ.Socket redirectSocket = this.socketInfo.getRedirectSocket(username);
+                        try { // send posts to the redirect PUB port
+                            redirectSocket.send(MessageBuilder.objectToByteArray(post));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
                 ++i;

@@ -108,13 +108,18 @@ public class AuthenticationTest {
             e.printStackTrace();
         }
 
-        assertEquals(2,peer1.getPostOfSubscriptions().get("u2").size());
+        assertEquals(2, peer1.getPostOfSubscriptions().get("u2").size());
 
         peer2.addPost("Terceira Posta");
-        //replace private key so it doesnt match
-        //peer2.getPeerInfo().setPrivateKey(peer1.getPeerInfo().getPrivateKey());
+        // replace private key so it doesnt match
+        peer2.getPeerInfo().setPrivateKey(peer1.getPeerInfo().getPrivateKey());
         peer2.addPost("Posta mal assinada");
 
-        assertNotEquals(2,peer1.getPostOfSubscriptions().get("u2").size());
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        assertNotEquals(2, peer1.getPostOfSubscriptions().get("u2").size());
     }
 }
