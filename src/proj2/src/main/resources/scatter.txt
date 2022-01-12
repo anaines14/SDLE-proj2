@@ -12,12 +12,20 @@ start G 10
 start H 10
 start I 10
 start J 10
-sleep 4
-sub A B
+sleep 10
 sub C B
-sub I B
+sub A B
+sub A C
+sub A D
+sub A E
+sub A F
+listen A
 sleep 1
-POST B "content"
+POST B "Posta 1"
+POST C "Posta 2"
+POST D "Posta 3"
+POST E "Posta 4"
+POST F "Posta 5"
 sleep 100
 print cucs
 stop_all

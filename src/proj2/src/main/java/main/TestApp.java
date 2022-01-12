@@ -85,6 +85,7 @@ public class TestApp {
                 \t SUB <username> <target_username>
                 \t IGNORE <message>
                 \t MSG_DELAY <value>
+                \t LISTEN <username>
                 \t PRINT <username>
                 \t PRINT_PEERS
                 \t STOP <username>

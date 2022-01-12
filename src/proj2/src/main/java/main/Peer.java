@@ -357,4 +357,12 @@ public class Peer implements Serializable {
     public int hashCode() {
         return Objects.hash(peerInfo);
     }
+
+    public void addContentListening() {
+        this.peerInfo.addContentListening();
+    }
+
+    public void stopContentListening() {
+        this.peerInfo.stopContentListening();
+    }
 }

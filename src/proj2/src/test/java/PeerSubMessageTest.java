@@ -1,4 +1,5 @@
 import main.Peer;
+import main.controller.message.MessageSender;
 import main.model.neighbour.Neighbour;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,10 @@ public class PeerSubMessageTest {
 
     @BeforeEach
     public void setUp() {
+        MessageSender.addIgnoredMsg("PING");
+        MessageSender.addIgnoredMsg("PONG");
+        MessageSender.addIgnoredMsg("PASSOU_BEM");
+        MessageSender.addIgnoredMsg("PASSOU_BEM_RESPONSE");
         InetAddress localhost = null;
         try {
             localhost = InetAddress.getByName("localhost");
@@ -57,6 +62,7 @@ public class PeerSubMessageTest {
         }
 
         peer1.requestSub("u2");
+        peer2.requestSub("u3");
         peer1.requestSub("u3");
 
         try {
@@ -78,7 +84,8 @@ public class PeerSubMessageTest {
             e.printStackTrace();
         }
 
-        System.out.println(peer1.getPostOfSubscriptions());
+        System.out.println("P1: " + peer1.getPostOfSubscriptions());
+        System.out.println("P2: " + peer2.getPostOfSubscriptions());
 
         this.close();
     }

@@ -16,6 +16,7 @@ public class CommandExecutor {
     private final Map<String, Peer> peers;
     private int curr_peer_id;
     private final GraphWrapper graph;
+    private Peer currPeerListening;
 
     public CommandExecutor() {
         this.peers = new HashMap<>();
@@ -23,6 +24,7 @@ public class CommandExecutor {
         this.curr_peer_id = 1;
         this.graph = new GraphWrapper("Network");
         this.executor.execute();
+        this.currPeerListening = null;
     }
 
     public int execCmd(String cmd) throws UnknownHostException, InterruptedException {
@@ -51,6 +53,8 @@ public class CommandExecutor {
                 return this.execIgnore(opts);
             case "MSG_TIMEOUT":
                 return this.execDelay(opts);
+            case "LISTEN":
+                return this.execListen(opts);
             case "PRINT":
                 return this.execPrint(opts);
             case "PRINT_PEERS":
@@ -278,6 +282,18 @@ public class CommandExecutor {
         MessageSender.addDelay(value);
         return 0;
     }
+
+    private int execListen(String[] opts) {
+        String username = opts[1];
+
+        if (currPeerListening != null)
+            currPeerListening.stopContentListening();
+
+        currPeerListening = peers.get(username);
+        currPeerListening.addContentListening();
+        return 0;
+    }
+
 
     private int execPrint(String[] opts) {
         if (opts.length < 2) return -1;
