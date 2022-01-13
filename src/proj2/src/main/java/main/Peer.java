@@ -184,6 +184,13 @@ public class Peer implements Serializable {
             this.broker.subscribe(username, response.getAddress(), response.getPublishPort());
             this.peerInfo.addSubscription(username); // register subscription in peerInfo
             this.peerInfo.notifyNewSub(response.getPort());
+
+            // create timeline for subscription if not exists
+            TimelineInfo myTimelineInfos = this.peerInfo.getTimelineInfo();
+            if (!myTimelineInfos.hasTimeline(username)){
+                Timeline timeline = new Timeline(username, myTimelineInfos.getClockOffset());
+                this.addTimeline(timeline);
+            }
             System.out.println(this.peerInfo.getUsername() + " SUBBED TO " + username + " ON " + response.getPort());
         } else
             System.out.println(this.peerInfo.getUsername() + " COULDN'T SUB TO " + username);

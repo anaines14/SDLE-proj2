@@ -76,13 +76,14 @@ public class PeerSubMessageTest {
 
         peer2.addPost("Uma posta");
         peer3.addPost("Duas postas");
-        peer2.addPost("Duas postas");
 
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        assertEquals(peer1.getPeerInfo().getTimelineInfo().getTimeline("u2").getPosts().get(0).getContent(), "Uma posta");
 
         System.out.println("P1: " + peer1.getPostOfSubscriptions());
         System.out.println("P2: " + peer2.getPostOfSubscriptions());

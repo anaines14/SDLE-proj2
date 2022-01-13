@@ -5,6 +5,7 @@ import com.google.common.hash.Funnels;
 import main.gui.Observer;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Post;
 import main.model.timelines.TimelineInfo;
 
 import java.net.InetAddress;
@@ -111,6 +112,9 @@ public class PeerInfo {
     public void addSubscription(String username) { this.subscriptions.add(username); }
     public void removeSubscription(String username) { this.subscriptions.remove(username); }
     public boolean hasSubscription(String username) { return this.subscriptions.contains(username); }
+    public void addPostOfSubscription(Post post) {
+        this.timelineInfo.addPost(post.getUsername(), post.getContent());
+    }
 
     public void addSubscriber(String port) { this.subscribers.add(port); }
     public void removeSubscriber(String username) { this.subscribers.remove(username); }

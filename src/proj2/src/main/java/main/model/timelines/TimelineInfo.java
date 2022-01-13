@@ -103,9 +103,12 @@ public class TimelineInfo {
     }
 
     public Post addPost(String username, String post_str) {
+
+        Timeline timeline = this.timelines.computeIfAbsent(username, k -> new Timeline(username, clockOffset));
         // add post
-        Timeline timeline = this.timelines.get(username);
         Post res = timeline.addPost(post_str);
+
+        // TODO: do this in a thread¿⸮?
         // update timeline file
         try {
             timeline.save(this.timelines_folder);
@@ -191,6 +194,10 @@ public class TimelineInfo {
 
     public Set<String> getStoredTimelines() {
         return this.timelines.keySet();
+    }
+
+    public Long getClockOffset() {
+        return clockOffset;
     }
 
     // for testing
