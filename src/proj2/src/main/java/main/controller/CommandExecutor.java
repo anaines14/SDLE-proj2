@@ -80,8 +80,16 @@ public class CommandExecutor {
         Peer peer = new Peer(username, address, capacity);
         System.out.println("INIT " + username + " " + peer.getPeerInfo().getPort() + " " + peer.getPeerInfo().getPublishPort());
 
-        startPeer(username, peer);
-
+        // connect to the provided peer
+        if (opts.length == 4) {
+            String paramUsername = opts[3];
+            this.startPeer(username, peer, paramUsername);
+        }
+        else {
+            // connect randomly to another peer
+            startPeer(username, peer);
+        }
+        
         return 0;
     }
 
@@ -92,6 +100,21 @@ public class CommandExecutor {
     private void startPeer(String username, Peer peer) {
         peer.subscribe(this.graph);
         this.connectToNetwork(peer);
+        peers.put(username, peer);
+        executor.addNode(peer);
+    }
+
+    private void startPeer(String username, Peer peer, String joinUsername) {
+        Peer joinPeer = this.peers.get(joinUsername);
+
+        if (joinPeer == null) {
+            System.err.println("Error: No peer with the requested ID (" + joinUsername + ")");
+            System.out.println("Connecting " + username + " randomly.");
+            this.startPeer(username, peer);
+            return;
+        }
+        peer.subscribe(this.graph);
+        peer.join(new Neighbour(joinPeer.getPeerInfo().getHost()));
         peers.put(username, peer);
         executor.addNode(peer);
     }

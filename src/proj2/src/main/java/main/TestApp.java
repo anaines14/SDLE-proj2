@@ -76,7 +76,7 @@ public class TestApp {
                 Avalable commands:
 
 
-                \t START <username> <capacity>
+                \t START <username> <capacity> <join_peer_id>
                 \t START_MULT <n>
                 \t POST <username> "<content>"
                 \t UPDATE <username> <post_id> "<content>"

@@ -1,4 +1,6 @@
-start bibo 5
-print bibo
+start bibo 10
+start ferno 10
+start ana 10 bibo
+start croc 10 ana
 sleep 10
 stop_all
