@@ -1,7 +1,5 @@
 package main.gui;
 
-import main.model.neighbour.Neighbour;
-
 import java.util.Set;
 
 public interface Observer {
@@ -12,4 +10,5 @@ public interface Observer {
     void newQueryHitUpdate(String source, String destination);
     void newSubUpdate(String source, String destination);
     void newPostUpdate(String source, Set<String> destinations);
+    void stopUpdate(String port);
 }

@@ -101,14 +101,20 @@ public class Broker {
         controlSend.close();
     }
 
-    public void subscribe(String username, InetAddress address, String port) {
-        socketInfo.addSubscription(username, address, port);
+    public void subscribe(String username, InetAddress address, String publisherPort, String port) {
+        socketInfo.addSubscription(username, address, publisherPort, port);
         this.sendToControl("NEW_SUB");
     }
 
     public void unsubscribe(String username) {
         socketInfo.removeSubscription(username);
         this.sendToControl("NEW_UNSUB");
+    }
+
+
+    public void unsubscribe(Set<String> usernames) {
+        for (String username: usernames)
+            this.unsubscribe(username);
     }
 
     public void publishPost(Post post) {
@@ -153,7 +159,7 @@ public class Broker {
             items.register(backend, ZMQ.Poller.POLLIN);
             items.register(control, ZMQ.Poller.POLLIN);
 
-            for (ZMQ.Socket socket: socketInfo.getSubscriptions())
+            for (ZMQ.Socket socket: socketInfo.getSubscriptionSockets())
                 items.register(socket, ZMQ.Poller.POLLIN);
 
             if (worker_queues.size() > 0) {

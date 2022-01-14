@@ -2,6 +2,7 @@ package main;
 
 import main.controller.network.Authenticator;
 import main.gui.Observer;
+import main.model.Pair;
 import main.model.PeerInfo;
 import main.controller.network.Broker;
 import main.controller.message.MessageSender;
@@ -18,6 +19,7 @@ import main.model.timelines.Post;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -29,9 +31,10 @@ import java.util.stream.IntStream;
 public class Peer implements Serializable {
     public static final int PINGNEIGH_DELAY = 1000;
     public static final int ADDNEIGH_DELAY = 1000;
+    private static final long PINGSUBS_DELAY = 1000;
     public static final int MIN_NGBRS = 1;
     public static final int MAX_RETRY = 3;
-    public static final int RCV_TIMEOUT = 1000;
+    public static final int RCV_TIMEOUT = 500;
     public static final int MAX_RANDOM_NEIGH = 2;
     // Minimun number of neighbours necessary to be considered a super peers
     public static final int SP_MIN = 5;
@@ -49,6 +52,7 @@ public class Peer implements Serializable {
     // Hooks
     private ScheduledFuture<?> pingNeighFuture;
     private ScheduledFuture<?> addNeighFuture;
+    private ScheduledFuture<?> pingSubsFuture;
 
 
     // CALL PEER WITH PASSWORD != "" TO REGISTER
@@ -138,11 +142,14 @@ public class Peer implements Serializable {
                 0, PINGNEIGH_DELAY, TimeUnit.MILLISECONDS);
         addNeighFuture = scheduler.scheduleWithFixedDelay(this::addNeighbour,
                 0, ADDNEIGH_DELAY, TimeUnit.MILLISECONDS);
+        pingSubsFuture = scheduler.scheduleWithFixedDelay(this::pingSubs,
+                0, PINGSUBS_DELAY, TimeUnit.MILLISECONDS);
     }
 
     public void cancelHooks() {
         if (pingNeighFuture != null) pingNeighFuture.cancel(false);
         if (addNeighFuture != null) addNeighFuture.cancel(false);
+        if (pingSubsFuture != null) pingSubsFuture.cancel(false);
     }
 
     public void stop() {
@@ -150,6 +157,7 @@ public class Peer implements Serializable {
         this.authenticator.close();
         this.cancelHooks();
         this.context.close();
+        this.peerInfo.notifyStop();
     }
 
     public Timeline requestTimeline(String username) {
@@ -171,22 +179,68 @@ public class Peer implements Serializable {
         return null;
     }
 
-    public void requestSub(String username) {
+    public boolean requestSub(String username) {
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
         if (neighbours.size() == 0)
-            return;
+            return false;
 
         MessageRequest request = new SubMessage(username, this.peerInfo);
         SubHitMessage response = (SubHitMessage) this.sendQueryNeighbours(request, neighbours);
 
         // add subscription
         if (response != null) {
-            this.broker.subscribe(username, response.getAddress(), response.getPublishPort());
+            this.broker.subscribe(username, response.getAddress(), response.getPublishPort(), response.getPort());
             this.peerInfo.addSubscription(username); // register subscription in peerInfo
             this.peerInfo.notifyNewSub(response.getPort());
             System.out.println(this.peerInfo.getUsername() + " SUBBED TO " + username + " ON " + response.getPort());
-        } else
+            return true;
+        } else {
             System.out.println(this.peerInfo.getUsername() + " COULDN'T SUB TO " + username);
+            return false;
+        }
+    }
+
+    private void pingSubs() {
+        // See if any of our subscriptions has died
+        Set<String> subPorts = this.broker.getSocketInfo().getSubscriptionPorts();
+        Set<String> subsToRetry = new HashSet<>();
+        Map<String, Pair<ZMQ.Socket, String>> subscriptions = this.broker.getSocketInfo().getSubscriptions();
+
+        for (String username: subscriptions.keySet()) {
+            String port = subscriptions.get(username).p2;
+            SubPing request = new SubPing(this.getPeerInfo().getHost());
+            Future<MessageResponse> promise = broker.addPromise(request.getId());
+
+            if (!this.sender.sendMessageNTimes(request, port)) {
+                subsToRetry.add(username);
+                broker.removePromise(request.getId());
+                continue;
+            }
+
+            try {
+                SubPong response = (SubPong) promise.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);
+                // If a peer can at any time stop providing us with a subscription, we need to check here
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+                broker.removePromise(request.getId());
+                continue;
+            } catch (TimeoutException e) { // Peer timed out
+                subsToRetry.add(username);
+                broker.removePromise(request.getId());
+                continue;
+            }
+            broker.removePromise(request.getId());
+        }
+
+        // Start by removing the dead subscriptions, then try to reconnect them
+        this.broker.unsubscribe(subsToRetry);
+        // Done because it is faster for broker poller, he will break the poll cycle just once this way
+
+        for (String username: subsToRetry) {
+            // TODO Maybe do something with success var, prob schedule another sub request
+            boolean success = this.requestSub(username); // Request it again
+            System.out.println("SUBBED2 TO " + username + success);
+        }
     }
 
     public void requestUnsub(String username) {
@@ -330,10 +384,6 @@ public class Peer implements Serializable {
 
     public PeerInfo getPeerInfo() {
         return this.peerInfo;
-    }
-
-    public Broker getBroker() {
-        return broker;
     }
 
     public boolean isSubscribed(String username) {
