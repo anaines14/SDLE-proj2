@@ -80,6 +80,17 @@ public class Timeline implements Serializable {
         return this.cipher.verifySignature(this.toString(), publicKey);
     }
 
+    public List<Post> getRelatedPosts(String search) {
+        List<Post> posts = new ArrayList<>();
+
+        for (Post post: this.posts.values()) {
+            if (post.matchesSearch(search))
+                posts.add(post);
+        }
+
+        return posts;
+    }
+
     public String getUsername() { return this.username; }
 
     public List<Post> getPosts() {

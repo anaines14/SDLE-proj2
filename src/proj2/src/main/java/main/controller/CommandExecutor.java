@@ -332,6 +332,7 @@ public class CommandExecutor {
 
         // print timelines of peer
         peer.printTimelines();
+
         return 0;
     }
 

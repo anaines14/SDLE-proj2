@@ -7,10 +7,12 @@ import main.controller.network.Broker;
 import main.controller.message.MessageSender;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
+import main.model.message.request.query.SearchMessage;
 import main.model.message.request.query.SubMessage;
 import main.model.message.response.*;
 import main.model.message.response.query.QueryHitMessage;
 import main.model.message.response.query.QueryResponseImpl;
+import main.model.message.response.query.SearchHitMessage;
 import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
@@ -153,15 +155,14 @@ public class Peer implements Serializable {
     }
 
     public Timeline requestTimeline(String username) {
-        // check if neighbours have the username's timeline
-        // TODO Tamos a dar flooding atm, dps temos que usar searches
+        // check if neighbours have the username's timeline TODO: (????????)
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
         if (neighbours.size() == 0)
             return null;
 
         MessageRequest request = new QueryMessage(username, this.peerInfo);
-
-        QueryHitMessage response = (QueryHitMessage) this.sendQueryNeighbours(request, neighbours);
+        this.sendReqNeighbours(request, neighbours);
+        QueryHitMessage response = (QueryHitMessage) this.receiveHitNeighbours(request);
         if (response != null) {
             // save requested timeline
             this.addTimeline(response.getTimeline());
@@ -171,13 +172,34 @@ public class Peer implements Serializable {
         return null;
     }
 
+    public void requestSearch(String search_str) {
+        /* TODO:
+            - Get our posts
+            - Receive search hits
+            - Order posts
+            - Print posts
+        */
+        // get neighbours to send request to
+        List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
+        if (neighbours.size() == 0)
+            return;
+
+        // send request to neighbours
+        MessageRequest request = new SearchMessage(search_str, this.peerInfo);
+        this.sendReqNeighbours(request, neighbours);
+
+        // receive responses from neighbours
+        SearchHitMessage response = (SearchHitMessage) this.receiveHitNeighbours(request);
+    }
+
     public void requestSub(String username) {
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
         if (neighbours.size() == 0)
             return;
 
         MessageRequest request = new SubMessage(username, this.peerInfo);
-        SubHitMessage response = (SubHitMessage) this.sendQueryNeighbours(request, neighbours);
+        this.sendReqNeighbours(request, neighbours);
+        SubHitMessage response = (SubHitMessage) this.receiveHitNeighbours(request);
 
         // add subscription
         if (response != null) {
@@ -204,7 +226,7 @@ public class Peer implements Serializable {
         return broker.popSubMessages();
     }
 
-    private QueryResponseImpl sendQueryNeighbours(MessageRequest request, List<Neighbour> neighbours) {
+    private void sendReqNeighbours(MessageRequest request, List<Neighbour> neighbours) {
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
         int i=0;
@@ -214,9 +236,13 @@ public class Peer implements Serializable {
             this.sender.sendMessageNTimes(request, n.getPort());
             ++i;
         }
+    }
 
+    // TODO: Receive more than one hit
+    private QueryResponseImpl receiveHitNeighbours(MessageRequest request) {
         boolean timed_out = false;
         QueryResponseImpl response = null;
+        Future<MessageResponse> responseFuture = broker.addPromise(request.getId());
         while (!timed_out && response == null) {
             try {
                 response = (QueryResponseImpl) responseFuture.get(RCV_TIMEOUT, TimeUnit.MILLISECONDS);

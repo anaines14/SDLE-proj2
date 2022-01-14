@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.LocalTime;
+import java.util.Locale;
 import java.util.Objects;
 
 public class Post implements Serializable, Comparable<Post> {
@@ -44,6 +45,13 @@ public class Post implements Serializable, Comparable<Post> {
 
     public boolean hasSignature() {
         return cipher.hasSignature();
+    }
+
+    public boolean matchesSearch(String search) {
+        // convert to lower case and remove spaces for comparison
+        String content_str = content.toLowerCase().replaceAll(" ", "");
+        String search_str = search.toLowerCase().replaceAll(" ", "");
+        return content_str.equals(search_str);
     }
 
     public int getId() {

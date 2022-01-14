@@ -73,4 +73,14 @@ public class PeerQueryTest {
         peer4.stop();
         peer5.stop();
     }
+
+    @Test
+    public void search() throws InterruptedException {
+        MessageSender.addIgnoredMsg("PING");
+        MessageSender.addIgnoredMsg("PONG");
+        Thread.sleep(4000); // Wait for peers to add eachother as neighbours
+
+        peer1.requestSearch("hello");
+
+    }
 }

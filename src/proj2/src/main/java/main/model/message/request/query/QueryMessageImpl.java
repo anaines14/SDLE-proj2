@@ -9,14 +9,14 @@ import main.model.message.request.Sender;
 public abstract class QueryMessageImpl extends MessageRequest {
     private final static int TTL = 10;
     public Path path;
-    protected final String wantedUsername;
+    protected final String wantedSearch;
     protected int timeToLive;
 
     public QueryMessageImpl(String username, PeerInfo peerInfo) {
         this.path = new Path();
         this.path.addSender(new Sender(peerInfo));
         // We put username in the beginning of the id so that no identifier is the same
-        this.wantedUsername = username;
+        this.wantedSearch = username;
         this.timeToLive = TTL;
     }
 
@@ -49,7 +49,7 @@ public abstract class QueryMessageImpl extends MessageRequest {
     }
 
     public String getWantedUsername() {
-        return wantedUsername;
+        return wantedSearch;
     }
 
     @Override
@@ -60,6 +60,6 @@ public abstract class QueryMessageImpl extends MessageRequest {
 
     @Override
     public String toString() {
-        return super.toString() + "("+ this.wantedUsername + ":" + path.toString() + ")";
+        return super.toString() + "("+ this.wantedSearch + ":" + path.toString() + ")";
     }
 }

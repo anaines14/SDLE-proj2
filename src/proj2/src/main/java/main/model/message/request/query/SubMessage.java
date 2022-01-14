@@ -10,7 +10,7 @@ public class SubMessage extends QueryMessageImpl {
     }
 
     public String getWantedSub() {
-        return wantedUsername;
+        return wantedSearch;
     }
 
     @Override
@@ -20,6 +20,6 @@ public class SubMessage extends QueryMessageImpl {
 
     @Override
     public String toString() {
-        return super.toString() + "("+ this.wantedUsername + ":" + path.toString() + ")";
+        return super.toString() + "("+ this.wantedSearch + ":" + path.toString() + ")";
     }
 }
