@@ -61,6 +61,8 @@ public class MessageHandler {
             case "PASSOU_BEM_RESPONSE" -> handle((PassouBemResponse) message);
             case "SUB" -> handle((SubMessage) message);
             case "SUB_HIT" -> handle((SubHitMessage) message);
+            case "SUB_PING" -> handle((SubPing) message);
+            case "SUB_PONG" -> handle((SubPong) message);
             default -> {
             }
         }
@@ -203,6 +205,18 @@ public class MessageHandler {
     }
 
     private void handle(SubHitMessage message) {
+        if (promises.containsKey(message.getId())) {
+            promises.get(message.getId()).complete(message);
+        }
+    }
+
+    private void handle(SubPing message) {
+        SubPong response = new SubPong(message.getId());
+        // Right now, just send pong to all subpings since we don't stop supporting a subscription after accepting it
+        this.sender.sendMessageNTimes(response, message.getSender().getPort());
+    }
+
+    private void handle(SubPong message) {
         if (promises.containsKey(message.getId())) {
             promises.get(message.getId()).complete(message);
         }

@@ -1,6 +1,7 @@
 import main.Peer;
 import main.controller.message.MessageSender;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Post;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,8 @@ import utils.TestUtils;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,6 +20,7 @@ public class PeerSubMessageTest {
     private Peer peer1;
     private Peer peer2;
     private Peer peer3;
+    private Peer peer3a;
     private ScheduledThreadPoolExecutor scheduler;
 
     @BeforeEach
@@ -32,7 +36,8 @@ public class PeerSubMessageTest {
         peer1 = new Peer("u1", localhost,  10);
         peer2 = new Peer("u2", localhost, 20);
         peer3 = new Peer("u3", localhost, 30);
-        scheduler = new ScheduledThreadPoolExecutor(3);
+        peer3a = new Peer("u3", localhost, 30);
+        scheduler = new ScheduledThreadPoolExecutor(4);
 
         peer1.execute(scheduler);
         peer2.execute(scheduler);
@@ -42,12 +47,6 @@ public class PeerSubMessageTest {
     @AfterAll
     static void cleanup() {
         TestUtils.deleteDirectory(new File("stored_timelines"));
-    }
-
-    public void close() {
-        peer1.stop();
-        peer2.stop();
-        peer3.stop();
     }
 
     @Test
@@ -83,11 +82,28 @@ public class PeerSubMessageTest {
             e.printStackTrace();
         }
 
-        assertEquals(peer1.getPeerInfo().getTimelineInfo().getTimeline("u2").getPosts().get(0).getContent(), "Uma posta");
+        Map<String, List<Post>> peer1Res = peer1.getPostOfSubscriptions();
+        Map<String, List<Post>> peer2Res = peer2.getPostOfSubscriptions();
 
-        System.out.println("P1: " + peer1.getPostOfSubscriptions());
-        System.out.println("P2: " + peer2.getPostOfSubscriptions());
+        assertEquals(peer1Res.size(), 2);
+//        assertEquals(peer1Res.get("u2").size(), 2);
+//        assertEquals(peer1Res.get("u3").size(), 1);
+        assertEquals(peer2Res.size(), 1);
+//        assertEquals(peer2Res.get("u3").size(), 1);
 
-        this.close();
+        // Peer3 Stops and user "u3" logs in to user peer3a
+        peer2.stop();
+        peer3a.execute(scheduler);
+        peer3a.join(new Neighbour(peer3.getPeerInfo().getHost()));
+
+        try {
+            Thread.sleep(8000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        peer1.stop();
+        peer2.stop();
+        peer3a.stop();
     }
 }

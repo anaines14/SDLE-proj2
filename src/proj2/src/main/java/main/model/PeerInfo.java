@@ -164,9 +164,13 @@ public class PeerInfo {
 
     public void notifyNewPost(String usernameRedirect) {
         if (this.observer != null) {
-            System.out.println(this.getUsername() + " NOTIFYING THE ALL " + this.redirections.size());
             this.observer.newPostUpdate(this.getPort(), this.redirections.get(usernameRedirect));
         }
+    }
+
+    public void notifyStop() {
+        if (this.observer != null)
+            this.observer.stopUpdate(this.getPort());
     }
 
     // HostCache
