@@ -20,8 +20,10 @@ public class BackupService implements Runnable {
     @Override
     public void run() {
         try {
-            if (this.timeline != null)
+            if (this.timeline != null) {
                 this.timeline.save(this.timelinesFolder);
+                this.timeline = null;
+            }
         } catch (IOException e) {
             System.err.println("Error: Couldn't save timeline.");
             e.printStackTrace();

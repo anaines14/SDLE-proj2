@@ -94,13 +94,7 @@ public class TimelineInfo {
         }
 
         this.timelines.put(timeline.getUsername(), timeline);
-        try {
-            // save timeline in non volatile memory
-            timeline.save(this.timelines_folder);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Couldn't save timeline: " + timeline.getUsername());
-        }
+        this.backup(timeline);
         this.cleanup();
     }
 
@@ -110,7 +104,6 @@ public class TimelineInfo {
         // add post
         Post res = timeline.addPost(post_str);
 
-        // TODO: do this in a thread¿⸮?
         // update timeline file
         this.backup(timeline);
         this.cleanup();
