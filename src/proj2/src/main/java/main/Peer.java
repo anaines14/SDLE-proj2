@@ -202,7 +202,6 @@ public class Peer implements Serializable {
 
     private void pingSubs() {
         // See if any of our subscriptions has died
-        Set<String> subPorts = this.broker.getSocketInfo().getSubscriptionPorts();
         Set<String> subsToRetry = new HashSet<>();
         Map<String, Pair<ZMQ.Socket, String>> subscriptions = this.broker.getSocketInfo().getSubscriptions();
 
