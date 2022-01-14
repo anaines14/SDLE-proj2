@@ -207,9 +207,9 @@ public class Broker {
                     if (this.peerInfo.hasContentListener())
                         System.out.println(post);
 
-                    if (post.hasSignature())
+                    if (post.hasSignature() && peerInfo.isAuth())
                         // Verify message signature
-                        post.verifySignature(authenticator.requestPublicKey(username),peerInfo.isAuth());
+                        post.verifySignature(authenticator.requestPublicKey(username));
                     else
                         post.setVerification(false);
 

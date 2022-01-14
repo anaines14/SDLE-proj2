@@ -77,9 +77,12 @@ public class Timeline implements Serializable {
         this.cipher.addSignature(this.getTimelineContent(), privateKey);
     }
 
-    public void verifySignature(PublicKey publicKey, boolean peerAuth) {
-        if(peerAuth && this.cipher.verifySignature(this.getTimelineContent(), publicKey)){
+    public void verifySignature(PublicKey publicKey) {
+        if(this.cipher.verifySignature(this.getTimelineContent(), publicKey)){
             this.verification = true;
+            for(Integer pos : this.posts.keySet()){
+                this.posts.get(pos).setVerification(true);
+            }
         }
         else{
             this.verification = false;
@@ -94,9 +97,7 @@ public class Timeline implements Serializable {
 
     @Override
     public String toString() {
-        return username + "'s Timeline:" +
-                "\n\tLast Update:" + lastUpdate +
-                "\n\tPosts: \n\t\t" + posts +
+        return this.getTimelineContent() +
                 "\n\tVerified: \n\t\t" + verification ;
     }
 
@@ -124,6 +125,6 @@ public class Timeline implements Serializable {
     }
 
     public void setVerification(boolean verification) {
-        this.verification = false;
+        this.verification = verification;
     }
 }

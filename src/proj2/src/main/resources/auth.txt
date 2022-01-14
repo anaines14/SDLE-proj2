@@ -1,9 +1,19 @@
 start bibo 10
-start ferno 10 bibo
 start ana 10 bibo
+start ferno 10 bibo
 auth
+sleep 5
 register bibo bibopassword
 register ferno fernopassword
 register ana anapassword
-sleep 10
+sleep 5
+logout ana
+sleep 5
+post bibo "hello world"
+sleep 5
+timeline ana bibo
+timeline ferno bibo
+sleep 5
+print ana
+print ferno
 stop_all

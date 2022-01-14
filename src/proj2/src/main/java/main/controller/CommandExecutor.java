@@ -5,6 +5,8 @@ import main.controller.message.MessageSender;
 import main.controller.network.AuthenticationServer;
 import main.gui.GraphWrapper;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Post;
+import main.model.timelines.Timeline;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -28,12 +30,7 @@ public class CommandExecutor {
         this.graph = new GraphWrapper("Network");
         this.executor.execute();
         this.currPeerListening = null;
-
-        InetAddress localhost = null;
-        try {
-            localhost = InetAddress.getByName("localhost");
-        } catch (UnknownHostException ignored) {}
-        authenticationServer = new AuthenticationServer(localhost);
+        this.authenticationServer = null;
     }
 
     public int execCmd(String cmd) throws UnknownHostException, InterruptedException {
@@ -75,31 +72,31 @@ public class CommandExecutor {
             case "AUTH":
                 return this.execAuth();
             case "LOGIN":
-                return this.login(opts);
+                return this.execLogin(opts);
             case "LOGOUT":
-                return this.logout(opts);
+                return this.execLogout(opts);
             case "REGISTER":
-                return this.register(opts);
+                return this.execRegister(opts);
             default:
                 return -1;
 
         }
     }
 
-    private int register(String[] opts) {
+    private int execRegister(String[] opts) {
         String username = opts[1];
         String password = opts[2];
         this.peers.get(username).register(password,authenticationServer.getAddress(), authenticationServer.getSocketPort());
         return 0;
     }
 
-    private int logout(String[] opts) {
+    private int execLogout(String[] opts) {
         String username = opts[1];
         this.peers.get(username).logout();
         return 0;
     }
 
-    private int login(String[] opts) {
+    private int execLogin(String[] opts) {
         String username = opts[1];
         String password = opts[2];
         this.peers.get(username).login(password,authenticationServer.getAddress(), authenticationServer.getSocketPort());
@@ -107,6 +104,11 @@ public class CommandExecutor {
     }
 
     private int execAuth() {
+        InetAddress localhost = null;
+        try {
+            localhost = InetAddress.getByName("localhost");
+        } catch (UnknownHostException ignored) {}
+        authenticationServer = new AuthenticationServer(localhost);
         authenticationServer.execute();
         return 0;
     }
@@ -374,6 +376,7 @@ public class CommandExecutor {
 
         // print timelines of peer
         peer.printTimelines();
+        System.out.println("-------------------------------------------------------------");
         return 0;
     }
 

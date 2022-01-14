@@ -103,7 +103,7 @@ public class MessageHandler {
 
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
-        int i=0;
+        int i = 0;
         while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);
             this.sender.sendMessageNTimes(message, n.getPort());
@@ -135,22 +135,20 @@ public class MessageHandler {
 
     private void handle(QueryHitMessage message) {
         if (promises.containsKey(message.getId())) {
+
             if (message.getTimeline().hasSignature() && peerInfo.isAuth()) {
                 // Timeline is signed and we can verify it
                 String username = message.getTimeline().getUsername();
                 PublicKey publicKey = authenticator.requestPublicKey(username);
-                assert(publicKey != null);
+                assert (publicKey != null);
 
                 Timeline t = message.getTimeline();
-                if (t.hasSignature())
-                    // Verify message signature
-                    t.verifySignature(authenticator.requestPublicKey(username),peerInfo.isAuth());
-                else
-                    t.setVerification(false);
+                t.verifySignature(authenticator.requestPublicKey(username));
 
-                promises.get(message.getId()).complete(message);
 
-            }
+            } else
+                message.getTimeline().setVerification(false);
+            promises.get(message.getId()).complete(message);
         }
     }
 

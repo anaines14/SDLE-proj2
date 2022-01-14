@@ -71,6 +71,7 @@ public class AuthenticationTest {
 
         Timeline t = peer2.requestTimeline("u1");
         assertEquals("O que e que e a tua publicaçao", t.getPosts().get(0).getContent());
+        assertTrue(t.isVerified());
 
         //replace private key so it doesnt match
         peer1.getPeerInfo().setPrivateKey(peer2.getPeerInfo().getPrivateKey());

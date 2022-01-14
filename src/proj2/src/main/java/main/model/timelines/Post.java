@@ -39,8 +39,8 @@ public class Post implements Serializable, Comparable<Post> {
         this.cipher.addSignature(this.getPostContent(), privateKey);
     }
 
-    public void verifySignature(PublicKey publicKey, boolean peerAuth) {
-        if(peerAuth && this.cipher.verifySignature(this.getPostContent(), publicKey)){
+    public void verifySignature(PublicKey publicKey) {
+        if(this.cipher.verifySignature(this.getPostContent(), publicKey)){
             this.verification = true;
         }
         else{
@@ -77,10 +77,7 @@ public class Post implements Serializable, Comparable<Post> {
 
     @Override
     public String toString() {
-        return  "\t\tID: " + Id + ": " +
-                "\n\t\tuser: " + username +
-                "\n\t\t\tTimestamp: " + timestamp +
-                "\n\t\t\tContent: '" + content + '\'' +
+        return  this.getPostContent() +
                 "\n\tVerified: \n\t\t" + verification ;
     }
 
@@ -107,7 +104,7 @@ public class Post implements Serializable, Comparable<Post> {
         return this.timestamp.compareTo(o.timestamp);
     }
 
-    public void setVerification(boolean b) {
-        this.verification = false;
+    public void setVerification(boolean verification) {
+        this.verification = verification;
     }
 }
