@@ -137,7 +137,8 @@ public class TimelineInfo {
 
     public void backup(Timeline timeline) {
         backupService.setTimeline(timeline);
-        backupService.run();
+        Thread t = new Thread(backupService);
+        t.start();
     }
 
     public void cleanup() {
