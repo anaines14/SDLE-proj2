@@ -87,6 +87,10 @@ public class TestApp {
                 \t MSG_DELAY <value>
                 \t LISTEN <username>
                 \t PRINT <username>
+                \t AUTH 
+                \t LOGIN <username> <password>
+                \t REGISTER <username> <password>
+                \t LOGOUT <username>
                 \t PRINT_PEERS
                 \t STOP <username>
                 \t STOP_ALL

@@ -16,6 +16,7 @@ public class Timeline implements Serializable {
     private LocalTime lastUpdate;
     private final Long clockOffset;
     private final Cipher cipher;
+    private boolean verification;
 
     public Timeline(String username, Long clockOffset) {
         this.posts = new HashMap<>();
@@ -73,11 +74,16 @@ public class Timeline implements Serializable {
     }
 
     public void addSignature(PrivateKey privateKey) {
-        this.cipher.addSignature(this.toString(), privateKey);
+        this.cipher.addSignature(this.getTimelineContent(), privateKey);
     }
 
-    public boolean verifySignature(PublicKey publicKey) {
-        return this.cipher.verifySignature(this.toString(), publicKey);
+    public void verifySignature(PublicKey publicKey, boolean peerAuth) {
+        if(peerAuth && this.cipher.verifySignature(this.getTimelineContent(), publicKey)){
+            this.verification = true;
+        }
+        else{
+            this.verification = false;
+        }
     }
 
     public String getUsername() { return this.username; }
@@ -90,7 +96,18 @@ public class Timeline implements Serializable {
     public String toString() {
         return username + "'s Timeline:" +
                 "\n\tLast Update:" + lastUpdate +
+                "\n\tPosts: \n\t\t" + posts +
+                "\n\tVerified: \n\t\t" + verification ;
+    }
+
+    public String getTimelineContent(){
+        return username + "'s Timeline:" +
+                "\n\tLast Update:" + lastUpdate +
                 "\n\tPosts: \n\t\t" + posts;
+    }
+
+    public boolean isVerified() {
+        return verification;
     }
 
     @Override
@@ -104,5 +121,9 @@ public class Timeline implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(posts, lastPostId, username, lastUpdate);
+    }
+
+    public void setVerification(boolean verification) {
+        this.verification = false;
     }
 }

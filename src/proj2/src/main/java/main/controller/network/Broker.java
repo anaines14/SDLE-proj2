@@ -201,10 +201,11 @@ public class Broker {
                     if (this.peerInfo.hasContentListener())
                         System.out.println(post);
 
-                    if (post.hasSignature() && peerInfo.isAuth())
+                    if (post.hasSignature())
                         // Verify message signature
-                        if (!post.verifySignature(authenticator.requestPublicKey(username)))
-                            continue; // Ignore message, invalid authentication
+                        post.verifySignature(authenticator.requestPublicKey(username),peerInfo.isAuth());
+                    else
+                        post.setVerification(false);
 
                     // update timeline
                     this.peerInfo.addPostOfSubscription(post);

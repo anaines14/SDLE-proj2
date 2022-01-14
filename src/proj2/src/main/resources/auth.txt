@@ -1,0 +1,9 @@
+start bibo 10
+start ferno 10 bibo
+start ana 10 bibo
+auth
+register bibo bibopassword
+register ferno fernopassword
+register ana anapassword
+sleep 10
+stop_all

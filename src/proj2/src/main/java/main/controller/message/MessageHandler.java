@@ -138,11 +138,17 @@ public class MessageHandler {
                 String username = message.getTimeline().getUsername();
                 PublicKey publicKey = authenticator.requestPublicKey(username);
                 assert(publicKey != null);
-                if (!message.getTimeline().verifySignature(publicKey))
-                    return; // Don't accept message
-            }
 
-            promises.get(message.getId()).complete(message);
+                Timeline t = message.getTimeline();
+                if (t.hasSignature())
+                    // Verify message signature
+                    t.verifySignature(authenticator.requestPublicKey(username),peerInfo.isAuth());
+                else
+                    t.setVerification(false);
+
+                promises.get(message.getId()).complete(message);
+
+            }
         }
     }
 
