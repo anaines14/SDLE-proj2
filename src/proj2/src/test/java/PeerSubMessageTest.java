@@ -75,7 +75,6 @@ public class PeerSubMessageTest {
 
         peer2.addPost("Uma posta");
         peer3.addPost("Duas postas");
-        peer2.addPost("Duas postas");
 
         try {
             Thread.sleep(500);

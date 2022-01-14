@@ -212,6 +212,9 @@ public class Broker {
                         if (!post.verifySignature(authenticator.requestPublicKey(username)))
                             continue; // Ignore message, invalid authentication
 
+                    // update timeline
+                    this.peerInfo.addPostOfSubscription(post);
+
                     this.subMessages.putIfAbsent(username, new CopyOnWriteArrayList<>());
                     this.subMessages.get(username).add(post);
                     // check if I should redirect this post to other peers
