@@ -71,7 +71,7 @@ public class BrokerTest {
         broker2.setPeerInfo(peerInfo2);
         broker2.execute();
 
-        broker2.subscribe(peerInfo.getUsername(), peerInfo.getAddress(), peerInfo.getPublishPort());
+        broker2.subscribe(peerInfo.getUsername(), peerInfo.getAddress(), peerInfo.getPublishPort(), peerInfo.getPort());
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {

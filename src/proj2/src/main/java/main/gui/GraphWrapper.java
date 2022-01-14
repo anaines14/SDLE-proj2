@@ -41,6 +41,12 @@ public class GraphWrapper implements Observer {
         }
     }
 
+    public void removeNode(String port) throws IdAlreadyInUseException {
+        if (graph.getNode(port) != null) {
+            graph.removeNode(port);
+        }
+    }
+
     public void addEdge(String peer1, String peer2) throws IdAlreadyInUseException,
             ElementNotFoundException, EdgeRejectedException {
         String edgeId1 = peer1 + peer2, edgeId2 = peer2 + peer1;
@@ -129,6 +135,11 @@ public class GraphWrapper implements Observer {
             }
         }
 
+    }
+
+    @Override
+    public void stopUpdate(String port) {
+        this.removeNode(port);
     }
 
     // new query message
