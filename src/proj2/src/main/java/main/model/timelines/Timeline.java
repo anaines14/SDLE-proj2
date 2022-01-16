@@ -24,6 +24,7 @@ public class Timeline implements Serializable {
         this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
         this.lastPostId = 0;
         this.clockOffset = clockOffset;
+        System.out.println("Local clock offset in ms: " + clockOffset / 1000L);
         this.cipher = new Cipher();
     }
 
@@ -98,7 +99,7 @@ public class Timeline implements Serializable {
     @Override
     public String toString() {
         return this.getTimelineContent() +
-                "\n\tVerified: \n\t\t" + verification ;
+                "\n\tVerified: \n\t\t" + verification + "\n\tSign: \n\t\t" + Arrays.toString(this.cipher.getSign());
     }
 
     public String getTimelineContent(){
