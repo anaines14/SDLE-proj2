@@ -8,3 +8,4 @@ sub C A
 sleep 3
 stop D
 sleep 10
+stop_all
