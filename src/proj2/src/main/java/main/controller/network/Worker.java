@@ -14,6 +14,7 @@ import org.zeromq.ZMQException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -23,7 +24,7 @@ public class Worker {
     private final ZMQ.Socket worker;
     private final Thread thread;
 
-    public Worker(ZContext context, int id, ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises,
+    public Worker(ZContext context, int id, ConcurrentMap<UUID, CompletableFuture<List<MessageResponse>>> promises,
                   SocketInfo socketInfo, Authenticator authenticator) {
         this.handler = new MessageHandler(promises, socketInfo, authenticator);
         this.worker = context.createSocket(SocketType.REQ);

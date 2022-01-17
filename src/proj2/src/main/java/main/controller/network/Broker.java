@@ -28,7 +28,7 @@ public class Broker {
     // supporting socket interruption on receive calls recently
     private ZMQ.Socket control;
     // Messages that we are expecting to receive, workers fill these when they receive the request
-    private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
+    private final ConcurrentMap<UUID, CompletableFuture<List<MessageResponse>>> promises;
     private final Map<String, List<Post>> subMessages; // New posts that are posted by our subs
     private final Authenticator authenticator;
     private PeerInfo peerInfo;
@@ -80,11 +80,11 @@ public class Broker {
             w.setPeerInfo(peerInfo);
     }
 
-    public Future<MessageResponse> addPromise(UUID id) {
+    public Future<List<MessageResponse>> addPromise(UUID id) {
         if (promises.containsKey(id))
             return promises.get(id);
 
-        CompletableFuture<MessageResponse> promise = new CompletableFuture<>();
+        CompletableFuture<List<MessageResponse>> promise = new CompletableFuture<>();
         promises.put(id, promise);
         return promise;
     }

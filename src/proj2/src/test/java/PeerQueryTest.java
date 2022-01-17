@@ -73,4 +73,21 @@ public class PeerQueryTest {
         peer4.stop();
         peer5.stop();
     }
+
+    @Test
+    public void manyHits() throws InterruptedException {
+        MessageSender.addIgnoredMsg("PING");
+        MessageSender.addIgnoredMsg("PONG");
+        Thread.sleep(5000); // Wait for peers to add eachother as neighbours
+
+        peer5.addPost("hello");
+
+        Timeline peer5Timeline = peer1.requestTimeline("u5");
+        assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
+
+        peer5.addPost("bye");
+        Timeline peer5Timeline2 = peer3.requestTimeline("u5");
+        assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline2);
+
+    }
 }
