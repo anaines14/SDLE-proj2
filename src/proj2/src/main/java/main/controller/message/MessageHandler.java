@@ -108,10 +108,11 @@ public class MessageHandler {
 
         // Get random N neighbours to send
         int[] randomNeighbours = IntStream.range(0, neighbours.size()).toArray();
-        int i = 0;
-        while (i < randomNeighbours.length && i < MAX_RANDOM_NEIGH) {
+        int i = 0, success_cnt = 0;
+        while (i < randomNeighbours.length && success_cnt < MAX_RANDOM_NEIGH) {
             Neighbour n = neighbours.get(i);
-            this.sender.sendMessageNTimes(message, n.getPort());
+            if (this.sender.sendMessageNTimes(message, n.getPort()))
+                ++success_cnt;
             ++i;
         }
     }

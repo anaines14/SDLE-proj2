@@ -3,6 +3,7 @@ import main.controller.network.AuthenticationServer;
 import main.model.timelines.Post;
 import main.model.timelines.Timeline;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import utils.TestUtils;
@@ -54,8 +55,8 @@ public class AuthenticationTest {
         }
     }
 
-    @AfterAll
-    static void runCleanup() {
+    @AfterEach
+    public void runCleanup() {
         TestUtils.deleteDirectory(new File("stored_timelines"));
     }
 
@@ -122,7 +123,7 @@ public class AuthenticationTest {
     }
 
     @Test
-    public void signPostSearch(){
+    public void signPostSearch() {
         peer2.addPost("Uma posta");
         peer2.addPost("Duas posta");
 

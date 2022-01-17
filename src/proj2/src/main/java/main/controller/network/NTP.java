@@ -40,7 +40,6 @@ public class NTP {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            System.out.println("TIMEOUT");
             client.close();
         }
 

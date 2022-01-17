@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PeerQueryTest {
     private Peer peer1;
@@ -32,11 +31,11 @@ public class PeerQueryTest {
         try {
             localhost = InetAddress.getByName("localhost");
         } catch (UnknownHostException ignored) {}
-        peer1 = new Peer("u1", localhost,  5);
-        peer2 = new Peer("u2", localhost, 1);
+        peer1 = new Peer("u1", localhost,  6);
+        peer2 = new Peer("u2", localhost, 6);
         peer3 = new Peer("u3", localhost, 10);
-        peer4 = new Peer("u4", localhost, 10);
-        peer5 = new Peer("u5", localhost, 20);
+        peer4 = new Peer("u4", localhost, 13);
+        peer5 = new Peer("u5", localhost, 13);
         scheduler = new ScheduledThreadPoolExecutor(5);
 
         List<Peer> peers = Arrays.asList(peer1, peer2, peer3, peer4, peer5);
@@ -47,9 +46,10 @@ public class PeerQueryTest {
         }
 
         peer1.join(peer2);
-        peer3.join(peer1);
-        peer4.join(peer1);
-        peer4.join(peer5);
+        peer2.join(peer3);
+        peer3.join(peer4);
+        peer5.join(peer4);
+        peer5.join(peer3);
     }
 
     @AfterAll
@@ -65,10 +65,11 @@ public class PeerQueryTest {
 
         Timeline peer5Timeline = peer1.requestTimeline("u5");
         assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
-        Thread.sleep(1000);
         // check if peer1 saved timeline
         peer5.stop();
+        Thread.sleep(500); // Give time for peer1 to change neighbour from peer5 to peer4
         Timeline peer5Timeline2 = peer3.requestTimeline("u5");
+
         assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline2);
 
         peer2.stop();
