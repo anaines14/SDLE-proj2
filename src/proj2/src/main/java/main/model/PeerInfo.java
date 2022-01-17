@@ -205,8 +205,6 @@ public class PeerInfo {
     // Returns worst neighbour if we need to replace Neighbour
     // Returns null if we can't replace candidate
     public Neighbour acceptNeighbour(Host candidate) {
-        // from neighbours with less or equal capacity than host, get the one with max degree
-
 
         // get neighbors with less capacity than val
         List<Neighbour> worstNgbrs = neighbours.stream()

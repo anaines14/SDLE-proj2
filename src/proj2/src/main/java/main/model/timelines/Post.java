@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class Post implements Serializable, Comparable<Post> {
@@ -78,7 +79,7 @@ public class Post implements Serializable, Comparable<Post> {
     @Override
     public String toString() {
         return  this.getPostContent() +
-                "\n\tVerified: \n\t\t" + verification ;
+                "\n\tVerified: \n\t\t" + verification + "\n\tSign: \n\t\t" + Arrays.toString(this.cipher.getSign());
     }
 
     public boolean isVerified() {

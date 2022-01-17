@@ -1,6 +1,7 @@
 package main.controller.network;
 
 import main.controller.message.MessageSender;
+import main.model.Pair;
 import main.model.PeerInfo;
 import main.model.SocketInfo;
 import main.model.message.Message;
@@ -156,14 +157,19 @@ public class Broker {
 
         while (!Thread.currentThread().isInterrupted()) {
             ZMQ.Poller items = context.createPoller(4);
-            items.register(backend, ZMQ.Poller.POLLIN);
-            items.register(control, ZMQ.Poller.POLLIN);
+            items.register(backend, ZMQ.Poller.POLLIN); // 0
+            items.register(control, ZMQ.Poller.POLLIN); // 1
 
-            for (ZMQ.Socket socket: socketInfo.getSubscriptionSockets())
-                items.register(socket, ZMQ.Poller.POLLIN);
+            Map<String, Pair<ZMQ.Socket, String>> subMap = socketInfo.getSubscriptions();
+            List<String> usernames = new ArrayList<>(); // Registered usernames sockets in current iteration
+            // Done because subscriptions can change mid-iteration, if we don't do this, we might poll unwanted sockets
+            for (String username: subMap.keySet()) {// 2, 2 + n - 1
+                items.register(subMap.get(username).p1, ZMQ.Poller.POLLIN);
+                usernames.add(username);
+            }
 
             if (worker_queues.size() > 0) {
-                items.register(socketInfo.getFrontend(), ZMQ.Poller.POLLIN);
+                items.register(socketInfo.getFrontend(), ZMQ.Poller.POLLIN); // 2 + n
             }
 
             if (items.poll() < 0)
@@ -191,9 +197,8 @@ public class Broker {
                 else if (cmd.equals("NEW_SUB") || cmd.equals("NEW_UNSUB")) {} // Do nothing
             }
 
-            Set<String> subscribedUsers = this.socketInfo.getSubsribedUsers();
             int i=0;
-            for (String username : subscribedUsers) {
+            for (String username : usernames) {
                 if (items.pollin(2 + i)) { // Received post from subscription
                     ZMQ.Socket subscription = items.getSocket(2 + i);
                     Post post = null;

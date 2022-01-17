@@ -32,4 +32,9 @@ public class Cipher implements Serializable {
         }
         return false;
     }
+
+    public byte[] getSign() {
+        return sign;
+    }
+
 }
