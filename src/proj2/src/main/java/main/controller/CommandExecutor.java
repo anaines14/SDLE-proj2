@@ -53,6 +53,8 @@ public class CommandExecutor {
                 return this.execUpdate(cmd, opts);
             case "TIMELINE":
                 return this.execTimeline(opts);
+            case "SEARCH":
+                return this.execSearch(opts);
             case "SUB":
                 return this.execSub(opts);
             case "IGNORE":
@@ -308,16 +310,37 @@ public class CommandExecutor {
             return -1;
         }
 
-        peer.pingNeighbours();
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("Pinged neighbours");
 
-        peer.requestTimeline(timeline);
+        Timeline t = peer.requestTimeline(timeline);
+        System.out.println("Timeline received:\n" + t);
 
+        return 0;
+    }
+
+    private int execSearch(String[] opts) {
+        // get peer
+        String username = opts[1];
+        String search = opts[2];
+        Peer peer = peers.get(username);
+
+        if (peer == null) {
+            System.err.println("ERROR: Peer not found.");
+            return -1;
+        }
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Set<Post> posts = peer.requestSearch(search);
+        System.out.println("Search Results\n" + posts);
         return 0;
     }
 

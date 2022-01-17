@@ -82,6 +82,7 @@ public class TestApp {
                 \t UPDATE <username> <post_id> "<content>"
                 \t DELETE <username> <post_id>
                 \t TIMELINE <username> <req_timeline>
+                \t SEARCH <username> <search_content>
                 \t SUB <username> <target_username>
                 \t IGNORE <message>
                 \t MSG_DELAY <value>
