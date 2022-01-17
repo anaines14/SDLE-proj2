@@ -14,6 +14,7 @@ import java.util.*;
 
 public class MessageSender {
     // Each Peer has a MessageSender, and it sends all messages through it
+    private final static int RCV_TIMEOUT=250;
     private String username;
     private final ZContext context;
     private int maxRetries;
@@ -31,16 +32,16 @@ public class MessageSender {
         ignoredMessages.add(msgType);
     }
 
-    public MessageSender(String username, String port, int maxRetries, int socketTimeout, ZContext context) {
+    public MessageSender(String username, String port, int maxRetries, ZContext context) {
         this.username = username;
         this.port = port;
         this.maxRetries = maxRetries;
-        this.socketTimeout = socketTimeout;
+        this.socketTimeout = RCV_TIMEOUT;
         this.context = context;
     }
 
-    public MessageSender(PeerInfo peerInfo, int maxRetries, int receiveTimeout, ZContext context){
-        this(peerInfo.getUsername(), peerInfo.getPort(), maxRetries, receiveTimeout, context);
+    public MessageSender(PeerInfo peerInfo, int maxRetries, ZContext context){
+        this(peerInfo.getUsername(), peerInfo.getPort(), maxRetries, context);
     }
 
     public static void send(Message message, ZMQ.Socket socket) {

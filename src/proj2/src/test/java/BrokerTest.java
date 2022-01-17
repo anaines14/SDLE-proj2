@@ -35,7 +35,7 @@ public class BrokerTest {
         } catch (UnknownHostException ignored) {}
 
         context = new ZContext();
-        MessageSender sender1 = new MessageSender("user1", "8083", 3, 500, context);
+        MessageSender sender1 = new MessageSender("user1", "8083", 3, context);
         Authenticator authenticator = new Authenticator(context);
         this.broker = new Broker(context, localhost, authenticator);
         this.peerInfo = new PeerInfo("user1", localhost, 3, this.broker.getSocketInfo());
@@ -43,7 +43,7 @@ public class BrokerTest {
         this.broker.setPeerInfo(peerInfo);
 
         broker.execute();
-        this.sender = new MessageSender("user2", peerInfo.getPort(), 3, 500, context);
+        this.sender = new MessageSender("user2", peerInfo.getPort(), 3, context);
     }
 
     @AfterAll
@@ -66,7 +66,7 @@ public class BrokerTest {
         Authenticator authenticator = new Authenticator(ctx);
         Broker broker2 = new Broker(ctx, localhost, authenticator);
         PeerInfo peerInfo2 = new PeerInfo("user2", localhost, 3, broker2.getSocketInfo());
-        MessageSender sender2 = new MessageSender(peerInfo2, 3, 500, ctx);
+        MessageSender sender2 = new MessageSender(peerInfo2, 3, ctx);
         broker2.setSender(sender2);
         broker2.setPeerInfo(peerInfo2);
         broker2.execute();
