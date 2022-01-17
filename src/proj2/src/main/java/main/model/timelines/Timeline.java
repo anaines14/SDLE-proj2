@@ -24,7 +24,6 @@ public class Timeline implements Serializable, Comparable<Timeline> {
         this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
         this.lastPostId = 0;
         this.clockOffset = clockOffset;
-        System.out.println("Local clock offset in ms: " + clockOffset / 1000L);
         this.cipher = new Cipher();
     }
 
@@ -88,6 +87,17 @@ public class Timeline implements Serializable, Comparable<Timeline> {
         else{
             this.verification = false;
         }
+    }
+
+    public List<Post> getRelatedPosts(String search) {
+        List<Post> posts = new ArrayList<>();
+
+        for (Post post: this.posts.values()) {
+            if (post.matchesSearch(search))
+                posts.add(post);
+        }
+
+        return posts;
     }
 
     public String getUsername() { return this.username; }

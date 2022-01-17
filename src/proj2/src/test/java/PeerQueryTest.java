@@ -1,5 +1,6 @@
 import main.Peer;
 import main.controller.message.MessageSender;
+import main.model.timelines.Post;
 import main.model.timelines.Timeline;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,9 +12,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PeerQueryTest {
     private Peer peer1;
@@ -58,7 +61,7 @@ public class PeerQueryTest {
     public void queryPeer() throws InterruptedException {
         MessageSender.addIgnoredMsg("PING");
         MessageSender.addIgnoredMsg("PONG");
-        Thread.sleep(10000); // Wait for peers to add eachother as neighbours
+        Thread.sleep(4000); // Wait for peers to add eachother as neighbours
 
         Timeline peer5Timeline = peer1.requestTimeline("u5");
         assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline);
@@ -89,5 +92,23 @@ public class PeerQueryTest {
         Timeline peer5Timeline2 = peer3.requestTimeline("u5");
         assertEquals(peer5.getPeerInfo().getTimelineInfo().getTimeline("u5"), peer5Timeline2);
 
+    }
+
+    @Test
+    public void search() throws InterruptedException {
+        MessageSender.addIgnoredMsg("PING");
+        MessageSender.addIgnoredMsg("PONG");
+        Thread.sleep(5000); // Wait for peers to add eachother as neighbours
+
+        peer3.addPost("hello");
+        peer3.addPost("bye");
+        peer4.addPost("hello");
+        peer4.addPost("bye");
+        peer5.addPost("hello");
+        peer5.addPost("bye");
+        Set<Post> posts = peer3.requestSearch("hello");
+        assertEquals(3, posts.size()); // might fail depending on network configuration
+        for (Post p : posts)
+            assertEquals(p.getContent(), "hello");
     }
 }

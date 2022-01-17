@@ -167,6 +167,11 @@ public class TimelineInfo {
         }
     }
 
+    public List<Post> getRelatedPosts(String search) {
+        Timeline timeline = this.timelines.get(this.me);
+        return timeline.getRelatedPosts(search);
+    }
+
     public void printTimelines() {
         for (Timeline timeline : this.timelines.values())
             System.out.println(timeline);

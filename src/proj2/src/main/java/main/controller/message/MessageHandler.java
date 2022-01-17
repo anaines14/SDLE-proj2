@@ -7,11 +7,14 @@ import main.model.message.*;
 import main.model.message.request.*;
 import main.model.message.request.query.QueryMessage;
 import main.model.message.request.query.QueryMessageImpl;
+import main.model.message.request.query.SearchMessage;
 import main.model.message.request.query.SubMessage;
 import main.model.message.response.*;
 import main.model.message.response.query.QueryHitMessage;
+import main.model.message.response.query.SearchHitMessage;
 import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Post;
 import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 
@@ -59,6 +62,8 @@ public class MessageHandler {
             case "PONG" -> handle((PongMessage) message);
             case "QUERY" -> handle((QueryMessage) message);
             case "QUERY_HIT" -> handle((QueryHitMessage) message);
+            case "SEARCH" -> handle((SearchMessage) message);
+            case "SEARCH_HIT" -> handle((SearchHitMessage) message);
             case "PASSOU_BEM" -> handle((PassouBem) message);
             case "PASSOU_BEM_RESPONSE" -> handle((PassouBemResponse) message);
             case "SUB" -> handle((SubMessage) message);
@@ -89,17 +94,13 @@ public class MessageHandler {
         }
     }
 
-    private void propagateQueryMessage(QueryMessageImpl message) {
+    private void propagateMessage(QueryMessageImpl message, Set<Neighbour> ngbrsToReceive) {
         if (!message.canResend()) {
             return; // Message has reached TTL 0
         }
         // Add ourselves to the message
         message.decreaseTtl();
         message.addToPath(new Sender(this.peerInfo));
-
-        Set<Neighbour> ngbrsToReceive = peerInfo.getNeighbours();
-        if (this.peerInfo.isSuperPeer()) // super peer => use bloom filter
-            ngbrsToReceive = this.peerInfo.getNeighboursWithTimeline(message.getWantedUsername());
 
         List<Neighbour> neighbours = ngbrsToReceive.stream().filter(
                 n -> !message.isInPath(new Sender(n.getAddress(), n.getPort())))
@@ -113,6 +114,19 @@ public class MessageHandler {
             this.sender.sendMessageNTimes(message, n.getPort());
             ++i;
         }
+    }
+
+    private void propagateSearchMessage(QueryMessageImpl message) {
+        Set<Neighbour> ngbrsToReceive = peerInfo.getNeighbours();
+        this.propagateMessage(message, ngbrsToReceive);
+    }
+
+    private void propagateQueryMessage(QueryMessageImpl message) {
+        Set<Neighbour> ngbrsToReceive = peerInfo.getNeighbours();
+        if (this.peerInfo.isSuperPeer()) // super peer => use bloom filter
+            ngbrsToReceive = this.peerInfo.getNeighboursWithTimeline(message.getWantedSearch());
+
+        this.propagateMessage(message, ngbrsToReceive);
     }
 
     private void handle(QueryMessage message) {
@@ -137,6 +151,30 @@ public class MessageHandler {
         this.propagateQueryMessage(message);
     }
 
+    private void handle(SearchMessage message) {
+        TimelineInfo ourTimelineInfo = peerInfo.getTimelineInfo();
+        String wantedSearch = message.getWantedSearch();
+
+        if (message.isInPath(this.peerInfo))
+            return; // Already redirected this message
+
+        List<Post> posts = ourTimelineInfo.getRelatedPosts(wantedSearch);
+        if (!posts.isEmpty()) {
+            // We have posts, send search hit to initiator
+            if (peerInfo.isAuth()) {
+                for (Post post: posts) {
+                    post.addSignature(peerInfo.getPrivateKey());
+                }
+            }
+
+            MessageResponse searchHit = new SearchHitMessage(message.getId(), posts);
+            this.sender.sendMessageNTimes(searchHit, message.getOriginalSender().getPort());
+            return;
+        }
+
+        this.propagateSearchMessage(message);
+    }
+
     private void handle(QueryHitMessage message) {
         if (promises.containsKey(message.getId())) {
 
@@ -154,7 +192,35 @@ public class MessageHandler {
                 message.getTimeline().setVerification(false);
 
             CompletableFuture<List<MessageResponse>> promise = promises.get(message.getId());
-            System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: ");
+            if (promise.isDone()) {
+                try {
+                    promise.get().add(message);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+                List<MessageResponse> responses = new ArrayList<>();
+                responses.add(message);
+                promises.get(message.getId()).complete(responses);
+            }
+        }
+    }
+
+    private void handle(SearchHitMessage message) {
+        if (promises.containsKey(message.getId())) {
+            // verify each post signature
+            for (Post post : message.getPosts()) {
+                if (post.hasSignature() && peerInfo.isAuth()) {
+                    String username = post.getUsername();
+                    PublicKey publicKey = authenticator.requestPublicKey(username);
+                    assert (publicKey != null);
+                    post.verifySignature(authenticator.requestPublicKey(username));
+                }
+                else post.setVerification(false);
+            }
+
+            CompletableFuture<List<MessageResponse>> promise = promises.get(message.getId());
             if (promise.isDone()) {
                 try {
                     promise.get().add(message);

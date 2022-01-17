@@ -2,7 +2,6 @@ package main.model.timelines;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.LocalTime;
 import java.util.Arrays;
@@ -53,6 +52,10 @@ public class Post implements Serializable, Comparable<Post> {
         return cipher.hasSignature();
     }
 
+    public boolean matchesSearch(String search) {
+        return content.toLowerCase().contains(search.toLowerCase());
+    }
+
     public int getId() {
         return Id;
     }
@@ -91,7 +94,8 @@ public class Post implements Serializable, Comparable<Post> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Post post = (Post) o;
-        return Id == post.Id && Objects.equals(timestamp, post.timestamp) && Objects.equals(content, post.content);
+        return Id == post.Id && Objects.equals(timestamp, post.timestamp) && Objects.equals(content, post.content)
+                && Objects.equals(username, post.username);
     }
 
     @Override

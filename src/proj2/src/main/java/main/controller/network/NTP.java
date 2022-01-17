@@ -29,7 +29,6 @@ public class NTP {
         while (i < nTries) {
             NTPUDPClient client = new NTPUDPClient();
             try {
-                System.out.println("Enter");
                 client.open();
                 client.setSoTimeout(100);
                 String tag = countryTags[random.nextInt(countryTags.length)];

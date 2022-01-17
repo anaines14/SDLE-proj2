@@ -11,7 +11,7 @@ public class QueryMessage extends QueryMessageImpl {
     }
 
     public String getWantedTimeline() {
-        return wantedUsername;
+        return wantedSearch;
     }
 
     @Override
@@ -21,6 +21,6 @@ public class QueryMessage extends QueryMessageImpl {
 
     @Override
     public String toString() {
-        return super.toString() + "("+ this.wantedUsername + ":" + path.toString() + ")";
+        return super.toString() + "("+ this.wantedSearch + ":" + path.toString() + ")";
     }
 }
