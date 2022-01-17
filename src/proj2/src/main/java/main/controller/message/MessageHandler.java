@@ -16,24 +16,26 @@ import main.model.timelines.Timeline;
 import main.model.timelines.TimelineInfo;
 
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
 import static main.Peer.MAX_RANDOM_NEIGH;
 
 // Dá handle só a mensagens que iniciam requests (PING)
 public class MessageHandler {
-    private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
+    private final ConcurrentMap<UUID, CompletableFuture<List<MessageResponse>>> promises;
     private PeerInfo peerInfo;
     private final SocketInfo socketInfo;
     private Authenticator authenticator;
     private MessageSender sender;
 
-    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises,
+    public MessageHandler(ConcurrentMap<UUID, CompletableFuture<List<MessageResponse>>> promises,
                           SocketInfo socketInfo, Authenticator authenticator) {
         this.peerInfo = null;
         this.sender = null;
@@ -81,7 +83,9 @@ public class MessageHandler {
     private void handle(PongMessage message) {
         // Complete future of ping request
         if (promises.containsKey(message.getId())) {
-            promises.get(message.getId()).complete(message);
+            List<MessageResponse> responses = new ArrayList<>();
+            responses.add(message);
+            promises.get(message.getId()).complete(responses);
         }
     }
 
@@ -148,7 +152,21 @@ public class MessageHandler {
 
             } else
                 message.getTimeline().setVerification(false);
-            promises.get(message.getId()).complete(message);
+
+            CompletableFuture<List<MessageResponse>> promise = promises.get(message.getId());
+            System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: ");
+            if (promise.isDone()) {
+                try {
+                    promise.get().add(message);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+                List<MessageResponse> responses = new ArrayList<>();
+                responses.add(message);
+                promises.get(message.getId()).complete(responses);
+            }
         }
     }
 
@@ -172,7 +190,9 @@ public class MessageHandler {
 
     private void handle(PassouBemResponse message) {
         if (promises.containsKey(message.getId())) {
-            promises.get(message.getId()).complete(message);
+            List<MessageResponse> responses = new ArrayList<>();
+            responses.add(message);
+            promises.get(message.getId()).complete(responses);
         }
         this.peerInfo.updateHostCache(message.getHostCache());
     }
@@ -210,7 +230,9 @@ public class MessageHandler {
 
     private void handle(SubHitMessage message) {
         if (promises.containsKey(message.getId())) {
-            promises.get(message.getId()).complete(message);
+            List<MessageResponse> responses = new ArrayList<>();
+            responses.add(message);
+            promises.get(message.getId()).complete(responses);
         }
     }
 
@@ -222,7 +244,9 @@ public class MessageHandler {
 
     private void handle(SubPong message) {
         if (promises.containsKey(message.getId())) {
-            promises.get(message.getId()).complete(message);
+            List<MessageResponse> responses = new ArrayList<>();
+            responses.add(message);
+            promises.get(message.getId()).complete(responses);
         }
     }
 }

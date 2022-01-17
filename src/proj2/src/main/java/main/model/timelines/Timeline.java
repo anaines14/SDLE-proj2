@@ -7,7 +7,7 @@ import java.security.*;
 import java.time.LocalTime;
 import java.util.*;
 
-public class Timeline implements Serializable {
+public class Timeline implements Serializable, Comparable<Timeline> {
     private static final long serialVersionUID = 1L;
 
     private final Map<Integer, Post> posts;
@@ -109,6 +109,11 @@ public class Timeline implements Serializable {
 
     public boolean isVerified() {
         return verification;
+    }
+
+    @Override
+    public int compareTo(Timeline o) {
+        return this.lastUpdate.compareTo(o.lastUpdate);
     }
 
     @Override
