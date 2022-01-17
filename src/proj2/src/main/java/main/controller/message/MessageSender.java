@@ -17,7 +17,7 @@ public class MessageSender {
     private String username;
     private final ZContext context;
     private int maxRetries;
-    private int receiveTimeout;
+    private int socketTimeout;
     private Observer observer;
     private String port;
 
@@ -31,11 +31,11 @@ public class MessageSender {
         ignoredMessages.add(msgType);
     }
 
-    public MessageSender(String username, String port, int maxRetries, int receiveTimeout, ZContext context) {
+    public MessageSender(String username, String port, int maxRetries, int socketTimeout, ZContext context) {
         this.username = username;
         this.port = port;
         this.maxRetries = maxRetries;
-        this.receiveTimeout = receiveTimeout;
+        this.socketTimeout = socketTimeout;
         this.context = context;
     }
 
@@ -68,7 +68,8 @@ public class MessageSender {
 
     private String sendMessage(Message message, String port) {
         ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-        socket.setReceiveTimeOut(receiveTimeout);
+        socket.setReceiveTimeOut(socketTimeout);
+        socket.setSendTimeOut(socketTimeout);
         socket.connect("tcp://localhost:" + port); // TODO convert to address
 
         send(message, socket);

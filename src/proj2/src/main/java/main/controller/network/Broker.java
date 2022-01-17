@@ -1,6 +1,7 @@
 package main.controller.network;
 
 import main.controller.message.MessageSender;
+import main.model.Pair;
 import main.model.PeerInfo;
 import main.model.SocketInfo;
 import main.model.message.Message;
@@ -27,7 +28,7 @@ public class Broker {
     // supporting socket interruption on receive calls recently
     private ZMQ.Socket control;
     // Messages that we are expecting to receive, workers fill these when they receive the request
-    private final ConcurrentMap<UUID, CompletableFuture<MessageResponse>> promises;
+    private final ConcurrentMap<UUID, CompletableFuture<List<MessageResponse>>> promises;
     private final Map<String, List<Post>> subMessages; // New posts that are posted by our subs
     private final Authenticator authenticator;
     private PeerInfo peerInfo;
@@ -79,11 +80,11 @@ public class Broker {
             w.setPeerInfo(peerInfo);
     }
 
-    public Future<MessageResponse> addPromise(UUID id) {
+    public Future<List<MessageResponse>> addPromise(UUID id) {
         if (promises.containsKey(id))
             return promises.get(id);
 
-        CompletableFuture<MessageResponse> promise = new CompletableFuture<>();
+        CompletableFuture<List<MessageResponse>> promise = new CompletableFuture<>();
         promises.put(id, promise);
         return promise;
     }
@@ -101,14 +102,20 @@ public class Broker {
         controlSend.close();
     }
 
-    public void subscribe(String username, InetAddress address, String port) {
-        socketInfo.addSubscription(username, address, port);
+    public void subscribe(String username, InetAddress address, String publisherPort, String port) {
+        socketInfo.addSubscription(username, address, publisherPort, port);
         this.sendToControl("NEW_SUB");
     }
 
     public void unsubscribe(String username) {
         socketInfo.removeSubscription(username);
         this.sendToControl("NEW_UNSUB");
+    }
+
+
+    public void unsubscribe(Set<String> usernames) {
+        for (String username: usernames)
+            this.unsubscribe(username);
     }
 
     public void publishPost(Post post) {
@@ -150,14 +157,19 @@ public class Broker {
 
         while (!Thread.currentThread().isInterrupted()) {
             ZMQ.Poller items = context.createPoller(4);
-            items.register(backend, ZMQ.Poller.POLLIN);
-            items.register(control, ZMQ.Poller.POLLIN);
+            items.register(backend, ZMQ.Poller.POLLIN); // 0
+            items.register(control, ZMQ.Poller.POLLIN); // 1
 
-            for (ZMQ.Socket socket: socketInfo.getSubscriptions())
-                items.register(socket, ZMQ.Poller.POLLIN);
+            Map<String, Pair<ZMQ.Socket, String>> subMap = socketInfo.getSubscriptions();
+            List<String> usernames = new ArrayList<>(); // Registered usernames sockets in current iteration
+            // Done because subscriptions can change mid-iteration, if we don't do this, we might poll unwanted sockets
+            for (String username: subMap.keySet()) {// 2, 2 + n - 1
+                items.register(subMap.get(username).p1, ZMQ.Poller.POLLIN);
+                usernames.add(username);
+            }
 
             if (worker_queues.size() > 0) {
-                items.register(socketInfo.getFrontend(), ZMQ.Poller.POLLIN);
+                items.register(socketInfo.getFrontend(), ZMQ.Poller.POLLIN); // 2 + n
             }
 
             if (items.poll() < 0)
@@ -185,9 +197,8 @@ public class Broker {
                 else if (cmd.equals("NEW_SUB") || cmd.equals("NEW_UNSUB")) {} // Do nothing
             }
 
-            Set<String> subscribedUsers = this.socketInfo.getSubsribedUsers();
             int i=0;
-            for (String username : subscribedUsers) {
+            for (String username : usernames) {
                 if (items.pollin(2 + i)) { // Received post from subscription
                     ZMQ.Socket subscription = items.getSocket(2 + i);
                     Post post = null;
@@ -203,8 +214,9 @@ public class Broker {
 
                     if (post.hasSignature() && peerInfo.isAuth())
                         // Verify message signature
-                        if (!post.verifySignature(authenticator.requestPublicKey(username)))
-                            continue; // Ignore message, invalid authentication
+                        post.verifySignature(authenticator.requestPublicKey(username));
+                    else
+                        post.setVerification(false);
 
                     // update timeline
                     this.peerInfo.addPostOfSubscription(post);

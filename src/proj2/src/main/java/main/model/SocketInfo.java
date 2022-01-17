@@ -3,13 +3,13 @@ package main.model;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-import org.zeromq.ZSocket;
 
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 // Keeps in storage information about the Peer's public Sockets
 // Useful to tell other peers which sockets to connect
@@ -21,9 +21,9 @@ public class SocketInfo {
     private String publisherPort;
     private String frontendPort;
 
-    private Map<String, ZMQ.Socket> subscriptions; // Connects to all nodes that we have subscribed to
+    // Connects to all nodes that we have subscribed to. Username => <Publish Socket, Port>
+    private Map<String, Pair<ZMQ.Socket, String>> subscriptions;
     private Map<String, ZMQ.Socket> redirects; // Nodes to which we have to send post from subscribers
-    private Map<String, String> redirectPorts; // username => port
 
     public SocketInfo(String publisherPort, String frontendPort) { // For testing
         this.publisherPort = publisherPort;
@@ -45,7 +45,6 @@ public class SocketInfo {
         //AUTH
         this.subscriptions = new ConcurrentHashMap<>();
         this.redirects = new ConcurrentHashMap<>();
-        this.redirectPorts = new ConcurrentHashMap<>();
     }
 
     public String getPublisherPort() {
@@ -68,8 +67,21 @@ public class SocketInfo {
         return this.subscriptions.containsKey(username);
     }
 
-    public Collection<ZMQ.Socket> getSubscriptions() {
-        return subscriptions.values();
+    public Set<ZMQ.Socket> getSubscriptionSockets() {
+        return subscriptions.values().stream().map(
+                socketStringPair -> socketStringPair.p1
+        ).collect(Collectors.toSet());
+    }
+
+
+    public Set<String> getSubscriptionPorts() {
+        return subscriptions.values().stream().map(
+                socketStringPair -> socketStringPair.p2
+        ).collect(Collectors.toSet());
+    }
+
+    public Map<String, Pair<ZMQ.Socket, String>> getSubscriptions() {
+        return subscriptions;
     }
 
     public Map<String, ZMQ.Socket> getRedirects() { return redirects; }
@@ -86,16 +98,16 @@ public class SocketInfo {
         return subscriptions.size();
     }
 
-    public void addSubscription(String username, InetAddress address, String port) {
+    public void addSubscription(String username, InetAddress address, String publisherPort, String port) {
         ZMQ.Socket subscription = context.createSocket(SocketType.SUB);
         String hostName = address.getHostName();
-        subscription.connect("tcp://" + hostName + ":" + port);
+        subscription.connect("tcp://" + hostName + ":" + publisherPort);
         subscription.subscribe("".getBytes());
-        this.subscriptions.put(username, subscription);
+        this.subscriptions.put(username, new Pair<>(subscription, port));
     }
 
     public void removeSubscription(String username) {
-        ZMQ.Socket subscription = subscriptions.get(username);
+        ZMQ.Socket subscription = subscriptions.get(username).p1;
         subscription.setLinger(0);
         subscription.close();
         subscriptions.remove(username);
@@ -107,14 +119,13 @@ public class SocketInfo {
         int p = pub.bindToRandomPort("tcp://" + hostName);
         String port = Integer.toString(p);
         this.redirects.put(username, pub);
-        this.redirectPorts.put(username, port);
         return port;
     }
 
     public void close() {
         frontend.close();
         publisher.close();
-        for (ZMQ.Socket subscriber: subscriptions.values())
+        for (ZMQ.Socket subscriber: this.getSubscriptionSockets())
             subscriber.close();
         for (ZMQ.Socket redirect: redirects.values())
             redirect.close();

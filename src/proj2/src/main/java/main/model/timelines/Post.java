@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.LocalTime;
 import java.util.Locale;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class Post implements Serializable, Comparable<Post> {
@@ -17,6 +18,7 @@ public class Post implements Serializable, Comparable<Post> {
     private final LocalTime timestamp;
     private String content;
     private final Cipher cipher;
+    private boolean verification;
 
     public Post(int Id, String username, String content) {
         this.username = username;
@@ -36,11 +38,16 @@ public class Post implements Serializable, Comparable<Post> {
     }
 
     public void addSignature(PrivateKey privateKey) {
-        this.cipher.addSignature(this.toString(), privateKey);
+        this.cipher.addSignature(this.getPostContent(), privateKey);
     }
 
-    public boolean verifySignature(PublicKey publicKey) {
-        return this.cipher.verifySignature(this.toString(), publicKey);
+    public void verifySignature(PublicKey publicKey) {
+        if(this.cipher.verifySignature(this.getPostContent(), publicKey)){
+            this.verification = true;
+        }
+        else{
+            this.verification = false;
+        }
     }
 
     public boolean hasSignature() {
@@ -70,12 +77,21 @@ public class Post implements Serializable, Comparable<Post> {
         return content;
     }
 
-    @Override
-    public String toString() {
+    public String getPostContent(){
         return  "\t\tID: " + Id + ": " +
                 "\n\t\tuser: " + username +
                 "\n\t\t\tTimestamp: " + timestamp +
                 "\n\t\t\tContent: '" + content + '\'';
+    }
+
+    @Override
+    public String toString() {
+        return  this.getPostContent() +
+                "\n\tVerified: \n\t\t" + verification + "\n\tSign: \n\t\t" + Arrays.toString(this.cipher.getSign());
+    }
+
+    public boolean isVerified() {
+        return verification;
     }
 
     @Override
@@ -95,5 +111,9 @@ public class Post implements Serializable, Comparable<Post> {
     @Override
     public int compareTo(Post o) {
         return this.timestamp.compareTo(o.timestamp);
+    }
+
+    public void setVerification(boolean verification) {
+        this.verification = verification;
     }
 }

@@ -7,7 +7,7 @@ import java.security.*;
 import java.time.LocalTime;
 import java.util.*;
 
-public class Timeline implements Serializable {
+public class Timeline implements Serializable, Comparable<Timeline> {
     private static final long serialVersionUID = 1L;
 
     private final Map<Integer, Post> posts;
@@ -16,6 +16,7 @@ public class Timeline implements Serializable {
     private LocalTime lastUpdate;
     private final Long clockOffset;
     private final Cipher cipher;
+    private boolean verification;
 
     public Timeline(String username, Long clockOffset) {
         this.posts = new HashMap<>();
@@ -23,6 +24,7 @@ public class Timeline implements Serializable {
         this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
         this.lastPostId = 0;
         this.clockOffset = clockOffset;
+        System.out.println("Local clock offset in ms: " + clockOffset / 1000L);
         this.cipher = new Cipher();
     }
 
@@ -73,11 +75,19 @@ public class Timeline implements Serializable {
     }
 
     public void addSignature(PrivateKey privateKey) {
-        this.cipher.addSignature(this.toString(), privateKey);
+        this.cipher.addSignature(this.getTimelineContent(), privateKey);
     }
 
-    public boolean verifySignature(PublicKey publicKey) {
-        return this.cipher.verifySignature(this.toString(), publicKey);
+    public void verifySignature(PublicKey publicKey) {
+        if(this.cipher.verifySignature(this.getTimelineContent(), publicKey)){
+            this.verification = true;
+            for(Integer pos : this.posts.keySet()){
+                this.posts.get(pos).setVerification(true);
+            }
+        }
+        else{
+            this.verification = false;
+        }
     }
 
     public List<Post> getRelatedPosts(String search) {
@@ -99,9 +109,23 @@ public class Timeline implements Serializable {
 
     @Override
     public String toString() {
+        return this.getTimelineContent() +
+                "\n\tVerified: \n\t\t" + verification + "\n\tSign: \n\t\t" + Arrays.toString(this.cipher.getSign());
+    }
+
+    public String getTimelineContent(){
         return username + "'s Timeline:" +
                 "\n\tLast Update:" + lastUpdate +
                 "\n\tPosts: \n\t\t" + posts;
+    }
+
+    public boolean isVerified() {
+        return verification;
+    }
+
+    @Override
+    public int compareTo(Timeline o) {
+        return this.lastUpdate.compareTo(o.lastUpdate);
     }
 
     @Override
@@ -115,5 +139,9 @@ public class Timeline implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(posts, lastPostId, username, lastUpdate);
+    }
+
+    public void setVerification(boolean verification) {
+        this.verification = verification;
     }
 }

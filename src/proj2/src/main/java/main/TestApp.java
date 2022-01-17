@@ -76,7 +76,7 @@ public class TestApp {
                 Avalable commands:
 
 
-                \t START <username> <capacity> <join_peer_id>
+                \t START <username> <capacity> [<join_peer_id>]
                 \t START_MULT <n>
                 \t POST <username> "<content>"
                 \t UPDATE <username> <post_id> "<content>"
@@ -87,6 +87,10 @@ public class TestApp {
                 \t MSG_DELAY <value>
                 \t LISTEN <username>
                 \t PRINT <username>
+                \t AUTH 
+                \t LOGIN <username> <password>
+                \t REGISTER <username> <password>
+                \t LOGOUT <username>
                 \t PRINT_PEERS
                 \t STOP <username>
                 \t STOP_ALL

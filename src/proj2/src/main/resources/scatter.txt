@@ -3,15 +3,15 @@ ignore PONG
 ignore PASSOU_BEM
 ignore PASSOU_BEM_RESPONSE
 start A 10
-start B 10
-start C 10
-start D 10
-start E 10
-start F 10
-start G 10
-start H 10
-start I 10
-start J 10
+start B 10 A
+start C 10 A
+start D 10 B
+start E 10 B
+start F 10 D
+start G 10 E
+start H 10 E
+start I 10 H
+start J 10 I
 sleep 10
 sub C B
 sub A B

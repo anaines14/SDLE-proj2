@@ -164,9 +164,13 @@ public class PeerInfo {
 
     public void notifyNewPost(String usernameRedirect) {
         if (this.observer != null) {
-            System.out.println(this.getUsername() + " NOTIFYING THE ALL " + this.redirections.size());
             this.observer.newPostUpdate(this.getPort(), this.redirections.get(usernameRedirect));
         }
+    }
+
+    public void notifyStop() {
+        if (this.observer != null)
+            this.observer.stopUpdate(this.getPort());
     }
 
     // HostCache
@@ -201,8 +205,6 @@ public class PeerInfo {
     // Returns worst neighbour if we need to replace Neighbour
     // Returns null if we can't replace candidate
     public Neighbour acceptNeighbour(Host candidate) {
-        // from neighbours with less or equal capacity than host, get the one with max degree
-
 
         // get neighbors with less capacity than val
         List<Neighbour> worstNgbrs = neighbours.stream()

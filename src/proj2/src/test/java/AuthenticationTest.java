@@ -71,13 +71,14 @@ public class AuthenticationTest {
 
         Timeline t = peer2.requestTimeline("u1");
         assertEquals("O que e que e a tua publicaçao", t.getPosts().get(0).getContent());
+        assertTrue(t.isVerified());
 
         //replace private key so it doesnt match
         peer1.getPeerInfo().setPrivateKey(peer2.getPeerInfo().getPrivateKey());
         peer1.addPost("QUE BURRO MAL ASSINADO");
 
         t = peer2.requestTimeline("u1");
-        assertNull(t);
+        assertFalse(t.isVerified());
     }
 
     @Test
@@ -103,12 +104,12 @@ public class AuthenticationTest {
         peer2.addPost("Duas postas");
 
         try {
-            Thread.sleep(1500);
+            Thread.sleep(2000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        assertEquals(2, peer1.getPostOfSubscriptions().get("u2").size());
+        assertTrue(peer1.getPostOfSubscriptions().get("u2").get(1).isVerified());
 
         peer2.addPost("Terceira Posta");
         // replace private key so it doesnt match
@@ -120,6 +121,6 @@ public class AuthenticationTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        assertNotEquals(2, peer1.getPostOfSubscriptions().get("u2").size());
+        assertFalse(peer1.getPostOfSubscriptions().get("u2").get(1).isVerified());
     }
 }

@@ -19,6 +19,7 @@ public class TimelineInfo {
     private final String me;
     private final Long clockOffset;
     private int maxKeepTime; // max time to keep timeline stored (in seconds)
+    private BackupService backupService;
 
     public TimelineInfo(String username) {
         // create folder
@@ -35,6 +36,7 @@ public class TimelineInfo {
         this.timelines.put(username, t);
         this.maxKeepTime = 120; // in seconds
 
+        this.backupService = new BackupService(timelines_folder);
         // load timelines
         try {
             loadTimelines();
@@ -92,13 +94,7 @@ public class TimelineInfo {
         }
 
         this.timelines.put(timeline.getUsername(), timeline);
-        try {
-            // save timeline in non volatile memory
-            timeline.save(this.timelines_folder);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Couldn't save timeline: " + timeline.getUsername());
-        }
+        this.backup(timeline);
         this.cleanup();
     }
 
@@ -108,14 +104,9 @@ public class TimelineInfo {
         // add post
         Post res = timeline.addPost(post_str);
 
-        // TODO: do this in a thread¿⸮?
         // update timeline file
-        try {
-            timeline.save(this.timelines_folder);
-            this.cleanup();
-        } catch (IOException e) {
-            System.err.println("ERROR: Failed to save timeline.");
-        }
+        this.backup(timeline);
+        this.cleanup();
 
         return res;
     }
@@ -126,13 +117,8 @@ public class TimelineInfo {
         if (timeline == null)
             return;
         if (timeline.updatePost(postId, newContent)) {
-            // update timeline
-            try {
-                timeline.save(this.timelines_folder);
-                this.cleanup();
-            } catch (IOException e) {
-                System.err.println("ERROR: Failed to save timeline.");
-            }
+            this.backup(timeline);
+            this.cleanup();
         }
     }
 
@@ -144,17 +130,19 @@ public class TimelineInfo {
         // delete post
         if (timeline.deletePost(postId)) {
             // update timeline
-            try {
-                timeline.save(this.timelines_folder);
-                this.cleanup();
-            } catch (IOException e) {
-                System.err.println("ERROR: Failed to save timeline.");
-            }
+            this.backup(timeline);
+            this.cleanup();
         }
     }
 
+    public void backup(Timeline timeline) {
+        backupService.setTimeline(timeline);
+        Thread t = new Thread(backupService);
+        t.start();
+    }
+
     public void cleanup() {
-        LocalTime currentTime = LocalTime.now(); // TODO: ntp
+        LocalTime currentTime = LocalTime.now();
         currentTime = currentTime.plusNanos(clockOffset);
 
         for (Timeline timeline : this.timelines.values()) {

@@ -1,0 +1,10 @@
+start A 3
+start B 6 A
+start C 6 B
+start D 3 C
+sleep 3
+sub D A
+sub C A
+sleep 3
+stop D
+sleep 10
