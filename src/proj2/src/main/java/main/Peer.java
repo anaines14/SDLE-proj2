@@ -221,6 +221,7 @@ public class Peer implements Serializable {
         } catch (TimeoutException e) {
             response = null;
         }
+        broker.removePromise(request.getId());
 
         // add subscription
         if (response != null) {

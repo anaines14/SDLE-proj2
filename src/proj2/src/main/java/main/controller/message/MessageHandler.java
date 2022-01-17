@@ -124,7 +124,7 @@ public class MessageHandler {
     private void propagateQueryMessage(QueryMessageImpl message) {
         Set<Neighbour> ngbrsToReceive = peerInfo.getNeighbours();
         if (this.peerInfo.isSuperPeer()) // super peer => use bloom filter
-            ngbrsToReceive = this.peerInfo.getNeighboursWithTimeline(message.getWantedUsername());
+            ngbrsToReceive = this.peerInfo.getNeighboursWithTimeline(message.getWantedSearch());
 
         this.propagateMessage(message, ngbrsToReceive);
     }
@@ -161,8 +161,12 @@ public class MessageHandler {
         List<Post> posts = ourTimelineInfo.getRelatedPosts(wantedSearch);
         if (!posts.isEmpty()) {
             // We have posts, send search hit to initiator
+            if (peerInfo.isAuth()) {
+                for (Post post: posts) {
+                    post.addSignature(peerInfo.getPrivateKey());
+                }
+            }
 
-            // TODO: auth add signature
             MessageResponse searchHit = new SearchHitMessage(message.getId(), posts);
             this.sender.sendMessageNTimes(searchHit, message.getOriginalSender().getPort());
             return;

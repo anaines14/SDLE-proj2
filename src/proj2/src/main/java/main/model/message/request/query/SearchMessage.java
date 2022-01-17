@@ -7,10 +7,6 @@ public class SearchMessage extends QueryMessageImpl{
 
     public SearchMessage(String search, PeerInfo peerInfo) { super(search, peerInfo); }
 
-    public String getWantedSearch() {
-        return wantedSearch;
-    }
-
     @Override
     public String getType() {
         return type;

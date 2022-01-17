@@ -48,7 +48,7 @@ public abstract class QueryMessageImpl extends MessageRequest {
         return path.getOriginalSender();
     }
 
-    public String getWantedUsername() {
+    public String getWantedSearch() {
         return wantedSearch;
     }
 

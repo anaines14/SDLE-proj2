@@ -37,7 +37,7 @@ public class PeerSubMessageTest {
         peer2 = new Peer("u2", localhost, 20);
         peer3 = new Peer("u3", localhost, 30);
         peer3a = new Peer("u3", localhost, 30);
-        scheduler = new ScheduledThreadPoolExecutor(4);
+        scheduler = new ScheduledThreadPoolExecutor(8);
 
         peer1.execute(scheduler);
         peer2.execute(scheduler);
