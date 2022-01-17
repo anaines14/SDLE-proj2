@@ -12,6 +12,7 @@ import main.model.message.request.query.SearchMessage;
 import main.model.message.request.query.SubMessage;
 import main.model.message.response.*;
 import main.model.message.response.query.QueryHitMessage;
+import main.model.message.response.query.SearchHitMessage;
 import main.model.message.response.query.SubHitMessage;
 import main.model.neighbour.Host;
 import main.model.neighbour.Neighbour;
@@ -26,6 +27,7 @@ import java.net.InetAddress;
 import java.security.PrivateKey;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Peer implements Serializable {
@@ -181,17 +183,14 @@ public class Peer implements Serializable {
         return null;
     }
 
-    public void requestSearch(String search_str) {
-        /* TODO:
-            - Get our posts
-            - Receive search hits
-            - Order posts
-            - Print posts
-        */
+    public Set<Post> requestSearch(String search_str) {
+        // see our posts that correspond to the search
+        List<Post> posts = this.peerInfo.getTimelineInfo().getRelatedPosts(search_str);
+
         // get neighbours to send request to
         List<Neighbour> neighbours = peerInfo.getNeighbours().stream().toList();
         if (neighbours.size() == 0)
-            return;
+            return new HashSet<>(posts);
 
         // send request to neighbours
         MessageRequest request = new SearchMessage(search_str, this.peerInfo);
@@ -199,10 +198,12 @@ public class Peer implements Serializable {
 
         // receive responses from neighbours
         List<MessageResponse> responses = receiveHitNeighbours(request, responseFuture);
+        if (responses == null) return null;
 
-        // get all posts
-        //List<Post> posts = responses.stream().map(m -> ((SearchHitMessage) m).getPosts().).toList();
-
+        // get all posts from responses
+        for (MessageResponse msg : responses)
+            posts.addAll(((SearchHitMessage) msg).getPosts());
+        return new HashSet<>(posts);
     }
 
     public boolean requestSub(String username) {
@@ -308,6 +309,8 @@ public class Peer implements Serializable {
         List<MessageResponse> responses = null;
         try {
             Thread.sleep(RCV_TIMEOUT);
+            if (!responseFuture.isDone())
+                return null;
             responses = responseFuture.get();
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();

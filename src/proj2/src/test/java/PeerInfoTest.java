@@ -1,6 +1,8 @@
+import main.Peer;
 import main.model.PeerInfo;
 import main.model.SocketInfo;
 import main.model.neighbour.Neighbour;
+import main.model.timelines.Post;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
@@ -49,5 +51,21 @@ public class PeerInfoTest {
         neighbours = new ArrayList<>(peer1.getNeighbours());
         assertEquals(2, neighbours.size());
         compareNeighbour(neighbours.get(0), "u1", 60, 4, 5);
+    }
+
+    @Test
+    public void testContentPost() {
+        InetAddress localhost = null;
+        try {
+            localhost = InetAddress.getByName("localhost");
+        } catch (UnknownHostException ignored) {}
+
+        Peer peer = new Peer("u1", localhost,  5);
+
+        peer.addPost("uwu");
+        peer.addPost("uwu ");
+        peer.addPost("ola");
+        List<Post> posts = peer.getPeerInfo().getTimelineInfo().getRelatedPosts("uwu");
+        assertEquals(2, posts.size());
     }
 }

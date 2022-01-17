@@ -188,7 +188,6 @@ public class MessageHandler {
                 message.getTimeline().setVerification(false);
 
             CompletableFuture<List<MessageResponse>> promise = promises.get(message.getId());
-            System.out.println(peerInfo.getUsername() + " RECV[" + message.getType() + "]: ");
             if (promise.isDone()) {
                 try {
                     promise.get().add(message);
@@ -205,7 +204,32 @@ public class MessageHandler {
     }
 
     private void handle(SearchHitMessage message) {
-        // TODO
+        if (promises.containsKey(message.getId())) {
+            // verify each post signature
+            for (Post post : message.getPosts()) {
+                if (post.hasSignature() && peerInfo.isAuth()) {
+                    String username = post.getUsername();
+                    PublicKey publicKey = authenticator.requestPublicKey(username);
+                    assert (publicKey != null);
+                    post.verifySignature(authenticator.requestPublicKey(username));
+                }
+                else post.setVerification(false);
+            }
+
+            CompletableFuture<List<MessageResponse>> promise = promises.get(message.getId());
+            if (promise.isDone()) {
+                try {
+                    promise.get().add(message);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+                List<MessageResponse> responses = new ArrayList<>();
+                responses.add(message);
+                promises.get(message.getId()).complete(responses);
+            }
+        }
     }
 
     private void handle(PassouBem message) {

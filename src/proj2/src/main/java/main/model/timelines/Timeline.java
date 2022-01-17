@@ -24,7 +24,6 @@ public class Timeline implements Serializable, Comparable<Timeline> {
         this.lastUpdate = LocalTime.now().plusNanos(clockOffset);
         this.lastPostId = 0;
         this.clockOffset = clockOffset;
-        System.out.println("Local clock offset in ms: " + clockOffset / 1000L);
         this.cipher = new Cipher();
     }
 

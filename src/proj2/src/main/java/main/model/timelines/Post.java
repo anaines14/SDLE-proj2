@@ -99,7 +99,8 @@ public class Post implements Serializable, Comparable<Post> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Post post = (Post) o;
-        return Id == post.Id && Objects.equals(timestamp, post.timestamp) && Objects.equals(content, post.content);
+        return Id == post.Id && Objects.equals(timestamp, post.timestamp) && Objects.equals(content, post.content)
+                && Objects.equals(username, post.username);
     }
 
     @Override
