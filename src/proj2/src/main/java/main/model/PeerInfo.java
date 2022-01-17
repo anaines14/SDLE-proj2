@@ -196,6 +196,11 @@ public class PeerInfo {
                 .filter(f -> !neighbours.contains(f))
                 .collect(Collectors.toSet());
 
+        if (isSuperPeer()) { // If is superpeer, try to get connected to other superpeers
+            Set<Host> superPeers = notNeighbors.stream().filter(host -> isSuperPeer(host)).collect(Collectors.toSet());
+            if (!superPeers.isEmpty())
+                return superPeers.stream().min(Host::compareTo).get();
+        }
 
         Optional<Host> best_host = notNeighbors.stream().min(Host::compareTo);
         if(best_host.isEmpty()) return null;
