@@ -10,9 +10,17 @@ Group members:
 4. Diogo Rosário (up201806582@edu.fe.up.pt)
 
 
-## Compilation
+## Compilation and Execution
 Java 16+ is required to run this application.  
+Maven version 4.0.0 is also required.  
 
+To compile run from ./src/proj2/:
+`mvn compile`
+
+To run the TestApp with args: `mvn exec:java -D"exec.args"="<arg1>"`
+- **arg1**: test file
+
+To run without a test file: `mvn exec:java`
 
 ## Executing
 To test the functionalities run: `TestApp.java [<test_file>]`  
